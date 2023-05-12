@@ -4,6 +4,7 @@ function read_netz(dir,netzfile,zwerte,zt,znamen)
 	J = JSON.parsefile(netzfile)
 	eventfile = []
 	if haskey(J,"Events")
+		dir = dirname(@__DIR__)	#-- Direction von Package
 		eventfile = get(J,"Events",[]); eventfile = dir*"/Events/"*eventfile[2:end]*".jl"
 		println("Eventfile:",eventfile)
 		include(eventfile)

@@ -1,11 +1,11 @@
 module FlexHyX
-using Plots, NLsolve, DifferentialEquations
+using Plots, NLsolve#, DifferentialEquations
 
     import Pkg
     import JSON
     using TerminalLoggers
     using Plots
-    using DifferentialEquations
+    #using DifferentialEquations
     using Dates
     using NLsolve
     using LinearAlgebra

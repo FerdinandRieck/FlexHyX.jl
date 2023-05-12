@@ -31,9 +31,6 @@ using Plots, NLsolve#, DifferentialEquations
     print_tree(FlexHyX)
     =#
     =#
-    dir = readdir("Funktionen/";join=true)
-    include.(dir)
-
     include("Funktionen/DGL.jl")
     include("Funktionen/Glättung.jl")
     include("Funktionen/Solve_Netzwerk.jl")

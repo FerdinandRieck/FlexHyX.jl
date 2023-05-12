@@ -33,8 +33,6 @@ module FlexHyX
     export solveNetzwerk
     export plotsol
 
-    #sol = solveNetzwerk(dir*"/src")
+    sol = solveNetzwerk(dir*"/src")
     #plotsol(sol)
 end
-
-sol = solveNetzwerk(dir*"/src")

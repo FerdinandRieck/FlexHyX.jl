@@ -1,7 +1,7 @@
 function solveNetzwerk()
     println("---------------- This is FlexhyX ------------------")
     #-- Netwerk einlesen
-    J_cfg = JSON.parsefile("FlexHyX/src/Netzwerk/flexhyx.cfg")
+    J_cfg = JSON.parsefile("FlexHyX.jl/src/Netzwerk/flexhyx.cfg")
     now = Dates.now(); jetzt = [Dates.year(now) Dates.month(now) Dates.day(now) Dates.hour(now) Dates.minute(now) 0]
     startzeit = get(J_cfg,"Startzeit",jetzt)
     startzeit = String(Symbol(startzeit'))

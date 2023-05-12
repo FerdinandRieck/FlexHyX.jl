@@ -37,6 +37,6 @@ using Plots, NLsolve, DifferentialEquations
     export solveNetzwerk
     export plotsol
 
-    #sol = solveNetzwerk()
+    #sol = solveNetzwerk(dir*"/Netzwerk")
     #plotsol(sol)
 end

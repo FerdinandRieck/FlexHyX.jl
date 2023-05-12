@@ -3,7 +3,7 @@ function solveNetzwerk(dir::String)
 #-- Netwerk einlesen
     #dir = dirname(@__DIR__)
     #J_cfg = JSON.parsefile(dir*"/Netzwerk/flexhyx.cfg")
-    J_cfg = JSON.parsefile(dir)
+    J_cfg = JSON.parsefile(dir*"/flexhyx.cfg")
     now = Dates.now(); jetzt = [Dates.year(now) Dates.month(now) Dates.day(now) Dates.hour(now) Dates.minute(now) 0]
     startzeit = get(J_cfg,"Startzeit",jetzt)
     startzeit = String(Symbol(startzeit'))

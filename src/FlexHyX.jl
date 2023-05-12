@@ -1,5 +1,5 @@
 module FlexHyX
-using Plots, NLsolve, DifferentialEquations
+#using Plots, NLsolve, DifferentialEquations
 
     import Pkg
     import JSON

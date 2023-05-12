@@ -36,7 +36,7 @@ using Plots, NLsolve, DifferentialEquations
     #-- Funktionen exportieren
     export solveNetzwerk
     export plotsol
-end
 
-#sol = solveNetzwerk(dir*"/src")
-#plotsol(sol)
+    sol = solveNetzwerk(dir*"/src")
+    plotsol(sol)
+end

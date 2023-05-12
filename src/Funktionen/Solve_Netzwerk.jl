@@ -44,7 +44,7 @@ function solveNetzwerk(dir::String)
         #-- Parameter erzeugen und ändern
         Params = MakeParam(kk)
         #-- Knoten erzeugen
-        s = Symbol(typ,"_Knoten"); obj = getfield(Main, s)
+        s = Symbol(typ,"_Knoten"); obj = getfield(FlexHyX, s)
         knoten[i] = obj(Param=Params, Z=kk)     #-- z.B. U0_Knoten()
 
         M = [M; knoten[i].M]
@@ -75,7 +75,7 @@ function solveNetzwerk(dir::String)
             #-- Parameter erzeugen und ändern
             Params = MakeParam(kk) 
             #-- Kante erzeugen
-            s = Symbol(typ,"_kante"); obj = getfield(Main, s)
+            s = Symbol(typ,"_kante"); obj = getfield(FlexHyX, s)
             kanten[i] = obj(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)    #-- z.B. iB_kante()
         end
 
@@ -173,7 +173,7 @@ function solveNetzwerk(dir::String)
 end
 
 function MakeParam(kk) 
-    s = Symbol(kk["Typ"],"_Param"); P = getfield(Main, s)
+    s = Symbol(kk["Typ"],"_Param"); P = getfield(FlexHyX, s)
     Param = P() #-- erzeuge Param z.B. iB_Param
     D = Dict()
     for ff in fieldnames(typeof(Param))

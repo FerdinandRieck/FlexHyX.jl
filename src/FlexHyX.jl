@@ -7,7 +7,9 @@ module FlexHyX
     import Pkg
     import JSON
 
+    #dir = dirname(@__FILE__)
     dir = dirname(@__DIR__)
+    @show dir
 
     #-- Funktionen einfügen
     pfad = filter(contains(r".jl$"), readdir(dir*"/src/Funktionen/";join=true))

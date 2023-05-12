@@ -1,11 +1,11 @@
 module FlexHyX
-#using Plots, NLsolve, DifferentialEquations
+using Plots, NLsolve, DifferentialEquations
 
     import Pkg
     import JSON
     using TerminalLoggers
     using Plots
-    #using DifferentialEquations
+    using DifferentialEquations
     using Dates
     using NLsolve
     using LinearAlgebra
@@ -34,7 +34,7 @@ module FlexHyX
     
     include("Funktionen/DGL.jl")
     include("Funktionen/Glättung.jl")
-    include("Funktionen/Solve_Netzwerk.jl")
+    include("Solve_Netzwerk.jl")
     include("Funktionen/Plot_Sol.jl")
     include("Funktionen/Read_Netz.jl")
     include("Funktionen/Inzidenz.jl")
@@ -49,7 +49,7 @@ module FlexHyX
     export solveNetzwerk
     export plotsol
 
-    #sol = solveNetzwerk()
+    sol = solveNetzwerk()
     #plotsol(sol)
 end
 

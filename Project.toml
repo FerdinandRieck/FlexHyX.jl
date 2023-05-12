@@ -1,0 +1,13 @@
+name = "FlexHyX"
+uuid = "f675fe5e-d9b4-4878-a3fe-80e0bca010a0"
+authors = ["Ferdinand Rieck <ferdinand.rieck@smail.emt.h-brs.de>"]
+version = "0.1.0"
+
+[compat]
+julia = "1.8.1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

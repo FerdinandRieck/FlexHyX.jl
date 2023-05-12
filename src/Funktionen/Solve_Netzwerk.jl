@@ -1,7 +1,7 @@
 function solveNetzwerk()
     println("---------------- This is FlexhyX ------------------")
 
-dir = dirname(@__FILE__)
+dir = dirname(@__DIR__)
 
 println("Directory: $dir")
 

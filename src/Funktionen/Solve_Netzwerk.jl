@@ -1,10 +1,7 @@
 function solveNetzwerk()
     println("---------------- This is FlexhyX ------------------")
     #-- Netwerk einlesen
-
-@show pwd()
-
-    J_cfg = JSON.parsefile("FlexHyX.jl/src/Netzwerk/flexhyx.cfg")
+    J_cfg = JSON.parsefile("Netzwerk/flexhyx.cfg")
     now = Dates.now(); jetzt = [Dates.year(now) Dates.month(now) Dates.day(now) Dates.hour(now) Dates.minute(now) 0]
     startzeit = get(J_cfg,"Startzeit",jetzt)
     startzeit = String(Symbol(startzeit'))
@@ -14,7 +11,7 @@ function solveNetzwerk()
     println("Startzeit, Simdauer:",startzeit," ",simdauer)
     rtol = get(J_cfg,"RTOL",5.0e-4); atol = get(J_cfg,"ATOL",5.0e-4)
     println("rtol,atol:",rtol," ",atol)
-    pfad = get(J_cfg,"Pfad","."); pfad="src/"*pfad*"/";
+    pfad = get(J_cfg,"Pfad","."); pfad=pfad*"/";
     netzfile = pfad*get(J_cfg,"Netzwerkfile",0)
     zeitfile = get(J_cfg,"Zeitreihenfile",nothing) 
 

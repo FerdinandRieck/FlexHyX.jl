@@ -47,7 +47,7 @@ function read_netz(dir,netzfile,zwerte,zt,znamen)
 					fcn = v[2:end];
 					#file = "Netzwerk/"*fcn*".jl";
 					#println(file);   include(file)
-					kk[k] = getfield(FlexhyX, Symbol(fcn))
+					kk[k] = getfield(FlexHyX, Symbol(fcn))
 				end
 			end
 			if (haskey(kk,"Schaltzeit")==true) kk["Schaltdauer"] = 60.0 end

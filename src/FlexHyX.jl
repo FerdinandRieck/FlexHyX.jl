@@ -48,8 +48,8 @@ using Plots, NLsolve, DifferentialEquations
     export solveNetzwerk
     export plotsol
 
-    sol = solveNetzwerk()
-    plotsol(sol)
+    #sol = solveNetzwerk()
+    #plotsol(sol)
 end
 
 #Pkg.add(Pkg.PackageSpec(;name="DifferentialEquations", version="7.5.0"))

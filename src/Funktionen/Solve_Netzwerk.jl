@@ -2,7 +2,7 @@ function solveNetzwerk()
     println("---------------- This is FlexhyX ------------------")
 #-- Netwerk einlesen
     dir = dirname(@__DIR__)
-    dir = dir*"/Netzwerk/"
+    dir = dir*"/Netzwerk/flexhyx.cfg"
     J_cfg = JSON.parsefile(dir)
     now = Dates.now(); jetzt = [Dates.year(now) Dates.month(now) Dates.day(now) Dates.hour(now) Dates.minute(now) 0]
     startzeit = get(J_cfg,"Startzeit",jetzt)

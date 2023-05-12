@@ -1,29 +1,29 @@
 module FlexHyX
-using Plots, NLsolve#, DifferentialEquations
+using Plots, NLsolve, DifferentialEquations
 
     import Pkg
     import JSON
     using TerminalLoggers
     using Plots
-    #using DifferentialEquations
+    using DifferentialEquations
     using Dates
     using NLsolve
     using LinearAlgebra
     using SparseArrays
 
     dir = dirname(@__DIR__)
-    #=
+
     #-- Funktionen einfügen
-    dir = filter(contains(r".jl$"), readdir("Funktionen/";join=true))
-    include.(dir)
+    pfad = filter(contains(r".jl$"), readdir(dir*"/src/Funktionen/";join=true))
+    include.(pfad)
 
     #-- Knoten einfügen
-    dir = filter(contains(r".jl$"), readdir("Komponenten/Knoten/";join=true))
-    include.(dir)
+    pfad = filter(contains(r".jl$"), readdir(dir*"/src/Komponenten/Knoten/";join=true))
+    include.(pfad)
 
     #-- Kanten einfügen
-    dir = filter(contains(r".jl$"), readdir("Komponenten/Kanten/";join=true))
-    include.(dir)
+    pfad = filter(contains(r".jl$"), readdir(dir*"/src/Komponenten/Kanten/";join=true))
+    include.(pfad)
 
     #=
     #-- Typenhierarchie anzeigen
@@ -31,7 +31,7 @@ using Plots, NLsolve#, DifferentialEquations
 	AbstractTrees.children(x::Type) = subtypes(x)
     print_tree(FlexHyX)
     =#
-    =#
+    #=
     include("Funktionen/DGL.jl")
     include("Funktionen/Glättung.jl")
     include("Funktionen/Solve_Netzwerk.jl")
@@ -44,12 +44,12 @@ using Plots, NLsolve#, DifferentialEquations
     include("Komponenten/Kanten/PV_Anlage.jl")
     include("Komponenten/Knoten/Kopplungsknoten_Strom.jl")
     include("Komponenten/Knoten/Potentialknoten.jl")
-    
+    =#
     #-- Funktionen exportieren
     export solveNetzwerk
     export plotsol
 
-    #sol = solveNetzwerk()
+    sol = solveNetzwerk()
     #plotsol(sol)
 end
 

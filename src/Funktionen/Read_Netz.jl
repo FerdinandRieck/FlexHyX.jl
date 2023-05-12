@@ -1,10 +1,10 @@
-function read_netz(pfad,netzfile,zwerte,zt,znamen)
+function read_netz(dir,netzfile,zwerte,zt,znamen)
 	typ_kn = ["U","U0"]
 	typ_ka = ["iB","iV","iPV"]
 	J = JSON.parsefile(netzfile)
 	eventfile = []
 	if haskey(J,"Events")
-		eventfile = get(J,"Events",[]); eventfile = pfad*"Events/"*eventfile[2:end]*".jl"
+		eventfile = get(J,"Events",[]); eventfile = dir*"/Events/"*eventfile[2:end]*".jl"
 		println("Eventfile:",eventfile)
 		include(eventfile)
 	end

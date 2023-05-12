@@ -74,7 +74,7 @@ function solveNetzwerk()
             #-- Parameter erzeugen und ändern
             Params = MakeParam(kk) 
             #-- Kante erzeugen
-            s = Symbol(typ,"_kante"); obj = getfield(Main, s)
+            s = Symbol(typ,"_kante"); obj = getfield(FlexHyX, s)
             kanten[i] = obj(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)    #-- z.B. iB_kante()
         end
 

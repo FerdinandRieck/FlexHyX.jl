@@ -1,5 +1,8 @@
 module FlexHyX
+__precompile__()
+
 using Plots, NLsolve, DifferentialEquations
+
 
     import Pkg
     import JSON

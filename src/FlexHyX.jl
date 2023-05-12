@@ -11,6 +11,7 @@ using Plots, NLsolve, DifferentialEquations
     using LinearAlgebra
     using SparseArrays
     
+    #=
     #-- Funktionen einfügen
     dir = filter(contains(r".jl$"), readdir("Funktionen/";join=true))
     include.(dir)
@@ -29,8 +30,8 @@ using Plots, NLsolve, DifferentialEquations
 	AbstractTrees.children(x::Type) = subtypes(x)
     print_tree(FlexHyX)
     =#
-
-    #=
+    =#
+    
     include("Funktionen/DGL.jl")
     include("Funktionen/Glättung.jl")
     include("Funktionen/Solve_Netzwerk.jl")
@@ -43,7 +44,7 @@ using Plots, NLsolve, DifferentialEquations
     include("Komponenten/Kanten/PV_Anlage.jl")
     include("Komponenten/Knoten/Kopplungsknoten_Strom.jl")
     include("Komponenten/Knoten/Potentialknoten.jl")
-    =#
+    
     #-- Funktionen exportieren
     export solveNetzwerk
     export plotsol

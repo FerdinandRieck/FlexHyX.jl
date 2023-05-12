@@ -41,4 +41,4 @@ using Plots, NLsolve, DifferentialEquations
     plotsol(sol)
 end
 
-Pkg.add(Pkg.PackageSpec(;name="DifferentialEquations", version="7.5.0"))
+#Pkg.add(Pkg.PackageSpec(;name="DifferentialEquations", version="7.5.0"))

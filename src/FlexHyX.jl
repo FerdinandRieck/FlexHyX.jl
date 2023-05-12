@@ -1,16 +1,11 @@
 module FlexHyX
-using Plots, NLsolve, DifferentialEquations
-
-
-    import Pkg
-    import JSON
+    using DifferentialEquations, NLsolve, Plots
     using TerminalLoggers
-    using Plots
-    using DifferentialEquations
     using Dates
-    using NLsolve
     using LinearAlgebra
     using SparseArrays
+    import Pkg
+    import JSON
 
     dir = dirname(@__DIR__)
 

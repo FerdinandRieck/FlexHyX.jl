@@ -38,5 +38,5 @@ using Plots, NLsolve, DifferentialEquations
     export plotsol
 end
 
-sol = solveNetzwerk(dir*"/src")
-plotsol(sol)
+#sol = solveNetzwerk(dir*"/src")
+#plotsol(sol)

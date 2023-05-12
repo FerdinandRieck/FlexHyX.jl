@@ -172,7 +172,7 @@ function solveNetzwerk()
 end
 
 function MakeParam(kk) 
-    s = Symbol(kk["Typ"],"_Param"); P = getfield(Main, s)
+    s = Symbol(kk["Typ"],"_Param"); P = getfield(FlexHyX, s)
     Param = P() #-- erzeuge Param z.B. iB_Param
     D = Dict()
     for ff in fieldnames(typeof(Param))

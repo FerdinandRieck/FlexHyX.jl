@@ -70,6 +70,7 @@ function read_zeitreihe(file)
             t[i] = (i - 1) * dt
         end
         JW = J["Daten"][i]["Wert"]
+        # ??? allownan=true gibt es auch als option für JSON.parse ???
         if all(isa.(JW,Number))
             werte[i, :] = JW'
         else #-- NaN als Text vorhanden

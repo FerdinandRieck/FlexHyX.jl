@@ -1,5 +1,10 @@
 function solveNetzwerk()
     println("---------------- This is FlexhyX ------------------")
+
+dir = dirname(@__FILE__)
+
+println("Directory: $dir")
+
     #-- Netwerk einlesen
     J_cfg = JSON.parsefile("https://github.com/FerdinandRieck/FlexHyX.jl/blob/main/src/Netzwerk/flexhyx.cfg")
     now = Dates.now(); jetzt = [Dates.year(now) Dates.month(now) Dates.day(now) Dates.hour(now) Dates.minute(now) 0]

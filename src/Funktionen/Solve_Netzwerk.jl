@@ -23,7 +23,7 @@ function solveNetzwerk()
         zt = zt .+ dt
     end
 
-    eventfile, knoten_infos, kanten_infos = read_netz(netzfile, zwerte, zt, znamen)
+    eventfile, knoten_infos, kanten_infos = read_netz(pfad,netzfile, zwerte, zt, znamen)
 
    
     #-- Anfangswerte setzen

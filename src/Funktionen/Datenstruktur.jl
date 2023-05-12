@@ -1,7 +1,7 @@
-abstract type FlexHyX end
+abstract type flexhyx end
 
-abstract type Knoten <: FlexHyX end
-abstract type Kante <: FlexHyX end
+abstract type Knoten <: flexhyx end
+abstract type Kante <: flexhyx end
 
 abstract type Strom_Knoten <: Knoten end
 abstract type Gas_Knoten <: Knoten end

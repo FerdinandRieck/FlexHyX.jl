@@ -1,5 +1,5 @@
 module FlexHyX
-using LinearAlgebra, Plots, NLsolve, DifferentialEquations
+using Plots, NLsolve, DifferentialEquations
 
     import Pkg
     import JSON
@@ -40,3 +40,5 @@ using LinearAlgebra, Plots, NLsolve, DifferentialEquations
     sol = solveNetzwerk()
     plotsol(sol)
 end
+
+Pkg.add(Pkg.PackageSpec(;name="DifferentialEquations", version="7.5.0"))

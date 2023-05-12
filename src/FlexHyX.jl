@@ -10,21 +10,17 @@ using Plots, NLsolve, DifferentialEquations
     using NLsolve
     using LinearAlgebra
     using SparseArrays
-    #=
-
+    
     #-- Funktionen einfügen
-    dir = filter(contains(r".jl$"), readdir("src/Funktionen/";join=true))
-    dir = chop.(dir, tail=0,head = 4)
+    dir = filter(contains(r".jl$"), readdir("Funktionen/";join=true))
     include.(dir)
 
     #-- Knoten einfügen
-    dir = filter(contains(r".jl$"), readdir("src/Komponenten/Knoten/";join=true))
-    dir = chop.(dir, tail=0,head = 4)
+    dir = filter(contains(r".jl$"), readdir("Komponenten/Knoten/";join=true))
     include.(dir)
 
     #-- Kanten einfügen
-    dir = filter(contains(r".jl$"), readdir("src/Komponenten/Kanten/";join=true))
-    dir = chop.(dir, tail=0,head = 4)
+    dir = filter(contains(r".jl$"), readdir("Komponenten/Kanten/";join=true))
     include.(dir)
 
     #=
@@ -34,7 +30,7 @@ using Plots, NLsolve, DifferentialEquations
     print_tree(FlexHyX)
     =#
 
-    =#
+    #=
     include("Funktionen/DGL.jl")
     include("Funktionen/Glättung.jl")
     include("Funktionen/Solve_Netzwerk.jl")
@@ -47,13 +43,13 @@ using Plots, NLsolve, DifferentialEquations
     include("Komponenten/Kanten/PV_Anlage.jl")
     include("Komponenten/Knoten/Kopplungsknoten_Strom.jl")
     include("Komponenten/Knoten/Potentialknoten.jl")
-
+    =#
     #-- Funktionen exportieren
     export solveNetzwerk
     export plotsol
 
-    #sol = solveNetzwerk()
-    #plotsol(sol)
+    sol = solveNetzwerk()
+    plotsol(sol)
 end
 
 #Pkg.add(Pkg.PackageSpec(;name="DifferentialEquations", version="7.5.0"))

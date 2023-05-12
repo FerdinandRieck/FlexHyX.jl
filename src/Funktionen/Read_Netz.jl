@@ -1,4 +1,4 @@
-function read_netz(pfad,netzfile,zwerte,zt,znamen)
+function read_netz(netzfile,zwerte,zt,znamen)
 	typ_kn = ["U","U0"]
 	typ_ka = ["iB","iV","iPV"]
 	J = JSON.parsefile(netzfile)

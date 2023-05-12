@@ -22,7 +22,7 @@ function solveNetzwerk()
         zt = zt .+ dt
     end
 
-    eventfile, knoten_infos, kanten_infos = read_netz(pfad, netzfile, zwerte, zt, znamen)
+    eventfile, knoten_infos, kanten_infos = read_netz(netzfile, zwerte, zt, znamen)
 
    
     #-- Anfangswerte setzen
@@ -159,7 +159,7 @@ function solveNetzwerk()
     else
         global n_events
         cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
-        sol = solve(prob_ode,Rodas4P2(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=600)
+        sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=600)
     end
 
     t1 = time()-t0

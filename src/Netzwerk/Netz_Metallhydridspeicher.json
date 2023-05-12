@@ -1,0 +1,10 @@
+{
+ "Kommentar":"Szenario Einfamilienhaus",
+ "Knoten":[
+  {"Nr":3,"Typ":"GPSP","XY":[3,1],"P0": 1.4421,"V":1,"T0":20},
+  {"Nr":4,"Typ":"GPMH","XY":[3,2],"P0":1.4421}
+ ],
+ "Kanten":[
+  {"Nr":18,"Typ":"mMH","VonNach":[3,4],"Theta0":0.7}
+ ]
+}

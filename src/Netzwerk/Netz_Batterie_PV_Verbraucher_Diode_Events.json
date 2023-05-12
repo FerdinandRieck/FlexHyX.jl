@@ -1,0 +1,18 @@
+{
+ "Kommentar":"Falls ein Element auskommentiert werden soll, einfach # anstatt Nr verwenden",
+ "Knoten":[
+  {"Nr":1,"Typ":"U0","XY":[0,0]}, 
+  {"Nr":2,"Typ":"U","XY":[0,1]},
+  {"Nr":3,"Typ":"U","XY":[0,2]},
+  {"Nr":4,"Typ":"U","XY":[0,3]}
+ ],
+ "Kanten":[
+  {"Nr":1,"Typ":"iB","VonNach":[1,2],"SOC":0.5},
+  {"Nr":2,"Typ":"iPV","VonNach":[1,3],"Strahlung":2000.0,"Temp":25.0,"G_ref":1000},
+  {"Nr":3,"Typ":"iV","VonNach":[3,1],"Leistung":"@fcn_leistung_einaus","Schaltzeit":[-10000]},
+  {"Nr":4,"Typ":"iD","VonNach":[2,3],"R":0.01,"I0":0.001,"U0":0.5,"Schaltzeit":[-10000]},
+  {"Nr":5,"Typ":"iD","VonNach":[3,2],"R":0.01,"I0":0.001,"U0":0.5,"Schaltzeit":[-10000]},
+  {"Nr":6,"Typ":"iD","VonNach":[3,4],"R":0.01,"I0":0.001,"U0":0.5,"Schaltzeit":[-10000]}
+ ],
+ "Events":"@Events"
+}

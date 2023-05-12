@@ -1,0 +1,20 @@
+{
+ "Kommentar":"Falls ein Element auskommentiert werden soll, einfach # anstatt Nr verwenden",
+ "Knoten":[
+  {"Nr":1,"Typ":"U0","XY":[0,0]}, 
+  {"Nr":2,"Typ":"U","XY":[0,1]},
+  {"Nr":3,"Typ":"U0","XY":[0,2]},
+  {"Nr":9,"Typ":"GP0","XY":[3,0],"T0":20},
+  {"Nr":10,"Typ":"GPSP","XY":[3,1],"P0":1.4421,"V":1,"T0":20},
+  {"Nr":15,"Typ":"GPMH","XY":[3,2],"P0":1.4421},
+  {"Nr":16,"Typ":"GPSP","XY":[4,1],"P0":1.4421,"V":0.0026,"T0":20}
+ ],
+ "Kanten":[
+  {"Nr":1,"Typ":"iB","VonNach":[1,2],"SOC":0.9},
+  {"Nr":2,"Typ":"iPV","VonNach":[1,2],"Strahlung":2000.0,"Temp":25.0,"G_ref":1000},
+  {"Nr":3,"Typ":"iV","VonNach":[2,1],"Leistung":20,"Schaltzeit":[-100,18000]},
+  {"Nr":9,"Typ":"iBZ","VonNach":[3,2],"RefKante":10},
+  {"Nr":10,"Typ":"mBZ","VonNach":[16,9]},
+  {"Nr":18,"Typ":"mMH","VonNach":[10,15],"Theta0":0.5}
+ ]
+}

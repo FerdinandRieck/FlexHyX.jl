@@ -1,0 +1,13 @@
+{
+ "Kommentar":"Szenario Einfamilienhaus",
+ "Knoten":[
+  {"Nr":9,"Typ":"GP0","XY":[3,0],"T0":20},
+  {"Nr":11,"Typ":"U","XY":[0,-1]},
+  {"Nr":12,"Typ":"U0","XY":[0,-2],"Spannung":20},
+  {"Nr":16,"Typ":"GPSP","XY":[4,1],"P0":1.4421,"V":0.0026,"T0":20}
+ ],
+ "Kanten":[
+  {"Nr":9,"Typ":"iBZ","VonNach":[12,11],"RefKante":10},
+  {"Nr":10,"Typ":"mBZ","VonNach":[16,9]}
+ ]
+}

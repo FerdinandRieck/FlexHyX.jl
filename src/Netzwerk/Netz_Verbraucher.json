@@ -1,0 +1,10 @@
+{
+ "Kommentar":"Falls ein Element auskommentiert werden soll, einfach # anstatt Nr verwenden",
+ "Knoten":[
+  {"Nr":1,"Typ":"U0","XY":[0,0],"U0":10}, 
+  {"Nr":2,"Typ":"U0","XY":[0,1]}
+ ],
+ "Kanten":[
+  {"Nr":3,"Typ":"iV","VonNach":[1,2],"Leistung":5}
+ ]
+}

@@ -1,0 +1,11 @@
+{
+ "Kommentar":"Szenario Einfamilienhaus",
+ "Knoten":[
+  {"Nr":1,"Typ":"U0","XY":[3,1],"U0":1},
+  {"Nr":2,"Typ":"U","XY":[3,2]}
+ ],
+ "Kanten":[
+  {"Nr":18,"Typ":"iR_Test","VonNach":[1,2]},
+  {"Nr":19,"Typ":"iC_Test","VonNach":[2,1]}
+ ]
+}

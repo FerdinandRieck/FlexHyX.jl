@@ -10,7 +10,8 @@ using Plots, NLsolve#, DifferentialEquations
     using NLsolve
     using LinearAlgebra
     using SparseArrays
-    
+
+    dir = dirname(@__DIR__)
     #=
     #-- Funktionen einfügen
     dir = filter(contains(r".jl$"), readdir("Funktionen/";join=true))

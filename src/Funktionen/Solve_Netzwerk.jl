@@ -43,7 +43,7 @@ function solveNetzwerk()
         #-- Parameter erzeugen und ändern
         Params = MakeParam(kk)
         #-- Knoten erzeugen
-        s = Symbol(typ,"_Knoten"); obj = getfield(Main, s)
+        s = Symbol(typ,"_Knoten"); obj = getfield(FlexHyX, s)
         knoten[i] = obj(Param=Params, Z=kk)     #-- z.B. U0_Knoten()
 
         M = [M; knoten[i].M]

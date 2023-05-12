@@ -1,5 +1,3 @@
-__precompile__()
-
 module FlexHyX
 using Plots, NLsolve, DifferentialEquations
 

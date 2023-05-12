@@ -3,7 +3,7 @@ function solveNetzwerk(dir::String)
 #-- Netwerk einlesen
     #dir = dirname(@__DIR__)
     #J_cfg = JSON.parsefile(dir*"/Netzwerk/flexhyx.cfg")
-    J_cfg = JSON.parsefile(dir*"/flexhyx.cfg")
+    J_cfg = JSON.parsefile(dir*"/Netzwerk/flexhyx.cfg")
     now = Dates.now(); jetzt = [Dates.year(now) Dates.month(now) Dates.day(now) Dates.hour(now) Dates.minute(now) 0]
     startzeit = get(J_cfg,"Startzeit",jetzt)
     startzeit = String(Symbol(startzeit'))
@@ -44,7 +44,7 @@ function solveNetzwerk(dir::String)
         #-- Parameter erzeugen und ändern
         Params = MakeParam(kk)
         #-- Knoten erzeugen
-        s = Symbol(typ,"_Knoten"); obj = getfield(FlexHyX, s)
+        s = Symbol(typ,"_Knoten"); obj = getfield(Main, s)
         knoten[i] = obj(Param=Params, Z=kk)     #-- z.B. U0_Knoten()
 
         M = [M; knoten[i].M]
@@ -75,7 +75,7 @@ function solveNetzwerk(dir::String)
             #-- Parameter erzeugen und ändern
             Params = MakeParam(kk) 
             #-- Kante erzeugen
-            s = Symbol(typ,"_kante"); obj = getfield(FlexHyX, s)
+            s = Symbol(typ,"_kante"); obj = getfield(Main, s)
             kanten[i] = obj(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)    #-- z.B. iB_kante()
         end
 
@@ -161,7 +161,7 @@ function solveNetzwerk(dir::String)
     else
         global n_events
         cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
-        sol = solve(prob_ode,Rodas4P(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=600)
+        sol = solve(prob_ode,Rodas4P2(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=600)
     end
 
     t1 = time()-t0
@@ -173,7 +173,7 @@ function solveNetzwerk(dir::String)
 end
 
 function MakeParam(kk) 
-    s = Symbol(kk["Typ"],"_Param"); P = getfield(FlexHyX, s)
+    s = Symbol(kk["Typ"],"_Param"); P = getfield(Main, s)
     Param = P() #-- erzeuge Param z.B. iB_Param
     D = Dict()
     for ff in fieldnames(typeof(Param))

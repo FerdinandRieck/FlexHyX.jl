@@ -33,7 +33,7 @@ using Plots, NLsolve#, DifferentialEquations
     =#
     dir = readdir("Funktionen/";join=true)
     include.(dir)
-    
+
     include("Funktionen/DGL.jl")
     include("Funktionen/Glättung.jl")
     include("Funktionen/Solve_Netzwerk.jl")
@@ -51,7 +51,7 @@ using Plots, NLsolve#, DifferentialEquations
     export solveNetzwerk
     export plotsol
 
-    sol = solveNetzwerk()
+    #sol = solveNetzwerk()
     #plotsol(sol)
 end
 

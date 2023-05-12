@@ -12,7 +12,7 @@ function solveNetzwerk()
     println("Startzeit, Simdauer:",startzeit," ",simdauer)
     rtol = get(J_cfg,"RTOL",5.0e-4); atol = get(J_cfg,"ATOL",5.0e-4)
     println("rtol,atol:",rtol," ",atol)
-    pfad = get(J_cfg,"Pfad","."); pfad=pfad*"/";
+    pfad = get(J_cfg,"Pfad","."); pfad=dir*"/"*pfad*"/";
     netzfile = pfad*get(J_cfg,"Netzwerkfile",0)
     zeitfile = get(J_cfg,"Zeitreihenfile",nothing) 
 

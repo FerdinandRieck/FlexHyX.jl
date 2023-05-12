@@ -1,12 +1,9 @@
 function solveNetzwerk()
     println("---------------- This is FlexhyX ------------------")
-
-dir = dirname(@__DIR__)
-
-println("Directory: $dir")
-
-    #-- Netwerk einlesen
-    J_cfg = JSON.parsefile("https://github.com/FerdinandRieck/FlexHyX.jl/blob/main/src/Netzwerk/flexhyx.cfg")
+#-- Netwerk einlesen
+    dir = dirname(@__DIR__)
+    dir = dir*"/Netzwerk/"
+    J_cfg = JSON.parsefile(dir)
     now = Dates.now(); jetzt = [Dates.year(now) Dates.month(now) Dates.day(now) Dates.hour(now) Dates.minute(now) 0]
     startzeit = get(J_cfg,"Startzeit",jetzt)
     startzeit = String(Symbol(startzeit'))
@@ -35,7 +32,7 @@ println("Directory: $dir")
     n_n = size(knoten_infos)[1]; n_e = size(kanten_infos)[1];  
   
     M = Int[]; 
-    kanten = Array{Any}(undef, n_e); knoten =  Array{Any}(undef, n_n); #
+    kanten = Array{Any}(undef, n_e); knoten =  Array{Any}(undef, n_n); 
 
     U_max = 0; P_max = 0; PW_max = 0
 

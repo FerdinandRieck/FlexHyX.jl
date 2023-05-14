@@ -8,7 +8,6 @@ module FlexHyX
     import JSON
 
     dir = dirname(@__FILE__)
-    #dir = dirname(@__DIR__)
 
     #-- Funktionen einfügen
     pfad = filter(contains(r".jl$"), readdir(dir*"/Funktionen/";join=true))
@@ -33,6 +32,6 @@ module FlexHyX
     export solveNetzwerk
     export plotsol
 
-    sol = solveNetzwerk(dir)
+    #sol = solveNetzwerk(dir)
     #plotsol(sol)
 end

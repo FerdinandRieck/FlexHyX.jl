@@ -7,19 +7,19 @@ module FlexHyX
     import Pkg
     import JSON
 
-    #dir = dirname(@__FILE__)
-    dir = dirname(@__DIR__)
+    dir = dirname(@__FILE__)
+    #dir = dirname(@__DIR__)
 
     #-- Funktionen einfügen
-    pfad = filter(contains(r".jl$"), readdir(dir*"/src/Funktionen/";join=true))
+    pfad = filter(contains(r".jl$"), readdir(dir*"/Funktionen/";join=true))
     include.(pfad)
 
     #-- Knoten einfügen
-    pfad = filter(contains(r".jl$"), readdir(dir*"/src/Komponenten/Knoten/";join=true))
+    pfad = filter(contains(r".jl$"), readdir(dir*"/Komponenten/Knoten/";join=true))
     include.(pfad)
 
     #-- Kanten einfügen
-    pfad = filter(contains(r".jl$"), readdir(dir*"/src/Komponenten/Kanten/";join=true))
+    pfad = filter(contains(r".jl$"), readdir(dir*"/Komponenten/Kanten/";join=true))
     include.(pfad)
 
     #=
@@ -33,6 +33,6 @@ module FlexHyX
     export solveNetzwerk
     export plotsol
 
-    sol = solveNetzwerk(dir*"/src")
+    sol = solveNetzwerk(dir)
     #plotsol(sol)
 end

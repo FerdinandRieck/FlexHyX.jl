@@ -1,6 +1,4 @@
 function read_netz(dir,netzfile,zwerte,zt,znamen)
-	typ_kn = ["U","U0"]
-	typ_ka = ["iB","iV","iPV"]
 	J = JSON.parsefile(netzfile)
 	eventfile = []
 	if haskey(J,"Events")

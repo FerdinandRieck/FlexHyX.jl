@@ -1,3 +1,6 @@
+dir = dirname(@__DIR__)
+include(dir*"/Events/fcn_events_H2_Lab.jl")
+
 function solveNetzwerk(dir::String)
     println("---------------- This is FlexhyX ------------------")
 #-- Netwerk einlesen
@@ -160,7 +163,7 @@ function solveNetzwerk(dir::String)
     else
         global n_events
         cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
-        sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=600)
+        sol = solve(prob_ode,Rodas5P(autodiff=false,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=600)
     end
 
     t1 = time()-t0

@@ -1,3 +1,4 @@
+#=
 Base.@kwdef mutable struct iBZ_Param
     F=96485; R=8.3145; z=2; DhO = 241.83e3; k=1.38e-23; 
     h=6.626e-34; Pstd = 101325; c=0.08988; # kg/m^3
@@ -72,7 +73,7 @@ function Kante!(dy,k,kante::iBZ_kante,t)
 
     P = PL-PR; T_1 = 25
     P = P*1.0e-5; T = T_1 + 273.15; P = max(P,1.0e-5); 
-    iOnomN = C3*(P+P02); EninReal = C4 + C5*log(max(P*sqrt(P02),1)); EocN = Ki*EninReal;
+    iOnomN = C3*(P+P02); EninReal = C4 + C5*log(max(P*sqrt(P02),1)); EocN = Ki*EninReal
 
     #-- Kennlinie Brennstoffzelle
     #i0 = 1; s = 0.5*(1-cos(pi*min(i,i0)/i0)); s = min(s,1); #-- erst mal ohne Glättung 
@@ -82,8 +83,8 @@ function Kante!(dy,k,kante::iBZ_kante,t)
     #U = EocN - s*NAnomN*log(max(i/iOnomN,1.0e-1))-Rohm*i; #-- Spannung
     #m = C1*T*i/(C2*P); #-- Massenstrom, ???? Abhängigkeit vom Druck ???
     m_BZ = N*iBZ/(F*2)*2.01599e-3; #-- nach David
-
     dy[k] = io*(U_BZ-(UR-UL))+(1-io)*iBZ
     dy[k+1] = m - m_BZ
     dy[k+2] = e - cv*m*ifxaorb(m,TL,TR)
 end
+=#

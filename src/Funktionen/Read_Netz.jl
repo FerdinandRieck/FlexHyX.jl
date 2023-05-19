@@ -45,12 +45,10 @@ function read_netz(dir,netzfile,zwerte,zt,znamen)
 			for (k, v) in kk
 				if v[1]=='@'
 					fcn = v[2:end];
-					#file = "Netzwerk/"*fcn*".jl";
-					#println(file);   include(file)
 					kk[k] = getfield(FlexHyX, Symbol(fcn))
 				end
 			end
-			if (haskey(kk,"Schaltzeit")==true) kk["Schaltdauer"] = 60.0 end
+			if (haskey(kk,"Schaltzeit")==true) kk["Schaltdauer"] = 0.1 end
 			if (haskey(kk,"Zeitreihe")==true)
 				spalte = first(findall(x->x==kk["Zeitreihe"],znamen))
 				kk["zt"] = zt

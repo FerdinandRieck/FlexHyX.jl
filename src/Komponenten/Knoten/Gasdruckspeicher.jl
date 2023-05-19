@@ -37,7 +37,6 @@ function Knoten!(dy,k,sum_i,sum_m,sum_e,knoten::GPSP_Knoten)
     (; V,Rs,cv) = knoten.Param
     #--
     (; M, MT, P, T) = knoten.y
-
     dy[k] = sum_m
     dy[k+1] = sum_e/cv
     dy[k+2] = P-Rs*MT/V

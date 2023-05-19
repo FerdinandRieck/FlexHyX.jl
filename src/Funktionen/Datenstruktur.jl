@@ -20,7 +20,8 @@ end
 function tuple2array(y_tuple)
     y_arr = Float64[]; P_scale = Float64[]; y_leg = String[]; 
     idx_ele = Dict()
-    idx_ifluss = Array{Int}(undef, 0,2); 
+    idx_iflussL = Array{Int}(undef, 0,2);
+    idx_iflussR = Array{Int}(undef, 0,2); 
     idx_mfluss = Array{Int}(undef, 0,2); 
     idx_efluss = Array{Int}(undef, 0,2); 
     k = 0;
@@ -40,7 +41,14 @@ function tuple2array(y_tuple)
         for ff in fieldnames(typeof(y_tuple.kanten[i].y))
             if ff != :Param
                 append!(y_arr,getfield(y_tuple.kanten[i].y,ff)); k +=1
-                if first(string(ff))=='i' idx_ifluss = [idx_ifluss;[i k]] end  #-- Strom der Kante i_k steht in y an Stelle k
+                if first(string(ff))=='i'
+                    idx_iflussL = [idx_iflussL;[i k]] #-- Strom der Kante i_k steht in y an Stelle k
+                    idx_iflussR = [idx_iflussR;[i k]]
+                    if string(ff)=="i_out"
+                        idx_iflussL = idx_iflussL[1:end-1,:]
+                        idx_iflussR = idx_iflussR[1:end .!= end-1,:] #-- Lösche vorletzte Zeile
+                    end
+                end
                 if first(string(ff))=='m' idx_mfluss = [idx_mfluss;[i k]] end  
                 if first(string(ff))=='e' idx_efluss = [idx_efluss;[i k]] end 
                 if first(string(ff))=='P' P_scale = [P_scale; 1.0e-5]
@@ -51,7 +59,7 @@ function tuple2array(y_tuple)
             end
         end
     end
-    return y_arr, idx_ifluss, idx_mfluss, idx_efluss, P_scale, y_leg, idx_ele
+    return y_arr, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, P_scale, y_leg, idx_ele
 end
 
 function array2tuple!(y_tuple,y_arr)

@@ -1,12 +1,17 @@
 Base.@kwdef mutable struct iB_Param
-    A = 0.4919; 
-    B = 1.302; 
-    K1 = 0.0224; 
-    K2 = 6.222222222222222e-06; 
-    Q_max = 65880; 
-    R = 0.5; 
-    U0 = 12.6481; 
-    soc_min = 0.031392201880530
+    n_reih = 1
+    n_par = 1
+    A = 0.4919*n_reih;
+    B = 130.2/3600/n_par;
+   # koeff.K = 0.0224;
+    K1 = 0.0224*n_reih;
+    K2 = 0.0224/3600*n_reih;
+    Q_max = 18.3*3600*n_par;
+    R = 0.05*n_reih/n_par;
+    U0 = 12.6481*n_reih;
+   # alpha = koeff.K*koeff.Q_max/(3600*koeff.U0) 
+    alpha = K2*Q_max/U0;
+    soc_min = alpha/(1+alpha);
     SOC = 0.5
 end
 
@@ -38,10 +43,6 @@ Base.@kwdef mutable struct iB_kante <: Strom_Kante
     
     #-- zusätzliche Infos
     Z::Dict
-
-    #-- Ladestatus für Event-Funktionen eventuell auch hier hin statt in Z
-    #status_laden::Int = 0
-    #status_entladen::Int = 0
 end
 
 function Kante!(dy,k,kante::iB_kante,t)

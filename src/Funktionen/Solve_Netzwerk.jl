@@ -2,7 +2,6 @@ function solveNetzwerk(dir::String)
     println("---------------- This is FlexhyX ------------------")
 #-- Netwerk einlesen
     #dir = dirname(@__DIR__)
-    #J_cfg = JSON.parsefile(dir*"/Netzwerk/flexhyx.cfg")
     J_cfg = JSON.parsefile(dir*"/Netzwerk/flexhyx.cfg")
     now = Dates.now(); jetzt = [Dates.year(now) Dates.month(now) Dates.day(now) Dates.hour(now) Dates.minute(now) 0]
     startzeit = get(J_cfg,"Startzeit",jetzt)
@@ -64,13 +63,13 @@ function solveNetzwerk(dir::String)
             von_mBZ = mBZ["VonNach"][1]; nach_mBZ = mBZ["VonNach"][2]
             Params = MakeParam(kk)
             kanten[i] = iBZ_kante(Param=Params, KUL=knoten[von], KUR=knoten[nach], KGL=knoten[von_mBZ], KGR=knoten[nach_mBZ], Z=kk)
-        elseif typ=="mMH"
-            #kk[typ] = "GPMH"  
-            #Params = MakeParam(kk)
+        elseif typ=="mMH" 
             kk_GPMH = knoten[nach].Z    #-- Infos von GPMH_Knoten
             Params = MakeParam(kk_GPMH)
-            kanten[i] = mMH_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)
             knoten[nach] = GPMH_Knoten(Param=Params, KL=knoten[von], Z=kk_GPMH) # GPMH_Knoten neu anlegen mit neuen Params und KL
+            kk["Typ"] = "GPMH"  #-- Damit selber Parametersatz wie von GPMH_Param verwendet wird
+            Params = MakeParam(kk)
+            kanten[i] = mMH_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)
         else
             #-- Parameter erzeugen und ändern
             Params = MakeParam(kk) 
@@ -123,19 +122,20 @@ function solveNetzwerk(dir::String)
     #-- Erzeuge Zustandsvektor y und Indizes wo was steht in y 
     elemente = Netzwerk(kanten=kanten,knoten=knoten)  #-- gesamtes Netzwerk 
 
-    y, idx_ifluss, idx_mfluss, idx_efluss, P_scale, y_leg, idx_ele = tuple2array(elemente)
+    y, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, P_scale, y_leg, idx_ele = tuple2array(elemente)  
 
    # Jacstru = comp_jacstru(IP,IM,idx_ifluss,idx_mfluss,idx_efluss,elemente,length(y))
 
     #-- Netzinfo und Speicherplatz (übergebe als Parameter an solver/dgl-function)
-    i_fluss = Array{Number}(undef, n_e);  #-- nur einmal Speicher reservieren
+    i_flussL = Array{Number}(undef, n_e);  #-- nur einmal Speicher reservieren
+    i_flussR = Array{Number}(undef, n_e);
     m_fluss = Array{Number}(undef, n_e); 
     e_fluss = Array{Number}(undef, n_e); 
 
     #-------------
 
-    params = IM, IP, elemente, i_fluss, m_fluss, e_fluss, idx_ifluss, idx_mfluss, idx_efluss, idx_ele, n_n, n_e
-   
+    params = IM, IP, elemente, i_flussL, i_flussR, m_fluss, e_fluss, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, idx_ele, n_n, n_e
+             
     #--------------
     ind_alg = findall(x->x==0,M[diagind(M)]);
     dy = 0*y;
@@ -144,7 +144,6 @@ function solveNetzwerk(dir::String)
     y_alg = copy(y[ind_alg])
     g!(dy_alg,y_alg) = f_aw!(dy_alg,y_alg,ind_alg,y,params)
     res = nlsolve(g!,y_alg)
- #   println("AW:",res.zero)
     y[ind_alg] = res.zero;
     dgl!(dy,y,params,0.0);
     println("Test Nachher:",Base.maximum(abs.(dy[ind_alg])))
@@ -161,7 +160,7 @@ function solveNetzwerk(dir::String)
     else
         global n_events
         cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
-        sol = solve(prob_ode,Rodas4P2(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=600)
+        sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=600)
     end
 
     t1 = time()-t0

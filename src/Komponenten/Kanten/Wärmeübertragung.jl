@@ -73,11 +73,13 @@ function Kante!(dy,k,kante::eWT_kante,t)
     e = kante.y.e
     #--
 
-    (; KL,KR) = kante
+    (; KL,KR,Z) = kante
     TL = KL.y.T
     TR = KR.y.T
 
-    # dot m fehlt noch in berechnung für kA
-    # einfache möglichkeit mit Alpha*A einfügen
-    dy[k] = e - kA*(TL-TR)
+    if (haskey(Z,"alpha")==true) && (haskey(Z,"A")==true)
+        dy[k] = e - Z["alpha"]*Z["A"]*(TL-TR)
+    else
+        dy[k] = e - kA*(TL-TR)  #-- hier noch dot m einfügen
+    end
 end

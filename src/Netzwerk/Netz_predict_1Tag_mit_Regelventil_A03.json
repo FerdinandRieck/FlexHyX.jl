@@ -37,7 +37,7 @@
   {"Nr":15,"Typ":"iB","VonNach":[1,2],"SOC":0.9},
   {"Nr":44,"Typ":"iS","VonNach":[4,44],"R":1},
   {"Nr":45,"Typ":"iVDR","VonNach":[4,44],"I0":1,"U0":1.5,"gamma":13,"I_max":1.0e6},
-  {"Nr":18,"Typ":"mMH","VonNach":[10,15],"Theta0":0.5},
+  {"Nr":18,"Typ":"mMH","VonNach":[10,15],"Theta0":0.8},
   {"Nr":19,"Typ":"mVentil","VonNach":[10,16],"P_soll":1.2,"KV":7.0e-8,"alpha":2.0e7,"A0":0.7},
   {"Nr":20,"Typ":"eWT","VonNach":[17,18],"A":1,"alpha":20},
   {"Nr":21,"Typ":"eWT","VonNach":[18,15]}

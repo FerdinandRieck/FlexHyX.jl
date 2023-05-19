@@ -40,7 +40,7 @@ module FlexHyX
 
 #=
 Aktuelle Bugs:
-- Bei Änderung in Eventsfunktion wird erst beim zweiten Durchlauf Änderung übernommen
-- Problem mit Events und normelne Run button
+- Eventfunktion muss aktuell noch in solveNetzwerk Funktion oben includiert werden
 - leichte unterschiede der Eventzeitpunkte von Matlab und JULIA mit Zeitreihe
+- Wenn z. B. n_par=2 => SOC0 ist falsch 
 =#

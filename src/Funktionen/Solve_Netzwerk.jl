@@ -4,7 +4,6 @@ include(dir*"/Events/fcn_events_H2_Lab.jl")
 function solveNetzwerk(dir::String)
     println("---------------- This is FlexhyX ------------------")
 #-- Netwerk einlesen
-    #dir = dirname(@__DIR__)
     J_cfg = JSON.parsefile(dir*"/Netzwerk/flexhyx.cfg")
     now = Dates.now(); jetzt = [Dates.year(now) Dates.month(now) Dates.day(now) Dates.hour(now) Dates.minute(now) 0]
     startzeit = get(J_cfg,"Startzeit",jetzt)
@@ -163,7 +162,7 @@ function solveNetzwerk(dir::String)
     else
         global n_events
         cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
-        sol = solve(prob_ode,Rodas5P(autodiff=false,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=600)
+        sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=600)
     end
 
     t1 = time()-t0

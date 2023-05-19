@@ -32,10 +32,10 @@ module FlexHyX
     export solveNetzwerk
     export plotsol
 
-    sol = solveNetzwerk(dir)
-    plotsol(sol,[38,46],28) # i_out -> iDiode 
-    plotsol(sol,[37,39],28) # iBZ   -> i_in
-    plotsol(sol,[40,35,42],28) # Summe m Knoten 14 
+    #sol = solveNetzwerk(dir)
+    #plotsol(sol,[38,46],28) # i_out -> iDiode 
+    #plotsol(sol,[37,39],28) # iBZ   -> i_in
+    #plotsol(sol,[40,35,42],28) # Summe m Knoten 14 
  end
 
 #=

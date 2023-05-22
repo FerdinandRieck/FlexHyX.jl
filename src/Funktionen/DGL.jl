@@ -10,6 +10,7 @@ function dgl!(dy,y,P,t)
     m_fluss  .= 0.0; m_fluss[idx_mfluss[:,1]]   = y[idx_mfluss[:,2]]   #-- Flussvektor Massenstrom
     e_fluss  .= 0.0; e_fluss[idx_efluss[:,1]]   = y[idx_efluss[:,2]]   #-- Flussvektor Energie
     
+    # sum_i = IP[idx_iflussR[:,1]]*y[idx_iflussR[:,2]] - IM[idx_iflussL[:,1]]*y[idx_iflussL[:,2]] 
     sum_i = IP*i_flussR - IM*i_flussL   #-- Beispiel Knotenbilanzen für Strom, ggf. Speicher für sum_i vorher reservieren !!  
     sum_m = IP*m_fluss - IM*m_fluss
     sum_e = IP*e_fluss - IM*e_fluss

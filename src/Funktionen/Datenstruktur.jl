@@ -82,3 +82,24 @@ function array2tuple!(y_tuple,y_arr)
     end
     nothing
 end
+
+function idx2struct!(y_tuple)
+    idx = 0
+    for i=1:length(y_tuple.knoten)
+        for ff in fieldnames(typeof(y_tuple.knoten[i].y))
+            if ff != :Param
+                idx += 1
+                setfield!(y_tuple.knoten[i].y, ff, idx)
+            end
+        end
+    end
+    for i=1:length(y_tuple.kanten)
+        for ff in fieldnames(typeof(y_tuple.kanten[i].y))
+            if ff != :Param
+                idx += 1
+                setfield!(y_tuple.kanten[i].y, ff, idx)
+            end
+        end
+    end
+    nothing
+end

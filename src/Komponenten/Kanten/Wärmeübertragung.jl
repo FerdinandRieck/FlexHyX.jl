@@ -51,8 +51,8 @@ Base.@kwdef mutable struct eWT_kante <: Temp_Kante
     y = y_eWT()
 
     #-- Gasknoten links und rechts
-    KL::Knoten  #!!! Hier nochmal überlegn ob das so richtig ist
-    KR::Knoten  #!!! Hier nochmal überlegn ob das so richtig ist
+    KL::Knoten  #!!! Hier nochmal überlegen ob das so richtig ist
+    KR::Knoten  #!!! Hier nochmal überlegen ob das so richtig ist
 
     #-- M-Matrix
     M::Array{Int} = [0] 

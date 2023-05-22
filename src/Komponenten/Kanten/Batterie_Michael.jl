@@ -17,9 +17,9 @@ end
 
 Base.@kwdef mutable struct y_iB
     Param::iB_Param
-    iB::Number = 0.0   
-    uB::Number = 0.0
-    qB::Number = Param.SOC*Param.Q_max
+    i::Number = 0.0   
+    u::Number = 0.0
+    q::Number = Param.SOC*Param.Q_max
 end
 
 Base.@kwdef mutable struct iB_kante <: Strom_Kante
@@ -50,7 +50,9 @@ function Kante!(dy,k,kante::iB_kante,t)
     (; A,B,K1,K2,Q_max,R,U0,soc_min) = kante.Param
 
     #-- Zustandsvariablen
-    (; iB,uB,qB) = kante.y
+    iB = kante.y.i
+    uB = kante.y.u
+    qB = kante.y.q
     #--
 
     #-- Spannungsknoten links und rechts

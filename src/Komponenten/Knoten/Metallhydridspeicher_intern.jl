@@ -47,9 +47,6 @@ Base.@kwdef mutable struct GPMH_Knoten <: Gas_Knoten
     #-- Zustandsvariablen 
     y = y_GPMH(Param=Param)
 
-#!!! Wird nicht mehr benötigt!!!
-    KL = 0  #-- Später wird hier der linke Knoten der Kante mMH übergeben
-
     #-- M-Matrix
     M::Array{Int} = [1; 1; 0; 0; 1] 
 

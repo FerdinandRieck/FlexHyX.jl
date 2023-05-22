@@ -6,8 +6,8 @@ function event_condition(out,y,t,integrator)
     #-- nur Nulldurchgänge von unten werden detektiert --!
 
     #-- Batterie --------------------------------------------------
-    idx_ka1 = idx_ele["1qB"][1]
-    idx_qB  = idx_ele["1qB"][2] 
+    idx_ka1 = idx_ele["1q"][1]
+    idx_qB  = idx_ele["1q"][2] 
     Batterie = elemente.kanten[idx_ka1]
     bat_soc = y[idx_qB]/Batterie.Param.Q_max
     batEmptyThres = 0.3
@@ -100,13 +100,13 @@ function event_affect!(integrator, event_index)
         regelung(idx_ele, elemente, integrator.t)
     end
     if event_index == 4
-        idx_ka1 = idx_ele["1iB"][1]
+        idx_ka1 = idx_ele["1i"][1]
         Batterie = elemente.kanten[idx_ka1]
         Batterie.Z["deltaPb"] = true
         regelung(idx_ele, elemente, integrator.t)
     end
     if event_index == 5
-        idx_ka1 = idx_ele["1iB"][1]
+        idx_ka1 = idx_ele["1i"][1]
         Batterie = elemente.kanten[idx_ka1]
         Batterie.Z["deltaPb"] = false
         regelung(idx_ele, elemente, integrator.t)
@@ -139,7 +139,7 @@ function toggleSchalter(schalter, in, t)
 end
 
 function regelung(idx_ele, elemente, t)
-    idx_ka1 = idx_ele["1iB"][1]
+    idx_ka1 = idx_ele["1i"][1]
     idx_ka7 = idx_ele["7i"][1]
     idx_ka9 = idx_ele["9i"][1]
     idx_ka18 = idx_ele["18i"][1]

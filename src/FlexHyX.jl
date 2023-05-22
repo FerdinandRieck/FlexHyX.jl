@@ -4,7 +4,6 @@ module FlexHyX
     using Dates
     using LinearAlgebra
     using SparseArrays
-    import Pkg
     import JSON
 
     dir = dirname(@__FILE__)
@@ -32,15 +31,29 @@ module FlexHyX
     export solveNetzwerk
     export plotsol
 
-    #sol = solveNetzwerk(dir)
-    #plotsol(sol,[38,46],28) # i_out -> iDiode 
-    #plotsol(sol,[37,39],28) # iBZ   -> i_in
-    #plotsol(sol,[40,35,42],28) # Summe m Knoten 14 
+    idx_ele, sol, y = solveNetzwerk(dir)
+
+    #=
+    iV3 = idx_ele["3i"][2] 
+    iPV4 = idx_ele["4i"][2]
+    iB1 = idx_ele["1i"][2]
+    iS7 = idx_ele["7i"][2]
+    iSP8 = idx_ele["8i"][2]
+    iD18 = idx_ele["18i"][2]
+    iBZ12 = idx_ele["12i"][2]
+    iE9 = idx_ele["9i"][2]
+    U3 = idx_ele["14P"][2]
+    SOC = idx_ele["1q"][2]
+    Θ = idx_ele["15Θ"][2]
+    plotsol(sol,iS7,SOC)
+    plotsol(y,sol.t,48,28)
+    plotsol(sol)
+    =#
+    plotsol(y,sol.t)
  end
 
 #=
 Aktuelle Bugs:
 - Eventfunktion muss aktuell noch in solveNetzwerk Funktion oben includiert werden
 - leichte unterschiede der Eventzeitpunkte von Matlab und JULIA mit Zeitreihe
-- Wenn z. B. n_par=2 => SOC0 ist falsch 
 =#

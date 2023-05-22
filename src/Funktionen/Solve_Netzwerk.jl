@@ -65,13 +65,6 @@ function solveNetzwerk(dir::String)
             von_mBZ = mBZ["VonNach"][1]; nach_mBZ = mBZ["VonNach"][2]
             Params = MakeParam(kk)
             kanten[i] = iBZ_kante(Param=Params, KUL=knoten[von], KUR=knoten[nach], KGL=knoten[von_mBZ], KGR=knoten[nach_mBZ], Z=kk)
-        elseif typ=="mMH" 
-            kk_GPMH = knoten[nach].Z    #-- Infos von GPMH_Knoten
-            Params = MakeParam(kk_GPMH)
-            knoten[nach] = GPMH_Knoten(Param=Params, KL=knoten[von], Z=kk_GPMH) # GPMH_Knoten neu anlegen mit neuen Params und KL
-            kk["Typ"] = "GPMH"  #-- Damit selber Parametersatz wie von GPMH_Param verwendet wird
-            Params = MakeParam(kk)
-            kanten[i] = mMH_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)
         else
             #-- Parameter erzeugen und ändern
             Params = MakeParam(kk) 
@@ -134,7 +127,7 @@ function solveNetzwerk(dir::String)
     m_fluss = Array{Number}(undef, n_e); 
     e_fluss = Array{Number}(undef, n_e); 
 
-    #-------------
+    #-------------   
 
     params = IM, IP, elemente, i_flussL, i_flussR, m_fluss, e_fluss, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, idx_ele, n_n, n_e
              
@@ -165,12 +158,14 @@ function solveNetzwerk(dir::String)
         sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=600)
     end
 
+    y = Leitsung_anhängen(sol,elemente,idx_iflussL,idx_iflussR,IM,IP)
+
     t1 = time()-t0
     println("CPU:",t1)
     println(sol.retcode," nt=",size(sol.t)); 
     println(sol.destats)
     println("---------------- This was FlexHyX -----------------")
-    return sol
+    return idx_ele, sol, y
 end
 
 function MakeParam(kk) 
@@ -186,4 +181,50 @@ function MakeParam(kk)
     par = Dict("param"=>D)
     Param = P(;(Symbol(k) => v for (k,v) in par["param"])...) #-- erstelle neue Param mit Änderungen
     return Param
+end
+
+function Leitsung_anhängen(y,elemente,idx_iflussL,idx_iflussR,IM,IP)
+    idx2struct!(elemente)
+    y = Array(y)
+
+    sum_i = IP[:,idx_iflussR[:,1]]*y[idx_iflussR[:,2],:] - IM[:,idx_iflussL[:,1]]*y[idx_iflussL[:,2],:];
+
+    for i = 1:length(elemente.knoten)
+        if (typeof(elemente.knoten[i]) == U0_Knoten) && (elemente.knoten[i].Z["U0"] > 0)
+            idx_U = elemente.knoten[i].y.U
+            U = y[[idx_U],:]
+            i = sum_i[[i],:]
+            P = U.*i
+            y = vcat(y,P)
+        end
+    end
+    for i = 1:length(elemente.kanten)
+        if (typeof(elemente.kanten[i]) <: Strom_Kante) && (typeof(elemente.kanten[i]) != iSP0_kante)
+            idx_UL = elemente.kanten[i].KL.y.U
+            idx_UR = elemente.kanten[i].KR.y.U
+            idx_i  = elemente.kanten[i].y.i
+            UL = y[[idx_UL],:]; UR = y[[idx_UR],:]
+            U = UR .- UL; i = y[[idx_i],:]
+            P = U.*i
+            y = vcat(y,P)
+        elseif typeof(elemente.kanten[i]) == iSP0_kante
+            idx_UL = elemente.kanten[i].KL.y.U
+            idx_UR = elemente.kanten[i].KR.y.U
+            idx_iL  = elemente.kanten[i].y.i
+            idx_iR  = elemente.kanten[i].y.i_out
+            UL = y[[idx_UL],:]; UR = y[[idx_UR],:]
+            iL = y[[idx_iL],:]; iR = y[[idx_iR],:]
+            P = UR.*iR .- UL.*iL;
+            y = vcat(y,P)
+        elseif typeof(elemente.kanten[i]) <: Gas_Strom_Kante
+            idx_UL = elemente.kanten[i].KUL.y.U
+            idx_UR = elemente.kanten[i].KUR.y.U
+            idx_i  = elemente.kanten[i].y.i
+            UL = y[[idx_UL],:]; UR = y[[idx_UR],:]
+            U = UR .- UL; i = y[[idx_i],:]
+            P = U.*i
+            y = vcat(y,P)
+        end
+    end
+    return y
 end

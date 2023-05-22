@@ -59,14 +59,17 @@ Aktuelle Bugs:
 =#
 
 #=
-große matrixoperation / sum_i Speicher nicht allokiert
+große matrixoperation / sum_i Speicher nicht allokiert:
 BenchmarkTools.Trial: 1 sample with 1 evaluation.
  Single result which took 9.941 s (5.38% GC) to evaluate,
  with a memory estimate of 2.62 GiB, over 94404818 allocations.
 
-große matrixoperation / sum_i Speicher allokiert
+große matrixoperation / sum_i Speicher allokiert:
+BenchmarkTools.Trial: 1 sample with 1 evaluation.
+ Single result which took 10.184 s (5.54% GC) to evaluate,
+ with a memory estimate of 2.62 GiB, over 94409015 allocations.
 
- kleine Matrixoperation / sum_i Speicher allokiert
+ kleine Matrixoperation / sum_i Speicher allokiert:
  BenchmarkTools.Trial: 1 sample with 1 evaluation.
  Single result which took 5.796 s (2.12% GC) to evaluate,
  with a memory estimate of 671.57 MiB, over 10987182 allocations.

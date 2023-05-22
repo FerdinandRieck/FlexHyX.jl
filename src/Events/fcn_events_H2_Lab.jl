@@ -1,7 +1,7 @@
 global n_events = 7
 
 function event_condition(out,y,t,integrator)
-    IM, IP, elemente, i_flussL, i_flussR, m_fluss, e_fluss, sum_i, sum_m, sum_e, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, idx_ele, n_n, n_e = integrator.p
+    IM, IP, elemente, sum_i, sum_m, sum_e, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, idx_ele, n_n, n_e = integrator.p
     
     #-- nur Nulldurchgänge von unten werden detektiert --!
 

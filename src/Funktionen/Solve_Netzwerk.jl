@@ -125,10 +125,14 @@ function solveNetzwerk(dir::String)
     sum_i = Array{Number}(undef, n_n);  #-- nur einmal Speicher reservieren
     sum_m = Array{Number}(undef, n_n);
     sum_e = Array{Number}(undef, n_n); 
-
+    
+    i_flussL = Array{Number}(undef, n_e);  #-- nur einmal Speicher reservieren
+    i_flussR = Array{Number}(undef, n_e);
+    m_fluss = Array{Number}(undef, n_e); 
+    e_fluss = Array{Number}(undef, n_e);
     #-------------   
 
-    params = IM, IP, elemente, sum_i, sum_m, sum_e, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, idx_ele, n_n, n_e
+    params = IM, IP, elemente, i_flussL, i_flussR, m_fluss, e_fluss, sum_i, sum_m, sum_e, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, idx_ele, n_n, n_e
              
     #--------------
     ind_alg = findall(x->x==0,M[diagind(M)]);

@@ -1,12 +1,18 @@
 function dgl!(dy,y,P,t) 
-    IM, IP, elemente, sum_i, sum_m, sum_e, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, idx_ele, n_n, n_e = P
+    IM, IP, elemente, i_flussL, i_flussR, m_fluss, e_fluss, sum_i, sum_m, sum_e, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, idx_ele, n_n, n_e = P
     #-- Innerhalb von dgl-Funktion: alle benötigten Infos, Speicherplatz aus parameter vorhanden
     
     array2tuple!(elemente,y)    #??? Was passiert, wenn zeitschritt vom Solver verworfen wird??? Wird aktuelles y oder neues y verwendet?
 
-    sum_i = IP[:,idx_iflussR[:,1]]*y[idx_iflussR[:,2]] - IM[:,idx_iflussL[:,1]]*y[idx_iflussL[:,2]] 
-    sum_m = IP[:,idx_mfluss[:,1]]*y[idx_mfluss[:,2]] - IM[:,idx_mfluss[:,1]]*y[idx_mfluss[:,2]]
-    sum_e = IP[:,idx_efluss[:,1]]*y[idx_efluss[:,2]] - IM[:,idx_efluss[:,1]]*y[idx_efluss[:,2]]
+    i_flussL .= 0.0; i_flussL[idx_iflussL[:,1]] = y[idx_iflussL[:,2]]  #-- Flussvektor Strom links
+    i_flussR .= 0.0; i_flussR[idx_iflussR[:,1]] = y[idx_iflussR[:,2]]  #-- Flussvektor Strom rechts
+    m_fluss  .= 0.0; m_fluss[idx_mfluss[:,1]]   = y[idx_mfluss[:,2]]   #-- Flussvektor Massenstrom
+    e_fluss  .= 0.0; e_fluss[idx_efluss[:,1]]   = y[idx_efluss[:,2]]   #-- Flussvektor Energie
+
+    # sum_i = IP[idx_iflussR[:,1]]*y[idx_iflussR[:,2]] - IM[idx_iflussL[:,1]]*y[idx_iflussL[:,2]] 
+    sum_i = IP*i_flussR - IM*i_flussL   #-- Beispiel Knotenbilanzen für Strom, ggf. Speicher für sum_i vorher reservieren !!  
+    sum_m = IP*m_fluss - IM*m_fluss
+    sum_e = IP*e_fluss - IM*e_fluss
 
     #-- jetzt alle Knoten und Kanten druchlaufen und Gleichungen erzeugen
 

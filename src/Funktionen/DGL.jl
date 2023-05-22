@@ -6,7 +6,7 @@ function dgl!(dy,y,P,t)
 
     sum_i = IP[:,idx_iflussR[:,1]]*y[idx_iflussR[:,2]] - IM[:,idx_iflussL[:,1]]*y[idx_iflussL[:,2]] 
     sum_m = IP[:,idx_mfluss[:,1]]*y[idx_mfluss[:,2]] - IM[:,idx_mfluss[:,1]]*y[idx_mfluss[:,2]]
-    sum_e = IP[:,idx_mfluss[:,1]]*y[idx_mfluss[:,2]] - IM[:,idx_mfluss[:,1]]*y[idx_mfluss[:,2]]
+    sum_e = IP[:,idx_efluss[:,1]]*y[idx_efluss[:,2]] - IM[:,idx_efluss[:,1]]*y[idx_efluss[:,2]]
 
     #-- jetzt alle Knoten und Kanten druchlaufen und Gleichungen erzeugen
 

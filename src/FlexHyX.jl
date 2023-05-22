@@ -31,7 +31,7 @@ module FlexHyX
     export solveNetzwerk
     export plotsol
 
-    idx_ele, sol, y = solveNetzwerk(dir)
+    #idx_ele, sol, y = solveNetzwerk(dir)
 
     #=
     iV3 = idx_ele["3i"][2] 
@@ -49,11 +49,17 @@ module FlexHyX
     plotsol(y,sol.t,48,28)
     plotsol(sol)
     =#
-    plotsol(y,sol.t)
+    #plotsol(y,sol.t)
  end
 
 #=
 Aktuelle Bugs:
 - Eventfunktion muss aktuell noch in solveNetzwerk Funktion oben includiert werden
 - leichte unterschiede der Eventzeitpunkte von Matlab und JULIA mit Zeitreihe
+=#
+
+#=
+BenchmarkTools.Trial: 1 sample with 1 evaluation.
+ Single result which took 9.941 s (5.38% GC) to evaluate,
+ with a memory estimate of 2.62 GiB, over 94404818 allocations.
 =#

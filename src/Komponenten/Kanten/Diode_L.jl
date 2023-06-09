@@ -17,11 +17,14 @@ Base.@kwdef mutable struct iDL_kante <: Strom_Kante
     #-- Zustandsvariablen
     y = y_iDL(Param=Param)
 
-    #-- Spannungsknoten links und rechts
+    #-- Stromknoten links und rechts
     KL::Strom_Knoten
     KR::Strom_Knoten
 
+    #-- M-Matrix
     M::Array{Int} = [0; 1]
+
+    #-- zusätzliche Infos
     Z::Dict
 end
 

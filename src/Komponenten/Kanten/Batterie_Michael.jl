@@ -29,18 +29,13 @@ Base.@kwdef mutable struct iB_kante <: Strom_Kante
     #-- Zustandsvariablen
     y = y_iB(Param=Param)
 
-    #-- Spannungsknoten links und rechts
+    #-- Stromknoten links und rechts
     KL::Strom_Knoten
     KR::Strom_Knoten
 
     #-- M-Matrix
     M::Array{Int} = [0; 1; 1] 
 
-    #-- Jacobi Struktur
-    J::Array{Int} = [1 1 1; 1 1 1; 1 1 1]
-    J_KL::Dict = Dict("eq1" => ["U"], "eq2" => ["U"], "eq3" => ["U"]) #["P" "T"; "T" "0"; "0"]
-    J_KR::Dict = Dict("eq1" => ["U"], "eq2" => ["U"], "eq3" => ["U"])
-    
     #-- zusätzliche Infos
     Z::Dict
 end
@@ -55,7 +50,7 @@ function Kante!(dy,k,kante::iB_kante,t)
     qB = kante.y.q
     #--
 
-    #-- Spannungsknoten links und rechts
+    #-- Stromknoten links und rechts
     (; KL,KR) = kante
     UL = KL.y.U
     UR = KR.y.U

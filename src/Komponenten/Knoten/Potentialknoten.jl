@@ -24,7 +24,7 @@ Base.@kwdef mutable struct U0_Knoten <: Strom_Knoten
     Z::Dict
 end
 
-function Knoten!(dy,k,sum_i,sum_m,sum_e,knoten::U0_Knoten)
+function Knoten!(dy,k,knoten::U0_Knoten,t)
     (; U0) = knoten.Param
     U = knoten.y.U
 

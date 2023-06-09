@@ -19,10 +19,14 @@ Base.@kwdef mutable struct GP_Knoten <: Gas_Knoten
 
     #-- zusätzeliche Infos
     Z::Dict
+    
+    #-- Knotenbilanz
+    sum_m::Number = 0.0
+    sum_e::Number = 0.0    
 end
 
 
-function Knoten!(dy,k,sum_i,sum_m,sum_e,knoten::GP_Knoten)
-    dy[k] = sum_m
-    dy[k+1] = sum_e
+function Knoten!(dy,k,knoten::GP_Knoten,t)
+    dy[k] = knoten.sum_m
+    dy[k+1] = knoten.sum_e
 end

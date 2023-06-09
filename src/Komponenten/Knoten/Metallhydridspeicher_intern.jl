@@ -52,9 +52,13 @@ Base.@kwdef mutable struct GPMH_Knoten <: Gas_Knoten
 
     #-- zusätzeliche Infos
     Z::Dict
+
+    #-- Knotenbilanz
+    sum_m::Number = 0.0
+    sum_e::Number = 0.0    
 end
 
-function Knoten!(dy,k,sum_i,sum_m,sum_e,knoten::GPMH_Knoten)
+function Knoten!(dy,k,knoten::GPMH_Knoten,t)
     #-- Parameter
     (; delta_rho,V_s,V_g,p_A,delta_H,R,delta_S,C_a,E_a,C_d,E_d,M_leer,cp_s,cv_g,MH2,Rs) = knoten.Param
     #--
@@ -68,8 +72,8 @@ function Knoten!(dy,k,sum_i,sum_m,sum_e,knoten::GPMH_Knoten)
     cp = ((M_leer+V_s*rho_s)*cp_s + V_g*rho_g*cv_g)/(M_H2 + M_leer); #-- Gesamtwärmekapazität des MHS
     e_R = delta_rho*V_s*delta_H/MH2*dTheta_dt;
 
-    dy[k] = sum_m
-    dy[k+1] = (sum_e - e_R)/cp
+    dy[k] = knoten.sum_m
+    dy[k+1] = (knoten.sum_e - e_R)/cp
     dy[k+2] = P-Rs*rho_g*T  
     dy[k+3] = T-MT_MH/(M_H2 + M_leer)
     dy[k+4] = dTheta_dt

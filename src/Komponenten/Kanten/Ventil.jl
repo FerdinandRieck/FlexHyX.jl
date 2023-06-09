@@ -27,11 +27,6 @@ Base.@kwdef mutable struct mVentil_kante <: Gas_Kante
     #-- M-Matrix
     M::Array{Int} = [0; 0; 1] 
 
-    #-- Jacobi Struktur
-    J::Array{Int} = [1 0 0; 1 1 0; 0 0 1]
-    J_KL::Dict = Dict("eq1" => ["P"], "eq2" => ["P" "T"], "eq3" => [""]) #["P" "T"; "T" "0"; "0"]
-    J_KR::Dict = Dict("eq1" => ["P"], "eq2" => ["P" "T"], "eq3" => ["P"])
-
     #-- zusätzliche Infos
     Z::Dict
 end

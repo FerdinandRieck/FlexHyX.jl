@@ -1,6 +1,3 @@
-dir = dirname(@__DIR__)
-include(dir*"/Events/fcn_events_H2_Lab.jl")
-
 function solveNetzwerk(dir::String)
     println("---------------- This is FlexhyX ------------------")
 #-- Netwerk einlesen
@@ -20,22 +17,19 @@ function solveNetzwerk(dir::String)
 
     znamen = []; zwerte = []; zt = [];
     if zeitfile != nothing
-        zstart, zt, zwerte, znamen, zeinheit, ztitel = read_zeitreihe(pfad*zeitfile)
+        zstart, zt, zwerte, znamen, zeinheit, ztitel = readZeitreihe(pfad*zeitfile)
         dt = Second(zstart-startzeit); dt = dt.value
         zt = zt .+ dt
     end
 
-    eventfile, knoten_infos, kanten_infos = read_netz(dir,netzfile, zwerte, zt, znamen)
+    knoten_infos, kanten_infos, eventfile = readNetz(dir, netzfile, zwerte, zt, znamen)
 
-   
     #-- Anfangswerte setzen
     IM, IP = inzidenz(knoten_infos,kanten_infos)
     n_n = size(knoten_infos)[1]; n_e = size(kanten_infos)[1];  
   
     M = Int[]; 
     kanten = Array{Any}(undef, n_e); knoten =  Array{Any}(undef, n_n); 
-
-    U_max = 0; P_max = 0; PW_max = 0
 
     println("---------------- geänderte Parameter ------------------")
 
@@ -48,7 +42,7 @@ function solveNetzwerk(dir::String)
         s = Symbol(typ,"_Knoten"); obj = getfield(FlexHyX, s)
         knoten[i] = obj(Param=Params, Z=kk)     #-- z.B. U0_Knoten()
 
-        M = [M; knoten[i].M]
+        M = vcat(M, knoten[i].M)
     end
 
     for i=1:n_e  #-- Kanten erzeugen ---------------------------- 
@@ -73,15 +67,17 @@ function solveNetzwerk(dir::String)
             kanten[i] = obj(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)    #-- z.B. iB_kante()
         end
 
-        M = [M; kanten[i].M] 
+        M = vcat(M, kanten[i].M)
     end
 
     println("-------------------------------------------------------")
 
     #-- U_max, P_max, PW_max suchen--------------------------
+    U_max = 0; P_max = 0; PW_max = 0
+
     for i=1:n_n
         if hasfield(typeof(knoten[i].y), :U) == true
-            U_max = max(U_max,knoten[i].y.U) 
+            U_max = max(U_max,knoten[i].y.U)
         end
         if hasfield(typeof(knoten[i].y), :P) == true
             P_max = max(P_max,knoten[i].y.P) 
@@ -106,8 +102,8 @@ function solveNetzwerk(dir::String)
     end
     for i=1:n_n #--- AW ändern ----
         kk = knoten[i].Z; typ = kk["Typ"];
-        if typ=="U" knoten[i].y.U = U_max; end  #???Wofür wird das genau benötigt AW??? was wenn zwei nicht gekoppelte Stromnetze???
-        if typ=="GP" knoten[i].y.P = P_max; end #???Wieso kein T_max bestimmen???
+        if typ=="U" knoten[i].y.U = U_max; end 
+        if typ=="GP" knoten[i].y.P = P_max; end 
         if typ=="WP" knoten[i].y.PW = PW_max; end
     end
     #-----------------------------------------------------
@@ -115,26 +111,13 @@ function solveNetzwerk(dir::String)
     M = sparse(diagm(M))
 
     #-- Erzeuge Zustandsvektor y und Indizes wo was steht in y 
-    elemente = Netzwerk(kanten=kanten,knoten=knoten)  #-- gesamtes Netzwerk 
+    elemente = Netzwerk(kanten=kanten,knoten=knoten)  #-- gesamtes Netzwerk  
 
-    y, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, P_scale, y_leg, idx_ele = tuple2array(elemente)  
+    y, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, P_scale, y_leg, idx_ele = netzwerk2array(elemente)  
 
-   # Jacstru = comp_jacstru(IP,IM,idx_ifluss,idx_mfluss,idx_efluss,elemente,length(y))
-
-    #-- Netzinfo und Speicherplatz (übergebe als Parameter an solver/dgl-function)
-    sum_i = Array{Number}(undef, n_n);  #-- nur einmal Speicher reservieren
-    sum_m = Array{Number}(undef, n_n);
-    sum_e = Array{Number}(undef, n_n); 
-
-    i_flussL = Array{Number}(undef, n_e);  #-- nur einmal Speicher reservieren
-    i_flussR = Array{Number}(undef, n_e);
-    m_fluss = Array{Number}(undef, n_e); 
-    e_fluss = Array{Number}(undef, n_e);
-    #-------------   
-
-    params = IM, IP, elemente, sum_i, sum_m, sum_e, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, idx_ele, n_n, n_e
+    params = IM, IP, elemente, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, idx_ele, n_n, n_e
              
-    #--------------
+    #-- konsistente AW berechnen -----------
     ind_alg = findall(x->x==0,M[diagind(M)]);
     dy = 0*y;
     dgl!(dy,y,params,0.0);
@@ -168,7 +151,7 @@ function solveNetzwerk(dir::String)
     println(sol.retcode," nt=",size(sol.t)); 
     println(sol.destats)
     println("---------------- This was FlexHyX -----------------")
-    return idx_ele, sol, y
+    return (idx_ele, sol, y, knoten_infos, kanten_infos)
 end
 
 function MakeParam(kk) 
@@ -181,13 +164,15 @@ function MakeParam(kk)
             println(kk["Typ"]," --> ",String(ff),"=",kk[String(ff)])
         end
     end
-    par = Dict("param"=>D)
+    par = Dict("param" => D)
     Param = P(;(Symbol(k) => v for (k,v) in par["param"])...) #-- erstelle neue Param mit Änderungen
     return Param
 end
 
 function Leitsung_anhängen(y,elemente,idx_iflussL,idx_iflussR,IM,IP)
-    idx2struct!(elemente)
+
+    idx2netzwerk!(elemente)
+    
     y = Array(y)
 
     sum_i = IP[:,idx_iflussR[:,1]]*y[idx_iflussR[:,2],:] - IM[:,idx_iflussL[:,1]]*y[idx_iflussL[:,2],:];
@@ -207,7 +192,7 @@ function Leitsung_anhängen(y,elemente,idx_iflussL,idx_iflussR,IM,IP)
             idx_UR = elemente.kanten[i].KR.y.U
             idx_i  = elemente.kanten[i].y.i
             UL = y[[idx_UL],:]; UR = y[[idx_UR],:]
-            U = UR .- UL; i = y[[idx_i],:]
+            U = UR - UL; i = y[[idx_i],:]
             P = U.*i
             y = vcat(y,P)
         elseif typeof(elemente.kanten[i]) == iSP0_kante
@@ -217,14 +202,14 @@ function Leitsung_anhängen(y,elemente,idx_iflussL,idx_iflussR,IM,IP)
             idx_iR  = elemente.kanten[i].y.i_out
             UL = y[[idx_UL],:]; UR = y[[idx_UR],:]
             iL = y[[idx_iL],:]; iR = y[[idx_iR],:]
-            P = UR.*iR .- UL.*iL;
+            P = UR.*iR - UL.*iL;
             y = vcat(y,P)
         elseif typeof(elemente.kanten[i]) <: Gas_Strom_Kante
             idx_UL = elemente.kanten[i].KUL.y.U
             idx_UR = elemente.kanten[i].KUR.y.U
             idx_i  = elemente.kanten[i].y.i
             UL = y[[idx_UL],:]; UR = y[[idx_UR],:]
-            U = UR .- UL; i = y[[idx_i],:]
+            U = UR - UL; i = y[[idx_i],:]
             P = U.*i
             y = vcat(y,P)
         end

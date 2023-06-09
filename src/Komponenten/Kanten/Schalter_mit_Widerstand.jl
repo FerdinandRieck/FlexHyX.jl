@@ -17,7 +17,10 @@ Base.@kwdef mutable struct iS_kante <: Strom_Kante
     KL::Strom_Knoten
     KR::Strom_Knoten
 
+    #-- M-Matrix
     M::Array{Int} = [0]
+
+    #-- zusätzliche Infos
     Z::Dict
 end
 

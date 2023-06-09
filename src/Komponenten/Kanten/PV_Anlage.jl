@@ -34,11 +34,6 @@ Base.@kwdef mutable struct iPV_kante <: Strom_Kante
     #-- M-Matrix
     M::Array{Int} = [0]
 
-    #-- Jacobi Struktur
-    J::Int = 1
-    J_KL::Dict = Dict("eq1" => ["U"]) 
-    J_KR::Dict = Dict("eq1" => ["U"])
-
     #-- zusätzliche Infos
     Z::Dict
 end

@@ -1,7 +1,7 @@
 Base.@kwdef mutable struct TM_Param
     T0 = 293.15
-    Masse = 10
-    c = 896
+    Masse = 10.0
+    c = 896.0
 end
 
 Base.@kwdef mutable struct y_TM
@@ -19,14 +19,15 @@ Base.@kwdef mutable struct TM_Knoten <: Temp_Knoten
     #-- M-Matrix
     M::Array{Int} = [1] 
 
-    #-- Jacobi Struktur
-
     #-- zusätzeliche Infos
     Z::Dict
+
+    #-- Knotenbilanz
+    sum_e::Number = 0.0    
 end
 
-function Knoten!(dy,k,sum_i,sum_m,sum_e,knoten::TM_Knoten)
+function Knoten!(dy,k,knoten::TM_Knoten,t)
     (; Masse, c) = knoten.Param
 
-    dy[k] = sum_e/(c * Masse)
+    dy[k] = knoten.sum_e/(c * Masse)
 end

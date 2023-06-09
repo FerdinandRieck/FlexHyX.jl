@@ -1,5 +1,5 @@
 Base.@kwdef mutable struct GPSP_Param
-    P0 = 144210
+    P0 = 144210.0
     T0 = 293.15
     V = 1.0
     Rs = 4124.2
@@ -24,21 +24,21 @@ Base.@kwdef mutable struct GPSP_Knoten <: Gas_Knoten
     #-- M-Matrix
     M::Array{Int} = [1; 1; 0; 0] 
 
-    #-- Jacobi Struktur
-    J::Array{Int} = [0 0 0 0; 0 0 0 0; 0 1 1 0; 1 1 0 1]
-    J_fluss::Array{String} = ["sum_m"; "sum_e"]
-
     #-- zusätzeliche Infos
     Z::Dict
+
+    #-- Knotenbilanz
+    sum_m::Number = 0.0
+    sum_e::Number = 0.0
 end
 
-function Knoten!(dy,k,sum_i,sum_m,sum_e,knoten::GPSP_Knoten)
+function Knoten!(dy,k,knoten::GPSP_Knoten,t)
     #-- Parameter
     (; V,Rs,cv) = knoten.Param
     #--
     (; M, MT, P, T) = knoten.y
-    dy[k] = sum_m
-    dy[k+1] = sum_e/cv
+    dy[k] = knoten.sum_m
+    dy[k+1] = knoten.sum_e/cv
     dy[k+2] = P-Rs*MT/V
     dy[k+3] = T-MT/max(M,1.0e-9)
 end

@@ -17,14 +17,11 @@ Base.@kwdef mutable struct T0_Knoten <: Temp_Knoten
     #-- M-Matrix
     M::Array{Int} = [0] 
 
-    #-- Jacobi Struktur
-    J::Int = 1
-
     #-- zusätzeliche Infos
     Z::Dict
 end
 
-function Knoten!(dy,k,sum_i,sum_m,sum_e,knoten::T0_Knoten)
+function Knoten!(dy,k,knoten::T0_Knoten,t)
     (; T0) = knoten.Param
     T = knoten.y.T
 

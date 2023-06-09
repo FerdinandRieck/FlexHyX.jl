@@ -1,17 +1,20 @@
-function read_netz(dir,netzfile,zwerte,zt,znamen)
+function readNetz(dir,netzfile,zwerte,zt,znamen)
+	typ_kn = ["U","U0","GP","GP0","GPSP","WPSP","WP0","WP","'WPSP","T0","TM","GPMH"]
+	typ_ka = ["iN","iS","iB","iV","iPV","iE","mE","iBZ","mBZ","iSP0","iSPB","mMH","iLR","iC","iDL",
+	          "mf","iD","mWVb","mWPu","eWT","mWRo"]
 	J = JSON.parsefile(netzfile)
 	eventfile = []
 	if haskey(J,"Events")
-		#dir = dirname(@__DIR__)	#-- Direction von Package
 		eventfile = get(J,"Events",[]); eventfile = dir*"/Events/"*eventfile[2:end]*".jl"
 		println("Eventfile:",eventfile)
+		io = open(eventfile,"r"); close(io)
 		include(eventfile)
 	end
     knoten = [];  kanten = []
 	K = get(J,"Knoten",0)
     for kk in K
 		if haskey(kk,"#")==false && haskey(kk,"#Nr")==false
-     	    typ = kk["Typ"];
+			typ = kk["Typ"]; iart = 0;
             if (typ=="U0") & (haskey(kk,"Spannung")==true) kk["U0"] = kk["Spannung"]; end
 			if (typ=="GP0") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15; end
 			if (typ=="T0") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15; end
@@ -26,18 +29,18 @@ function read_netz(dir,netzfile,zwerte,zt,znamen)
 				if haskey(kk,"T0")==true kk["T0"] = kk["T0"] + 273.15 end
 				if haskey(kk,"Theta0")==true kk["Θ0"] = kk["Theta0"] end
 			end
+			iart = findall(x->x==typ,typ_kn)[1];  kk["iart"] = -iart
 			push!(knoten,kk);
         end
     end
 	K = get(J,"Kanten",0)
 	for kk in K
 		if haskey(kk,"#")==false && haskey(kk,"#Nr")==false
-			typ = kk["Typ"];
+			typ = kk["Typ"]; iart = 0;
 			if (typ=="iPV")  
 				if (haskey(kk,"Temp")==true) kk["T_PV"] = kk["Temp"] + 273.15; end
 				if (haskey(kk,"Strahlung")==true) kk["G"] = kk["Strahlung"] end
 			end
-			#if (typ=="iV")&(haskey(kk,"R")==false) kk["R"]=0.0; end # ??? Wofür wird R benötigt???
 			if (typ=="iE")&(haskey(kk,"Zellen")==true) kk["n_Z"] = kk["Zellen"] end
 			if (typ=="mMH")&(haskey(kk,"Theta0")==true) kk["Θ0"] = kk["Theta0"] end
 			for (k, v) in kk
@@ -65,11 +68,13 @@ function read_netz(dir,netzfile,zwerte,zt,znamen)
 					end
 				end
 			end
+			iart = findall(x->x==typ,typ_ka)[1]; 
+			kk["iart"] = iart
 			push!(kanten,kk);
 	   end
 	end
 	
-#-- Zweiter Durchlauf: Von/Nach = aktualisieren, RefKante aktualisieren
+#-- Von/Nach = aktualisieren, RefKante aktualisieren
 	n_n = size(knoten)[1];   n_e = size(kanten)[1]
 	nr2kn = zeros(Int,n_n); nr2ka = zeros(Int,n_e)
 	for i = 1:n_n
@@ -82,18 +87,17 @@ function read_netz(dir,netzfile,zwerte,zt,znamen)
 		kanten[i]["VonNach"][1] = findall(x->x==kanten[i]["VonNach"][1],nr2kn)[1];
 		kanten[i]["VonNach"][2] = findall(x->x==kanten[i]["VonNach"][2],nr2kn)[1];
 	end
-	#-- RefKanten Infos in Kante einfügen und RefKanten Index überschreiben
+	#-- RefKanten Infos in Kante einfügen und RefKante löschen
 	idx_ka = Int[]
 	for i = 1:n_e
 		if haskey(kanten[i],"RefKante")
 			i_ka = findall(x->x==kanten[i]["RefKante"],nr2ka)[1];
-			kanten[i]["RefKante"] = i_ka;
 			RefKante = kanten[i_ka];
 			kanten[i]["RefKante"] = RefKante	
-			idx_ka = [idx_ka; i_ka]
+			idx_ka = push!(idx_ka,i_ka)
 		end
 	end
 	deleteat!(kanten,idx_ka)
 #--
-    return eventfile, knoten, kanten
+    return knoten, kanten, eventfile
 end

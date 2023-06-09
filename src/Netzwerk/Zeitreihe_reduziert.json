@@ -1,6 +1,0 @@
-{"Format":"JMTSMS",
- "Titel":"Leistungen Verbraucher, PV",
- "Namen":["Verbraucher_1","PV_1"],
- "Einheiten":["W","W"],
- "Daten":[{"JMTSMS":[2021,4,19,0,0,0],"Wert":[396,0]},{"JMTSMS":[2021,4,19,0,1,0],"Wert":[232,0]},{"JMTSMS":[2021,4,19,0,2,0],"Wert":[235,0]}]
-}

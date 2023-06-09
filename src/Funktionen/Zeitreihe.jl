@@ -1,30 +1,5 @@
-#=
-function read_zeitreihe(file) # alt
-    J = JSON.parsefile(file)
-    werte = Array{Any}(undef, 0,2)  # 2 in (undef, 0,2) vielleicht aus Anzahl Einheiten holen?
-    startzeit = []; zeiten = []; 
-    namen = get(J,"Namen",0)
-    D = get(J,"Daten",0)
-    for wert in D
-        zwert = wert["Wert"]
-        werte = [werte; zwert']
-    end
-    df = DateFormat("yyyy mm dd HH MM SS")
-    for zeit in D
-        zt = zeit["JMTSMS"]; zt = String(Symbol(zt'))
-        zt = zt[5:end-1]; zt = DateTime(zt,df)
-        if Symbol(typeof(startzeit)) != :DateTime 
-            startzeit = zt 
-        end
-        t = Second(zt-startzeit)
-        zeiten = [zeiten; t.value]
-    end
-    return werte, zeiten, namen
-end
-=#
-
 #function read_zeitreihe(file::AbstractString)
-function read_zeitreihe(file)
+function readZeitreihe(file)
     # Daten einer/mehrerer Zeitreihen einlesen
     T = read(file, String)
     J = JSON.parse(T)
@@ -75,14 +50,14 @@ function read_zeitreihe(file)
             werte[i, :] = JW'
         else #-- NaN als Text vorhanden
             ff = JW .== "NaN"
-            werte[i, !ff] = parse.(Float64, JW[.!ff])
-            werte[i, ff] = NaN
+            werte[i,!ff] = parse.(Float64, JW[.!ff])
+            werte[i,ff] = NaN
         end
     end 
     #--
     if any(isnan.(werte))
         for i = 1:length(namen)
-            werte[:, i] = fillmissing(werte[:, i], "linear", SortedDict(t => 1:length(t)))
+            werte[:,i] = fillmissing(werte[:,i], "linear", SortedDict(t => 1:length(t)))
         end
     end
     startdatum = startzeit

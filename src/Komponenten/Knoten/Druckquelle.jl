@@ -1,6 +1,5 @@
 Base.@kwdef mutable struct GP0_Param
-    #-- default Parameter
-    P0 = 101325
+    P0 = 101325.0
     T0 = 293.15
 end
 
@@ -20,12 +19,11 @@ Base.@kwdef mutable struct GP0_Knoten <: Gas_Knoten
     #-- M-Matrix
     M::Array{Int} = [0; 0] 
 
-    #-- zusätzeliche Infos
+    #-- zusätzliche Infos
     Z::Dict
 end
 
-
-function Knoten!(dy,k,sum_i,sum_m,sum_e,knoten::GP0_Knoten)
+function Knoten!(dy,k,knoten::GP0_Knoten,t)
     #-- Parameter
     (; P0,T0) = knoten.Param
     #--

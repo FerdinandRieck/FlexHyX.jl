@@ -8,7 +8,7 @@ function inzidenz(knoten,kanten)
             in_RefKante = RefKante["VonNach"][2]
             IP[in_RefKante,i] = 1; IM[iv_RefKante,i] = 1;
         end
-        iv = kanten[i]["VonNach"][1]; in = kanten[i]["VonNach"][2];;
+        iv = kanten[i]["VonNach"][1]; in = kanten[i]["VonNach"][2];
         IP[in,i] = 1; IM[iv,i] = 1;
     end
     return IM, IP

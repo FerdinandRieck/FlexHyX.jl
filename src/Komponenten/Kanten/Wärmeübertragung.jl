@@ -57,9 +57,6 @@ Base.@kwdef mutable struct eWT_kante <: Temp_Kante
     #-- M-Matrix
     M::Array{Int} = [0] 
 
-    #-- Jacobi Struktur
-
-
     #-- zusätzliche Infos
     Z::Dict
 end

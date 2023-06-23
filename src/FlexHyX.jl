@@ -1,10 +1,13 @@
 module FlexHyX
     using DifferentialEquations, NLsolve, Plots
+    using Symbolics
     using TerminalLoggers
     using Dates
     using LinearAlgebra
     using SparseArrays
+    using Graphs, GraphRecipes
     import JSON
+    using Plots
 
     dir = dirname(@__FILE__)
 

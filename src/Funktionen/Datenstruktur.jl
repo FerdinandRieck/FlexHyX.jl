@@ -18,7 +18,8 @@ Base.@kwdef mutable struct Netzwerk
 end
 
 function netzwerk2array(y_netz)
-    y_arr = Float64[]; P_scale = Float64[]; y_leg = String[]; 
+    y_arr = Float64[]; P_scale = Float64[]; 
+    leg_knoten = String[]; leg_kanten = String[]; 
     idx_ele = Dict()
     idx_iflussL = Array{Int}(undef, 0,2);
     idx_iflussR = Array{Int}(undef, 0,2); 
@@ -29,10 +30,10 @@ function netzwerk2array(y_netz)
         for ff in fieldnames(typeof(y_netz.knoten[i].y))
             if ff != :Param
                 append!(y_arr,getfield(y_netz.knoten[i].y,ff)); k +=1 
-                if first(string(ff))=='P' P_scale = push!(P_scale, 1.0e-5)
-                else P_scale = push!(P_scale, 0.0) end 
+                if first(string(ff))=='P' push!(P_scale, 1.0e-5)
+                else push!(P_scale, 0.0) end             
                 leg_i = string(y_netz.knoten[i].Z["Nr"],ff)
-                y_leg = push!(y_leg, leg_i)
+                push!(leg_knoten, leg_i*"-"*y_netz.knoten[i].Z["Typ"])
                 idx_ele[leg_i] = [i k]  #-- Dictionary
             end
         end
@@ -51,15 +52,15 @@ function netzwerk2array(y_netz)
                 end
                 if first(string(ff))=='m' idx_mfluss = vcat(idx_mfluss, [i k]) end  
                 if first(string(ff))=='e' idx_efluss = vcat(idx_efluss, [i k]) end 
-                if first(string(ff))=='P' P_scale = push!(P_scale, 1.0e-5)
-                else P_scale = push!(P_scale, 0.0) end 
+                if first(string(ff))=='P' push!(P_scale, 1.0e-5)
+                else push!(P_scale, 0.0) end 
                 leg_i = string(y_netz.kanten[i].Z["Nr"],ff)
-                y_leg = push!(y_leg, leg_i)
+                push!(leg_kanten, leg_i*"-"*y_netz.kanten[i].Z["Typ"])
                 idx_ele[leg_i] = [i k]  #-- Dictionary
             end
         end
     end
-    return y_arr, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, P_scale, y_leg, idx_ele
+    return y_arr, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, P_scale, leg_knoten, leg_kanten, idx_ele
 end
 
 function array2netzwerk!(y_netz,y_arr)

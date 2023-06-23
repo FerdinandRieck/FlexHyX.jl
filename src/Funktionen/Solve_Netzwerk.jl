@@ -26,6 +26,7 @@ function solveNetzwerk(dir::String)
 
     #-- Anfangswerte setzen
     IM, IP = inzidenz(knoten_infos,kanten_infos)
+
     n_n = size(knoten_infos)[1]; n_e = size(kanten_infos)[1];  
   
     M = Int[]; 
@@ -113,7 +114,7 @@ function solveNetzwerk(dir::String)
     #-- Erzeuge Zustandsvektor y und Indizes wo was steht in y 
     elemente = Netzwerk(kanten=kanten,knoten=knoten)  #-- gesamtes Netzwerk  
 
-    y, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, P_scale, y_leg, idx_ele = netzwerk2array(elemente)  
+    y, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, P_scale, leg_knoten, leg_kanten, idx_ele = netzwerk2array(elemente)  
 
     params = IM, IP, elemente, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, idx_ele, n_n, n_e
              
@@ -128,10 +129,18 @@ function solveNetzwerk(dir::String)
     y[ind_alg] = res.zero;
     dgl!(dy,y,params,0.0);
     println("Test Nachher:",Base.maximum(abs.(dy[ind_alg])))
+    #--------------
+
+    #-- Jacobi Struktur
+    #f!(x,z) = dgl!(x,z,params,0.0); 
+    #jac_sparsity = Symbolics.jacobian_sparsity(f!, similar(y), similar(y))  #-- funktioniert nicht immer
+    dy0 = copy(y)
+    jac_sparsity = Symbolics.jacobian_sparsity((dy, y) -> dgl!(dy, y, params, 0.0),dy0, y)
 
     #--------------
+
     t0 = time()
-    f = ODEFunction(dgl!,mass_matrix=M)
+    f = ODEFunction(dgl!; mass_matrix=M)#, jac_prototype = float.(jac_sparsity))
     tspan = (0.0,simdauer)
     prob_ode = ODEProblem(f,y,tspan,params)
 
@@ -151,7 +160,7 @@ function solveNetzwerk(dir::String)
     println(sol.retcode," nt=",size(sol.t)); 
     println(sol.destats)
     println("---------------- This was FlexHyX -----------------")
-    return (idx_ele, sol, y, knoten_infos, kanten_infos)
+    return (idx_ele, sol, y, knoten_infos, kanten_infos, jac_sparsity)
 end
 
 function MakeParam(kk) 
@@ -178,12 +187,14 @@ function Leitsung_anhängen(y,elemente,idx_iflussL,idx_iflussR,IM,IP)
     sum_i = IP[:,idx_iflussR[:,1]]*y[idx_iflussR[:,2],:] - IM[:,idx_iflussL[:,1]]*y[idx_iflussL[:,2],:];
 
     for i = 1:length(elemente.knoten)
-        if (typeof(elemente.knoten[i]) == U0_Knoten) && (elemente.knoten[i].Z["U0"] > 0)
-            idx_U = elemente.knoten[i].y.U
-            U = y[[idx_U],:]
-            i = sum_i[[i],:]
-            P = U.*i
-            y = vcat(y,P)
+        if (haskey(elemente.knoten[i].Z,"U0")==true)
+            if (typeof(elemente.knoten[i]) == U0_Knoten) && (elemente.knoten[i].Z["U0"] > 0)
+                idx_U = elemente.knoten[i].y.U
+                U = y[[idx_U],:]
+                I = sum_i[[i],:]
+                P = U.*I
+                y = vcat(y,P)
+            end
         end
     end
     for i = 1:length(elemente.kanten)
@@ -192,8 +203,8 @@ function Leitsung_anhängen(y,elemente,idx_iflussL,idx_iflussR,IM,IP)
             idx_UR = elemente.kanten[i].KR.y.U
             idx_i  = elemente.kanten[i].y.i
             UL = y[[idx_UL],:]; UR = y[[idx_UR],:]
-            U = UR - UL; i = y[[idx_i],:]
-            P = U.*i
+            U = UR - UL; I = y[[idx_i],:]
+            P = U.*I
             y = vcat(y,P)
         elseif typeof(elemente.kanten[i]) == iSP0_kante
             idx_UL = elemente.kanten[i].KL.y.U
@@ -201,16 +212,16 @@ function Leitsung_anhängen(y,elemente,idx_iflussL,idx_iflussR,IM,IP)
             idx_iL  = elemente.kanten[i].y.i
             idx_iR  = elemente.kanten[i].y.i_out
             UL = y[[idx_UL],:]; UR = y[[idx_UR],:]
-            iL = y[[idx_iL],:]; iR = y[[idx_iR],:]
-            P = UR.*iR - UL.*iL;
+            IL = y[[idx_iL],:]; IR = y[[idx_iR],:]
+            P = UR.*IR - UL.*IL;
             y = vcat(y,P)
         elseif typeof(elemente.kanten[i]) <: Gas_Strom_Kante
             idx_UL = elemente.kanten[i].KUL.y.U
             idx_UR = elemente.kanten[i].KUR.y.U
             idx_i  = elemente.kanten[i].y.i
             UL = y[[idx_UL],:]; UR = y[[idx_UR],:]
-            U = UR - UL; i = y[[idx_i],:]
-            P = U.*i
+            U = UR - UL; I = y[[idx_i],:]
+            P = U.*I
             y = vcat(y,P)
         end
     end

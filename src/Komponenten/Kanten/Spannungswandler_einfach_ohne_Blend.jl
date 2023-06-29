@@ -4,7 +4,7 @@ Base.@kwdef mutable struct iSP0_Param
 end
 
 Base.@kwdef mutable struct y_iSP0
-    i::Number = 0.0
+    i_in::Number = 0.0
     i_out::Number = 0.0
 end
 
@@ -31,7 +31,7 @@ function Kante!(dy,k,kante::iSP0_kante,t)
     (; U_soll,eta) = kante.Param
     #--
 
-    (; i,i_out) = kante.y
+    (; i_in,i_out) = kante.y
 
 
     #-- Spannungsknoten links und rechts
@@ -42,6 +42,6 @@ function Kante!(dy,k,kante::iSP0_kante,t)
 
     io = 1.0; if get(Z,"Schaltzeit",0)!=0 io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
     
-    dy[k] = ifxaorb(i,1/eta,eta)*i_out*UR/UL - i;
+    dy[k] = ifxaorb(i_in,1/eta,eta)*i_out*UR/UL - i_in;
     dy[k+1] = io*(UR - U_soll) + (1-io)*i_out
 end

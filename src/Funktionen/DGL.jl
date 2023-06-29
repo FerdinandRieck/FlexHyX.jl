@@ -1,33 +1,33 @@
 function dgl!(dy,y,P,t) 
-    IM, IP, elemente, idx_iflussL, idx_iflussR, idx_mfluss, idx_efluss, idx_ele, n_n, n_e  = P
+    IM, IP, knoten, kanten, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele  = P
     
-    array2netzwerk!(elemente,y)
+    array2netzwerk!(knoten,kanten,y)
 
     #-- jetzt alle Knoten und Kanten druchlaufen und Gleichungen erzeugen
     k = 1
     #-- Knotengleichungen
-    for i = 1:n_n 
-        if hasfield(typeof(elemente.knoten[i]), :sum_i)
+    for i in eachindex(knoten)
+        if hasfield(typeof(knoten[i]), :sum_i)
             sum_i = IP[i,idx_iflussR[:,1]]'*y[idx_iflussR[:,2]] - IM[i,idx_iflussL[:,1]]'*y[idx_iflussL[:,2]] 
-            elemente.knoten[i].sum_i = sum_i
+            knoten[i].sum_i = sum_i
         end
-        if hasfield(typeof(elemente.knoten[i]), :sum_m)
-            sum_m = IP[i,idx_mfluss[:,1]]'*y[idx_mfluss[:,2]] - IM[i,idx_mfluss[:,1]]'*y[idx_mfluss[:,2]]
-            elemente.knoten[i].sum_m = sum_m
+        if hasfield(typeof(knoten[i]), :sum_m)
+            sum_m = IP[i,idx_mflussR[:,1]]'*y[idx_mflussR[:,2]] - IM[i,idx_mflussL[:,1]]'*y[idx_mflussL[:,2]]
+            knoten[i].sum_m = sum_m
         end
-        if hasfield(typeof(elemente.knoten[i]), :sum_e)
-            sum_e = IP[i,idx_efluss[:,1]]'*y[idx_efluss[:,2]] - IM[i,idx_efluss[:,1]]'*y[idx_efluss[:,2]]
-            elemente.knoten[i].sum_e = sum_e
+        if hasfield(typeof(knoten[i]), :sum_e)
+            sum_e = IP[i,idx_eflussR[:,1]]'*y[idx_eflussR[:,2]] - IM[i,idx_eflussL[:,1]]'*y[idx_eflussL[:,2]]
+            knoten[i].sum_e = sum_e
         end
-        Knoten!(dy,k,elemente.knoten[i],t) # Datentyp von elemente.knoten[i] bestimmt Knoten! Funktion
-        n_ele = length(elemente.knoten[i].M)
+        Knoten!(dy,k,knoten[i],t) # Datentyp von knoten[i] bestimmt Knoten! Funktion
+        n_ele = length(knoten[i].M)
         k = k+n_ele;
     end
 
     #-- Kantengleichungen
-    for i=1:n_e  
-        Kante!(dy,k,elemente.kanten[i],t) # Datentyp von elemente.kanten[i] bestimmt Kante! Funktion 
-        n_ele = length(elemente.kanten[i].M)
+    for i in eachindex(kanten) 
+        Kante!(dy,k,kanten[i],t) # Datentyp von kanten[i] bestimmt Kante! Funktion 
+        n_ele = length(kanten[i].M)
         k = k+n_ele;
     end
 end

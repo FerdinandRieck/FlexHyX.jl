@@ -15,7 +15,7 @@ function plotNetz(dir::String)
 	for kk in K
 		if haskey(kk,"#")==false && haskey(kk,"#Nr")==false
 			push!(kanten_infos,kk);
-	   end
+	   	end
 	end
 	#-- Von/Nach = aktualisieren, RefKante aktualisieren
 	n_n = size(knoten_infos)[1];   n_e = size(kanten_infos)[1]

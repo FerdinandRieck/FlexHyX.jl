@@ -12,10 +12,14 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
     for kk in K
 		if haskey(kk,"#")==false && haskey(kk,"#Nr")==false
 			typ = kk["Typ"]; 
-            if (typ=="U0") & (haskey(kk,"Spannung")==true) kk["U0"] = kk["Spannung"]; end
-			if (typ=="GP0") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15; end
-			if (typ=="T0") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15; end
-			if (typ=="TM") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15; end
+            if (typ=="U0") & (haskey(kk,"Spannung")==true) kk["U0"] = kk["Spannung"] end
+			if (typ=="GP0") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end
+			if (typ=="T0") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end
+			if (typ=="TM") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end
+			if (typ=="WPSP") 
+				if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end
+				if (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end
+			end
 		#	if (typ=="GP0")|(typ=="GPSP")|(typ=="GPMH")... # besser direkt so
 			if typ=="GPSP"
 				if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end
@@ -68,7 +72,7 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 	   end
 	end
 	
-#-- Von/Nach = aktualisieren, RefKante aktualisieren
+#-- Von/Nach = aktualisieren
 	n_n = size(knoten)[1];   n_e = size(kanten)[1]
 	nr2kn = zeros(Int,n_n); nr2ka = zeros(Int,n_e)
 	for i = 1:n_n

@@ -72,7 +72,7 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 	   end
 	end
 	
-#-- Von/Nach = aktualisieren
+#-- Von/Nach = aktualisieren, RefRohr aktualisieren
 	n_n = size(knoten)[1];   n_e = size(kanten)[1]
 	nr2kn = zeros(Int,n_n); nr2ka = zeros(Int,n_e)
 	for i = 1:n_n
@@ -81,7 +81,19 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 	for i = 1:n_e
 		nr2ka[i] = kanten[i]["Nr"];
 	end
+	i_Rohr = 0
 	for i = 1:n_e
+		if haskey(kanten[i],"nx")
+			i_Rohr = i_Rohr + kanten[i]["nx"] + 1  #-- + 1 wegen Rohr Links
+		end
+		if (kanten[i]["Typ"] == "mWT")
+			i_ka = findall(x->x==kanten[i]["RefRohr"],nr2ka)[1];
+			kanten[i]["RefRohr"] = i_ka + i_Rohr;
+		end
+		if haskey(kanten[i],"RohrAussen")
+			i_ka = findall(x->x==kanten[i]["RohrAussen"],nr2ka)[1];
+			kanten[i]["RohrAussen"] = i_ka + i_Rohr;
+		end
 		kanten[i]["VonNach"][1] = findall(x->x==kanten[i]["VonNach"][1],nr2kn)[1];
 		kanten[i]["VonNach"][2] = findall(x->x==kanten[i]["VonNach"][2],nr2kn)[1];
 	end

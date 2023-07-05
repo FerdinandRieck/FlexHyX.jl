@@ -4,7 +4,7 @@ end
 
 Base.@kwdef mutable struct y_GP
     P::Number = 0.0
-    T::Number = 0.0
+    T::Number = 293.15
 end
 
 Base.@kwdef mutable struct GP_Knoten <: Gas_Knoten

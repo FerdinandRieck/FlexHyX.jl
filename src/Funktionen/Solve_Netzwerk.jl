@@ -50,13 +50,13 @@ function solveNetzwerk(dir::String)
             von_mE = mE["VonNach"][1]; nach_mE = mE["VonNach"][2]
             Params = MakeParam(kk)
             push!(kanten,iE_kante(Param=Params, KUL=knoten[von], KUR=knoten[nach], KGL=knoten[von_mE], KGR=knoten[nach_mE], Z=kk))
-            M = vcat(M, kanten[i].M)
+            M = vcat(M, kanten[end].M)
         elseif typ=="iBZ"
             mBZ = kk["RefKante"]; 
             von_mBZ = mBZ["VonNach"][1]; nach_mBZ = mBZ["VonNach"][2]
             Params = MakeParam(kk)
             push!(kanten,iBZ_kante(Param=Params, KUL=knoten[von], KUR=knoten[nach], KGL=knoten[von_mBZ], KGR=knoten[nach_mBZ], Z=kk))
-            M = vcat(M, kanten[i].M)
+            M = vcat(M, kanten[end].M)
         elseif typ=="mWRo"
             Params = MakeParam(kk)
             #-- Linke Rand
@@ -72,8 +72,9 @@ function solveNetzwerk(dir::String)
             push!(kanten,mWRo_kante_randR(Param=Params, KR=knoten[nach], Z=kk))
             M = vcat(M, kanten[end].M)
             #-- 
+            n = length(kanten)
             k = 1
-            for j = i+1:i+nx
+            for j = n-nx:n-1
                 #-- Rechte und Linke Rohrabschnitt übergeben
                 kanten[j].RL = kanten[j-1]
                 kanten[j].RR = kanten[j+1]
@@ -85,18 +86,97 @@ function solveNetzwerk(dir::String)
                 k = k+1
             end
             #-- Mittlere Rohrabschnitte an Ränder übergeben
-            kanten[i].RL = kanten[i+1]
+            kanten[end-nx-1].RL = kanten[end-nx]
             kanten[end].RR = kanten[end-1]
         elseif typ=="mWT"
             Params = MakeParam(kk) 
-            RL = kk["RefKante"]
+            RL = kk["RefRohr"]
+            push!(kanten,mWT_kante(Param=Params, KL=knoten[von], KR=knoten[nach], RL = kanten[RL], Z=kk)) 
+            M = vcat(M, kanten[end].M)
+        elseif typ=="mWTR"
+            Params = MakeParam(kk) 
+            push!(kanten,mWTR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
+            M = vcat(M, kanten[end].M)
+            PL = knoten[von].y.P; PR = knoten[nach].y.P
+            TL = knoten[von].y.T; TR = knoten[nach].y.T
+            kanten[end].y.P = PL + 0.5*(PR-PL)
+            kanten[end].y.T = TL + 0.5*(TR-TL)
+        elseif typ=="mWTaR"
+            Params = MakeParam(kk) 
+            push!(kanten,mWTaR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
+            M = vcat(M, kanten[end].M)
+            PL = knoten[von].y.P; PR = knoten[nach].y.P
+            TL = knoten[von].y.T; TR = knoten[nach].y.T
+            kanten[end].y.P = PL + 0.5*(PR-PL)
+            kanten[end].y.T = TL + 0.5*(TR-TL)
+            if haskey(kk,"RohrAussen")
+                RA = kk["RohrAussen"]
+                kanten[end].RA = kanten[RA]
+                kanten[RA].RA = kanten[end]
+            end
+        elseif typ=="mWTaRnx"
+            Params = MakeParam(kk)
+            #-- Linke Rand
+            push!(kanten,mWTaRnx_kante_randL(Param=Params, KL=knoten[von], Z=kk))
+            M = vcat(M, kanten[end].M)
+            #-- Rohrmitte
+            nx = Params.nx
+            for j = 1:nx
+                push!(kanten,mWTaRnx_kante_mitte(Param=Params, Z=kk))
+                M = vcat(M, kanten[end].M)
+            end
+            #-- Rechte Rand
+            push!(kanten,mWTaRnx_kante_randR(Param=Params, KR=knoten[nach], Z=kk))
+            M = vcat(M, kanten[end].M)
+            #-- 
+            n = length(kanten)
+            k = 1
+            for j = n-nx:n-1
+                #-- Rechte und Linke Rohrabschnitt übergeben
+                kanten[j].RL = kanten[j-1]
+                kanten[j].RR = kanten[j+1]
+                #-- AW ändern
+                PL = knoten[von].y.P; PR = knoten[nach].y.P
+                TL = knoten[von].y.T; TR = knoten[nach].y.T
+                kanten[j].y.P = PL + (k-0.5)/nx*(PR-PL)
+                kanten[j].y.T = TL + (k-0.5)/nx*(TR-TL)
+                k = k+1
+            end
+            #-- Mittlere Rohrabschnitte an Ränder übergeben
+            kanten[end-nx-1].RL = kanten[end-nx]
+            kanten[end].RR = kanten[end-1]
+            #-- Rohrabschnitte Wärmeaustausch
+            if haskey(kk,"Richtung")
+                if kk["Richtung"] == "gleich"
+                    for j = n-nx:n-1
+                        kanten[j].RA = kanten[j-nx-2]
+                        kanten[j-nx-2].RA = kanten[j]
+                    end
+                end
+                if kk["Richtung"] == "gegen"
+                    for j = 1:nx
+                        kanten[end-nx+j-1].RA = kanten[end-nx-j-2]
+                        kanten[end-nx-j-2].RA = kanten[end-nx+j-1]
+                    end
+                end
+            end 
+        elseif typ=="eWT2"
+            Params = MakeParam(kk) 
+            push!(kanten,eWT2_kante(Param=Params, KL1=knoten[von], KR1=knoten[nach], Z=kk)) 
+            M = vcat(M, kanten[end].M)
+            if haskey(kk,"RohrAussen")
+                RA = kk["RohrAussen"]
+                vonRA = kanten[RA].Z["VonNach"][1]; nachRA = kanten[RA].Z["VonNach"][2]
+                kanten[end].KL2 = knoten[vonRA]; kanten[end].KR2 = knoten[nachRA]
+                kanten[end-1].KL2 = knoten[von]; kanten[end-1].KR2 = knoten[nach]
+            end
         else
             #-- Parameter erzeugen und ändern
             Params = MakeParam(kk) 
             #-- Kante erzeugen
             s = Symbol(typ,"_kante"); obj = getfield(FlexHyX, s)
             push!(kanten,obj(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk))    #-- z.B. iB_kante()
-            M = vcat(M, kanten[i].M)
+            M = vcat(M, kanten[end].M)
         end
     end
 
@@ -141,6 +221,7 @@ function solveNetzwerk(dir::String)
         if typ=="U" knoten[i].y.U = U_max; end 
         if typ=="GP" knoten[i].y.P = P_max; end 
         if typ=="WP" knoten[i].y.P = PW_max; end
+        # wieso kein T_max suchen? Wie können AW für Kopplungsknoten mit T besser bestimmt werden?
     end
     #-----------------------------------------------------
 
@@ -186,13 +267,14 @@ function solveNetzwerk(dir::String)
         cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
         sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=600)
     end
-
-    y = Leitsung_anhängen(sol,knoten,kanten,idx_iflussL,idx_iflussR,IM,IP)
-
     t1 = time()-t0
     println("CPU: ",t1)
     println(sol.retcode," nt=",size(sol.t)); 
     println(sol.destats)
+
+    y = Leitsung_anhängen(sol,knoten,kanten,idx_iflussL,idx_iflussR,IM,IP)
+
+
     println("---------------- This was FlexHyX -----------------")
     return (idx_ele, sol, y, knoten_infos, kanten_infos, jac_sparsity)
 end
@@ -243,8 +325,8 @@ function Leitsung_anhängen(y,knoten,kanten,idx_iflussL,idx_iflussR,IM,IP)
         elseif typeof(kanten[i]) == iSP0_kante
             idx_UL = kanten[i].KL.y.U
             idx_UR = kanten[i].KR.y.U
-            idx_iL  = kanten[i].y.i_in
-            idx_iR  = kanten[i].y.i_out
+            idx_iL  = kanten[i].y.iL
+            idx_iR  = kanten[i].y.iR
             UL = y[[idx_UL],:]; UR = y[[idx_UR],:]
             IL = y[[idx_iL],:]; IR = y[[idx_iR],:]
             P = UR.*IR - UL.*IL;

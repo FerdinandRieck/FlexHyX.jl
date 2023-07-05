@@ -5,9 +5,7 @@ module FlexHyX
     using Dates
     using LinearAlgebra
     using SparseArrays
-    using Graphs, GraphRecipes
     import JSON
-    using Plots
 
     dir = dirname(@__FILE__)
 

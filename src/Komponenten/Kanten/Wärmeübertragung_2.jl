@@ -1,4 +1,4 @@
-Base.@kwdef mutable struct mWT_Param
+Base.@kwdef mutable struct eWT2_Param
     #---Wärmeübertragung ----
     #-- Berechnung des Wärmedurchgangskoeffizienten (nach VDI-Wärmeatlas, 11.
     #-- Auflage, Kapitel G2)
@@ -39,34 +39,32 @@ Base.@kwdef mutable struct mWT_Param
     # A = Defaultwert festlegen
 end
 
-Base.@kwdef mutable struct y_mWT
-    m::Number = 0.0
+Base.@kwdef mutable struct y_eWT2
     eL::Number = 0.0
     eR::Number = 0.0
 end
 
-Base.@kwdef mutable struct mWT_kante <: Temp_Kante
+Base.@kwdef mutable struct eWT2_kante <: Temp_Kante
     #-- default Parameter
-    Param::mWT_Param
+    Param::eWT2_Param
 
     #-- Zustandsvariablen
-    y = y_mWT()
+    y = y_eWT2()
 
-    #-- Gasknoten links und rechts
-    KL::Wasser_Knoten  
-    KR::Wasser_Knoten  
-
-    #-- Rohr links 
-    RL = 0 
+    #-- Wasserknoten links und rechts
+    KL1::Wasser_Knoten 
+    KR1::Wasser_Knoten 
+    KL2 = 0 
+    KR2 = 0
 
     #-- M-Matrix
-    M::Array{Int} = [0; 0; 0] 
+    M::Array{Int} = [0; 0] 
 
     #-- zusätzliche Infos
     Z::Dict
 end
 
-function Kante!(dy,k,kante::mWT_kante,t)
+function Kante!(dy,k,kante::eWT2_kante,t)
     #-- Parameter
     (; kA) = kante.Param
     #--
@@ -74,23 +72,23 @@ function Kante!(dy,k,kante::mWT_kante,t)
     #-- Zustandsvariable
     eL = kante.y.eL
     eR = kante.y.eR
-    m = kante.y.m
     #--
 
-    (; KL,KR,RL,Z) = kante
-    TL = KL.y.T
-    TR = KR.y.T
-    m_in = RL.y.mR
-    e_in = RL.y.eR
+    (; KL1,KR1,KL2,KR2,Z) = kante
+    TL1 = KL1.y.T
+    TR1 = KR1.y.T
+    TL2 = KL2.y.T
+    TR2 = KR2.y.T
 
-    T_aussen = 263.15
+    dTa = max(1.0e-8,TR1 - TL2)
+    dTb = max(1.0e-8,TR2 - TL2)
 
+    dT_ln = (dTa - dTb)/max(1.0e-8,(log(abs(dTa))-log(abs(dTb)))) 
 
-    dy[k] = m - m_in
-    dy[k+1] = eL - e_in
+    dy[k] = eL
     if (haskey(Z,"alpha")==true) && (haskey(Z,"A")==true)
-        dy[k+2] = eR - Z["alpha"]*Z["A"]*(TL-TR)
+        dy[k+1] = eR - Z["alpha"]*Z["A"]*dT_ln
     else
-        dy[k+2] = eR - (e_in - kA*(T_aussen-TL))  #-- hier noch dot m einfügen
+        dy[k+1] = eR - kA*A*dT_ln  #-- hier noch dot m einfügen
     end
 end

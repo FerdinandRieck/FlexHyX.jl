@@ -44,9 +44,9 @@ function netzwerk2array(knoten,kanten)
                 k +=1
                 append!(y_arr,getfield(kanten[i].y,ff)); 
                 if first(string(ff))=='i'
-                    if string(ff)=="i_out"
+                    if string(ff)=="iR"
                         idx_iflussR = vcat(idx_iflussR, [i k])
-                    elseif string(ff)=="i_in"
+                    elseif string(ff)=="iL"
                         idx_iflussL = vcat(idx_iflussL, [i k])
                     else
                         idx_iflussR = vcat(idx_iflussR, [i k])
@@ -59,10 +59,8 @@ function netzwerk2array(knoten,kanten)
                     elseif string(ff)=="mL"
                         idx_mflussL = vcat(idx_mflussL, [i k])
                     else
-                        if typeof(kanten[i]) != mWRo_kante_mitte
-                            idx_mflussR = vcat(idx_mflussR, [i k])
-                            idx_mflussL = vcat(idx_mflussL, [i k])
-                        end
+                        idx_mflussR = vcat(idx_mflussR, [i k])
+                        idx_mflussL = vcat(idx_mflussL, [i k])
                     end
                 end
                 if first(string(ff))=='e'

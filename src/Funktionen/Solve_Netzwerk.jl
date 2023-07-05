@@ -88,6 +88,12 @@ function solveNetzwerk(dir::String)
             #-- Mittlere Rohrabschnitte an Ränder übergeben
             kanten[end-nx-1].RL = kanten[end-nx]
             kanten[end].RR = kanten[end-1]
+        elseif typ=="mWRo2"
+            kk["PL"] = knoten[von].y.P; kk["PR"] = knoten[nach].y.P;
+            kk["TL"] = knoten[von].y.T; kk["TR"] = knoten[nach].y.T;
+            Params = MakeParam(kk)
+            push!(kanten,mWRo2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
+            M = vcat(M, kanten[end].M)
         elseif typ=="mWT"
             Params = MakeParam(kk) 
             RL = kk["RefRohr"]
@@ -187,32 +193,32 @@ function solveNetzwerk(dir::String)
 
     for i in eachindex(knoten_infos)
         if hasfield(typeof(knoten[i].y), :U) == true
-            U_max = max(U_max,knoten[i].y.U)
+            U_max = maximum([U_max; knoten[i].y.U])
         end
         if typeof(knoten[i]) <: Wasser_Knoten
             if hasfield(typeof(knoten[i].y), :P) == true
-                PW_max = max(PW_max,knoten[i].y.P) 
+                PW_max = maximum([PW_max; knoten[i].y.P]) 
             end
         else
             if hasfield(typeof(knoten[i].y), :P) == true
-                P_max = max(P_max,knoten[i].y.P) 
+                P_max = maximum([P_max; knoten[i].y.P]) 
             end
         end
     end
     for i in eachindex(kanten_infos)
         if hasfield(typeof(kanten[i].y), :U) == true
-            U_max = max(U_max,kanten[i].y.U) 
+            U_max = maximum([U_max; kanten[i].y.U]) 
         end
         if hasfield(typeof(kanten[i].Param), :U0) == true   #-- z. B. wegen U0 der Batterie
-            U_max = max(U_max,kanten[i].Param.U0) 
+            U_max = maximum([U_max; kanten[i].Param.U0]) 
         end
         if typeof(kanten[i]) <: Wasser_Kante
             if hasfield(typeof(kanten[i].y), :P) == true
-                PW_max = max(PW_max,kanten[i].y.P) 
+                PW_max = maximum([PW_max; kanten[i].y.P]) 
             end
         else
             if hasfield(typeof(kanten[i].y), :P) == true
-                P_max = max(P_max,kanten[i].y.P) 
+                P_max = maximum([P_max; kanten[i].y.P]) 
             end
         end
     end
@@ -224,7 +230,7 @@ function solveNetzwerk(dir::String)
         # wieso kein T_max suchen? Wie können AW für Kopplungsknoten mit T besser bestimmt werden?
     end
     #-----------------------------------------------------
-
+@show M
     M = sparse(diagm(M))
 
     #-- Erzeuge Zustandsvektor y und Indizes wo was steht in y 

@@ -17,7 +17,7 @@ abstract type Gas_Strom_Kante <: Kante end
 #----------------------------------------
 
 function netzwerk2array(knoten,kanten)
-    y_arr = Float64[]; P_scale = Float64[];
+    y_arr = Number[]; P_scale = Float64[];
     idx_ele = Dict()
     idx_iflussL = Array{Int}(undef, 0,2); idx_iflussR = Array{Int}(undef, 0,2); 
     idx_mflussR = Array{Int}(undef, 0,2); idx_mflussL = Array{Int}(undef, 0,2); 
@@ -87,20 +87,25 @@ function netzwerk2array(knoten,kanten)
 end
 
 function array2netzwerk!(knoten,kanten,y_arr)
-    idx = 0
+    idx = 1
     for i in eachindex(knoten)
         for ff in fieldnames(typeof(knoten[i].y))
             if ff != :Param
-                idx += 1
                 setfield!(knoten[i].y, ff, y_arr[idx])
+                idx += 1
             end
         end
     end
     for i in eachindex(kanten)
         for ff in fieldnames(typeof(kanten[i].y))
             if ff != :Param
-                idx += 1
-                setfield!(kanten[i].y, ff, y_arr[idx])
+                n = length(getfield(kanten[i].y,ff))
+                if n == 1
+                    setfield!(kanten[i].y, ff, y_arr[idx])
+                else
+                    setfield!(kanten[i].y, ff, y_arr[idx:idx+n-1])
+                end
+                idx = idx + n
             end
         end
     end

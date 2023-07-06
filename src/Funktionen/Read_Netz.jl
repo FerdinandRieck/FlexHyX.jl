@@ -12,15 +12,21 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
     for kk in K
 		if haskey(kk,"#")==false && haskey(kk,"#Nr")==false
 			typ = kk["Typ"]; 
-            if (typ=="U0") & (haskey(kk,"Spannung")==true) kk["U0"] = kk["Spannung"] end
-			if (typ=="GP0") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end
+			#if (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end 
+			#if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end 
+
+            if (typ=="U0") & (haskey(kk,"Spannung")==true) kk["U0"] = kk["Spannung"] end 
+			if (typ=="GP0") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end # !!! braucht man nicht mehr, da bereits oben für alle Typen
 			if (typ=="T0") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end
 			if (typ=="TM") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end
 			if (typ=="WPSP") 
 				if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end
 				if (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end
 			end
-		#	if (typ=="GP0")|(typ=="GPSP")|(typ=="GPMH")... # besser direkt so
+			if (typ=="WPSPy") 
+				if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end
+				if (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end
+			end
 			if typ=="GPSP"
 				if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end
 				if haskey(kk,"T0")==true kk["T0"] = kk["T0"] + 273.15 end
@@ -37,6 +43,8 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 	for kk in K
 		if haskey(kk,"#")==false && haskey(kk,"#Nr")==false
 			typ = kk["Typ"]; 
+			#if (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end 
+			#if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end 
 			if (typ=="iPV")  
 				if (haskey(kk,"Temp")==true) kk["T_PV"] = kk["Temp"] + 273.15; end
 				if (haskey(kk,"Strahlung")==true) kk["G"] = kk["Strahlung"] end

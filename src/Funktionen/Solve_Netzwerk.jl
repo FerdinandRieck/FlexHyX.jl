@@ -91,9 +91,31 @@ function solveNetzwerk(dir::String)
         elseif typ=="mWRo2"
             kk["PL"] = knoten[von].y.P; kk["PR"] = knoten[nach].y.P;
             kk["TL"] = knoten[von].y.T; kk["TR"] = knoten[nach].y.T;
+            if kk["PL"] == kk["PR"]
+                kk["P_vec"] = 0
+                kk["P"] = fill(kk["PL"],kk["nx"])
+            end
+            if kk["TL"] == kk["TR"]
+                kk["T_vec"] = 0
+                kk["T"] = fill(kk["TL"],kk["nx"])
+            end
             Params = MakeParam(kk)
             push!(kanten,mWRo2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
             M = vcat(M, kanten[end].M)
+        elseif typ=="mWRo2y"
+            kk["PL"] = knoten[von].y.P; kk["PR"] = knoten[nach].y.P;
+            kk["TL"] = knoten[von].y.T; kk["TR"] = knoten[nach].y.T;
+            if kk["PL"] == kk["PR"]
+                kk["P_vec"] = 0
+                kk["P"] = fill(kk["PL"],kk["nx"])
+            end
+            if kk["TL"] == kk["TR"]
+                kk["T_vec"] = 0
+                kk["T"] = fill(kk["TL"],kk["nx"])
+            end
+            Params = MakeParam(kk)
+            push!(kanten,mWRo2y_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
+            M = vcat(M, kanten[end].M)    
         elseif typ=="mWT"
             Params = MakeParam(kk) 
             RL = kk["RefRohr"]
@@ -230,7 +252,7 @@ function solveNetzwerk(dir::String)
         # wieso kein T_max suchen? Wie können AW für Kopplungsknoten mit T besser bestimmt werden?
     end
     #-----------------------------------------------------
-@show M
+
     M = sparse(diagm(M))
 
     #-- Erzeuge Zustandsvektor y und Indizes wo was steht in y 

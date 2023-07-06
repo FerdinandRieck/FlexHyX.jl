@@ -1,4 +1,4 @@
-Base.@kwdef mutable struct mWRo2_Param
+Base.@kwdef mutable struct mWRo2y_Param
     nx = 1
     L = 1.0
     dx = L/max(nx,1/2)
@@ -26,8 +26,8 @@ Base.@kwdef mutable struct mWRo2_Param
 end
 
 #-- Rohrränder ---------------------------------
-Base.@kwdef mutable struct y_mWRo2
-    Param::mWRo2_Param
+Base.@kwdef mutable struct y_mWRo2y
+    Param::mWRo2y_Param
     mL::Number = 0.0
     eL::Number = 0.0
     P = Param.P
@@ -37,12 +37,12 @@ Base.@kwdef mutable struct y_mWRo2
     eR::Number = 0.0
 end
 
-Base.@kwdef mutable struct mWRo2_kante <: Wasser_Kante
+Base.@kwdef mutable struct mWRo2y_kante <: Wasser_Kante
     #-- default Parameter
-    Param::mWRo2_Param
+    Param::mWRo2y_Param
 
     #-- Zustandsvariablen
-    y = y_mWRo2(Param=Param)
+    y = y_mWRo2y(Param=Param)
 
     #-- Wasserknoten links und rechts
     KL::Wasser_Knoten
@@ -55,26 +55,24 @@ Base.@kwdef mutable struct mWRo2_kante <: Wasser_Kante
     Z::Dict
 end
 
-function Kante!(dy,k,kante::mWRo2_kante,t)
+function Kante!(dy,y,k,kante::mWRo2y_kante,t)
     #-- Parameter
     (; nx,dx,a2,leit,Arho,A,D,cv_H2O,mu,K,lamW,phi,g) = kante.Param
     #--
 
     #-- Zustandsvariablen
-    mL = kante.y.mL
-    eL = kante.y.eL
-    P = kante.y.P
-    m = kante.y._m
-    T = kante.y.T
-    mR = kante.y.mR
-    eR = kante.y.eR
+    mL = y[kante.y.mL]
+    eL = y[kante.y.eL]
+    P = y[kante.y.P]
+    m = y[kante.y._m]
+    T = y[kante.y.T]
+    mR = y[kante.y.mR]
+    eR = y[kante.y.eR]
     #--
-
-    (; KL,KR) = kante
-    PL = KL.y.P
-    TL = KL.y.T
-    PR = KR.y.P
-    TR = KR.y.T
+    PL = y[kante.KL.y.P]
+    TL = y[kante.KL.y.T]
+    PR = y[kante.KR.y.P]
+    TR = y[kante.KR.y.T]
     
    # P = [PL; y[k+2:k+1+nx]; PR]
    # m = [mL; y[k+2+nx:k+1+2*nx]; mR]

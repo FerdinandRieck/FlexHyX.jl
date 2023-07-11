@@ -101,26 +101,7 @@ function solveNetzwerk(dir::String)
             end
             Params = MakeParam(kk)
             push!(kanten,mWRo2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
-            M = vcat(M, kanten[end].M)
-        elseif typ=="mWRo2y"
-            kk["PL"] = knoten[von].y.P; kk["PR"] = knoten[nach].y.P;
-            kk["TL"] = knoten[von].y.T; kk["TR"] = knoten[nach].y.T;
-            if kk["PL"] == kk["PR"]
-                kk["P_vec"] = 0
-                kk["P"] = fill(kk["PL"],kk["nx"])
-            end
-            if kk["TL"] == kk["TR"]
-                kk["T_vec"] = 0
-                kk["T"] = fill(kk["TL"],kk["nx"])
-            end
-            Params = MakeParam(kk)
-            push!(kanten,mWRo2y_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
-            M = vcat(M, kanten[end].M)    
-        elseif typ=="mWT"
-            Params = MakeParam(kk) 
-            RL = kk["RefRohr"]
-            push!(kanten,mWT_kante(Param=Params, KL=knoten[von], KR=knoten[nach], RL = kanten[RL], Z=kk)) 
-            M = vcat(M, kanten[end].M)
+            M = vcat(M, kanten[end].M)   
         elseif typ=="mWTR"
             Params = MakeParam(kk) 
             push!(kanten,mWTR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
@@ -130,31 +111,18 @@ function solveNetzwerk(dir::String)
             kanten[end].y.P = PL + 0.5*(PR-PL)
             kanten[end].y.T = TL + 0.5*(TR-TL)
         elseif typ=="mWTaR"
-            Params = MakeParam(kk) 
-            push!(kanten,mWTaR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
-            M = vcat(M, kanten[end].M)
-            PL = knoten[von].y.P; PR = knoten[nach].y.P
-            TL = knoten[von].y.T; TR = knoten[nach].y.T
-            kanten[end].y.P = PL + 0.5*(PR-PL)
-            kanten[end].y.T = TL + 0.5*(TR-TL)
-            if haskey(kk,"RohrAussen")
-                RA = kk["RohrAussen"]
-                kanten[end].RA = kanten[RA]
-                kanten[RA].RA = kanten[end]
-            end
-        elseif typ=="mWTaRnx"
             Params = MakeParam(kk)
             #-- Linke Rand
-            push!(kanten,mWTaRnx_kante_randL(Param=Params, KL=knoten[von], Z=kk))
+            push!(kanten,mWTaR_kante_randL(Param=Params, KL=knoten[von], Z=kk))
             M = vcat(M, kanten[end].M)
             #-- Rohrmitte
             nx = Params.nx
             for j = 1:nx
-                push!(kanten,mWTaRnx_kante_mitte(Param=Params, Z=kk))
+                push!(kanten,mWTaR_kante_mitte(Param=Params, Z=kk))
                 M = vcat(M, kanten[end].M)
             end
             #-- Rechte Rand
-            push!(kanten,mWTaRnx_kante_randR(Param=Params, KR=knoten[nach], Z=kk))
+            push!(kanten,mWTaR_kante_randR(Param=Params, KR=knoten[nach], Z=kk))
             M = vcat(M, kanten[end].M)
             #-- 
             n = length(kanten)
@@ -188,15 +156,43 @@ function solveNetzwerk(dir::String)
                     end
                 end
             end 
-        elseif typ=="eWT2"
+        elseif typ=="mWTaR2"
+            kk["PL"] = knoten[von].y.P; kk["PR"] = knoten[nach].y.P;
+            kk["TL"] = knoten[von].y.T; kk["TR"] = knoten[nach].y.T;
+            if kk["PL"] == kk["PR"]
+                kk["P_vec"] = 0
+                kk["P"] = fill(kk["PL"],kk["nx"])
+            end
+            if kk["TL"] == kk["TR"]
+                kk["T_vec"] = 0
+                kk["T"] = fill(kk["TL"],kk["nx"])
+            end
             Params = MakeParam(kk) 
-            push!(kanten,eWT2_kante(Param=Params, KL1=knoten[von], KR1=knoten[nach], Z=kk)) 
+            push!(kanten,mWTaR2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
             M = vcat(M, kanten[end].M)
             if haskey(kk,"RohrAussen")
                 RA = kk["RohrAussen"]
-                vonRA = kanten[RA].Z["VonNach"][1]; nachRA = kanten[RA].Z["VonNach"][2]
-                kanten[end].KL2 = knoten[vonRA]; kanten[end].KR2 = knoten[nachRA]
-                kanten[end-1].KL2 = knoten[von]; kanten[end-1].KR2 = knoten[nach]
+                kanten[end].RA = kanten[RA]
+                kanten[RA].RA = kanten[end]
+            end
+        elseif typ=="mWTaR3"
+            kk["PL"] = knoten[von].y.P; kk["PR"] = knoten[nach].y.P;
+            kk["TL"] = knoten[von].y.T; kk["TR"] = knoten[nach].y.T;
+            if kk["PL"] == kk["PR"]
+                kk["P_vec"] = 0
+                kk["P"] = fill(kk["PL"],kk["nx"])
+            end
+            if kk["TL"] == kk["TR"]
+                kk["T_vec"] = 0
+                kk["T"] = fill(kk["TL"],kk["nx"])
+            end
+            Params = MakeParam(kk) 
+            push!(kanten,mWTaR3_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
+            M = vcat(M, kanten[end].M)
+            if haskey(kk,"RohrAussen")
+                RA = kk["RohrAussen"]
+                kanten[end].RA = kanten[RA]
+                kanten[RA].RA = kanten[end]
             end
         else
             #-- Parameter erzeugen und ändern
@@ -261,7 +257,7 @@ function solveNetzwerk(dir::String)
     y, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, P_scale, idx_ele = netzwerk2array(knoten,kanten) 
 
     params = IM, IP, knoten, kanten, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele
-
+@show y
     #-- konsistente AW berechnen -----------
     ind_alg = findall(x->x==0,M[diagind(M)]);
     dy = 0*y;
@@ -273,7 +269,7 @@ function solveNetzwerk(dir::String)
     y[ind_alg] = res.zero;
     dgl!(dy,y,params,0.0);
     println("Test Nachher: ",Base.maximum(abs.(dy[ind_alg])))
-
+@show y
     #--------------
     #-- Jacobi Struktur
     #f!(x,z) = dgl!(x,z,params,0.0); 

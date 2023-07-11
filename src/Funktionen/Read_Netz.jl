@@ -12,28 +12,10 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
     for kk in K
 		if haskey(kk,"#")==false && haskey(kk,"#Nr")==false
 			typ = kk["Typ"]; 
-			#if (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end 
-			#if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end 
-
+			if haskey(kk,"T0")==true kk["T0"] = kk["T0"] + 273.15 end 
+			if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end 
             if (typ=="U0") & (haskey(kk,"Spannung")==true) kk["U0"] = kk["Spannung"] end 
-			if (typ=="GP0") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end # !!! braucht man nicht mehr, da bereits oben für alle Typen
-			if (typ=="T0") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end
-			if (typ=="TM") & (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end
-			if (typ=="WPSP") 
-				if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end
-				if (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end
-			end
-			if (typ=="WPSPy") 
-				if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end
-				if (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end
-			end
-			if typ=="GPSP"
-				if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end
-				if haskey(kk,"T0")==true kk["T0"] = kk["T0"] + 273.15 end
-			end
 			if typ=="GPMH"
-				if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end
-				if haskey(kk,"T0")==true kk["T0"] = kk["T0"] + 273.15 end
 				if haskey(kk,"Theta0")==true kk["Θ0"] = kk["Theta0"] end
 			end
 			push!(knoten,kk);
@@ -43,8 +25,8 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 	for kk in K
 		if haskey(kk,"#")==false && haskey(kk,"#Nr")==false
 			typ = kk["Typ"]; 
-			#if (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end 
-			#if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end 
+			if (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end 
+			if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end 
 			if (typ=="iPV")  
 				if (haskey(kk,"Temp")==true) kk["T_PV"] = kk["Temp"] + 273.15; end
 				if (haskey(kk,"Strahlung")==true) kk["G"] = kk["Strahlung"] end
@@ -89,18 +71,16 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 	for i = 1:n_e
 		nr2ka[i] = kanten[i]["Nr"];
 	end
-	i_Rohr = 0
+	#i_Rohr = 0
 	for i = 1:n_e
+		#=
 		if haskey(kanten[i],"nx")
 			i_Rohr = i_Rohr + kanten[i]["nx"] + 1  #-- + 1 wegen Rohr Links
 		end
-		if (kanten[i]["Typ"] == "mWT")
-			i_ka = findall(x->x==kanten[i]["RefRohr"],nr2ka)[1];
-			kanten[i]["RefRohr"] = i_ka + i_Rohr;
-		end
+		=#
 		if haskey(kanten[i],"RohrAussen")
 			i_ka = findall(x->x==kanten[i]["RohrAussen"],nr2ka)[1];
-			kanten[i]["RohrAussen"] = i_ka + i_Rohr;
+			kanten[i]["RohrAussen"] = i_ka #+ i_Rohr;
 		end
 		kanten[i]["VonNach"][1] = findall(x->x==kanten[i]["VonNach"][1],nr2kn)[1];
 		kanten[i]["VonNach"][2] = findall(x->x==kanten[i]["VonNach"][2],nr2kn)[1];

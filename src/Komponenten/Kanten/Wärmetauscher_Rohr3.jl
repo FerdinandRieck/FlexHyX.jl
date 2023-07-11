@@ -1,4 +1,4 @@
-Base.@kwdef mutable struct mWRo2_Param
+Base.@kwdef mutable struct mWTaR3_Param
     nx = 1
     L = 1.0
     dx = L/max(nx,1/2)
@@ -19,15 +19,16 @@ Base.@kwdef mutable struct mWRo2_Param
     PR = 0
     TL = 10
     TR = 0
-    P_vec = PL:(PR-PL)*0.5/nx:PR # [fill(PL,nx);fill(PR,nx+1)]
+    P_vec = PL:(PR-PL)*0.5/nx:PR
     T_vec = TL:(TR-TL)*0.5/nx:TR
-    P = Vector(P_vec[2:2:end-1])
+    P = Vector(P_vec[2:2:end-1]) #fill(PR,nx)
     T = Vector(T_vec[2:2:end-1])
+    kA = 380.0
 end
 
 #-- Rohrränder ---------------------------------
-Base.@kwdef mutable struct y_mWRo2
-    Param::mWRo2_Param
+Base.@kwdef mutable struct y_mWTaR3
+    Param::mWTaR3_Param
     mL::Number = 0.0
     eL::Number = 0.0
     P = Param.P
@@ -37,16 +38,19 @@ Base.@kwdef mutable struct y_mWRo2
     eR::Number = 0.0
 end
 
-Base.@kwdef mutable struct mWRo2_kante <: Wasser_Kante
+Base.@kwdef mutable struct mWTaR3_kante <: Wasser_Kante
     #-- default Parameter
-    Param::mWRo2_Param
+    Param::mWTaR3_Param
 
     #-- Zustandsvariablen
-    y = y_mWRo2(Param=Param)
+    y = y_mWTaR3(Param=Param)
 
     #-- Wasserknoten links und rechts
     KL::Wasser_Knoten
     KR::Wasser_Knoten
+
+    #-- Rohr aussen
+    RA = 0
 
     #-- M-Matrix
     M::Array{Int} = [1; 0; ones(Int,3*Param.nx); 1; 0]
@@ -55,9 +59,9 @@ Base.@kwdef mutable struct mWRo2_kante <: Wasser_Kante
     Z::Dict
 end
 
-function Kante!(dy,k,kante::mWRo2_kante,t)
+function Kante!(dy,k,kante::mWTaR3_kante,t)
     #-- Parameter
-    (; nx,dx,a2,leit,Arho,A,D,cv_H2O,mu,K,lamW,phi,g) = kante.Param
+    (; nx,dx,a2,leit,Arho,A,D,cv_H2O,mu,K,lamW,phi,g,kA) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -70,18 +74,12 @@ function Kante!(dy,k,kante::mWRo2_kante,t)
     eR = kante.y.eR
     #--
 
-    (; KL,KR,Z) = kante
+    (; KL,KR,RA,Z) = kante
     PL = KL.y.P
     TL = KL.y.T
     PR = KR.y.P
     TR = KR.y.T
-    
-   # P = [PL; y[k+2:k+1+nx]; PR]
-   # m = [mL; y[k+2+nx:k+1+2*nx]; mR]
-   # T = [TL; y[k+2+2*nx:k+1+3*nx]; TR]
-
-   # Re = abs(m)*D/(A*var.mu); Re = max(Re,1.0e-6);
-   # lam = 0.25./(log10(K/(3.7*D)+5.74./exp(0.9*log(Re))).^2);
+    T_aussen = RA.y.T
 
     if haskey(Z,"WENO") 
         if Z["WENO"] == true
@@ -97,8 +95,8 @@ function Kante!(dy,k,kante::mWRo2_kante,t)
     end
 
     #-- Rohr links
-    dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - A*(P[1]-PL)*2/dx - lamda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi); #-- mL
-    dy[k+1] = eL -(0.5*cv_H2O*(abs(mL)*(TL-T[1])+mL*(TL+T[1])) + A/dx*2*lamW*(TL-T[1])); #-- eL
+    dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - A*(P[1]-PL)*2/dx - lamda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi)  #-- mL
+    dy[k+1] = eL -(0.5*cv_H2O*(abs(mL)*(TL-T[1])+mL*(TL+T[1])) + A/dx*2*lamW*(TL-T[1]))  #-- eL
     
     #-- Rohr mitte
     fRP = PL; fRm = mL; fRT = TL #-- linke Randbedingung
@@ -111,35 +109,13 @@ function Kante!(dy,k,kante::mWRo2_kante,t)
             fRm = 0.5*(fluxmL[i+1]+fluxmR[i+1]) 
             fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
         end
-        dy[k+i+1] = -a2/A*(fRm-fLm)/dx
-        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - A*(fRP-fLP)/dx - lamda(m[i],D,A,mu,K)/(2*D*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)
-        dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
+        dy[k+i+1] = -a2/A*(fRm-fLm)/dx  #-- P 
+        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - A*(fRP-fLP)/dx - lamda(m[i],D,A,mu,K)/(2*D*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)  #-- m
+        dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) - kA/(Arho*D)*(T[i]-T_aussen[i])  #-- T
     end
-    
-    #=
-    for i = 1:nx
-        if i==1
-            P_m12 = PL; m_m12 = mL; T_m12 = TL;
-        else
-            P_m12 = 0.5*(P[i]+P[i-1]); 
-            m_m12 = 0.5*(m[i]+m[i-1])
-            T_m12 = 0.5*(T[i]+T[i-1]);
-        end
-        if i==nx
-            P_p12 = PR; m_p12 = mR; T_p12 = TR;
-        else
-            P_p12 = 0.5*(P[i]+P[i+1]);
-            m_p12 = 0.5*(m[i]+m[i+1]); 
-            T_p12 = 0.5*(T[i]+T[i+1]);
-        end
-        dy[k+i+1] = -a2/A*(m_p12-m_m12)/dx
-        dy[k+i+1+nx] = -(m_p12^2-m_m12^2)/(dx*Arho) - A*(P_p12-P_m12)/dx - lamda(m[i],D,A,mu,K)/(2*D*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)
-        dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-T_m12,T_p12-T[i])*2/dx + leit*2/(dx^2)*(T_m12-2*T[i]+T_p12)
-    end
-    =#
 
     #-- Rohr rechts
-    dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - A*(PR-P[end])*2/dx - lamda(mR,D,A,mu,K)/(2*D*Arho)*abs(mR)*mR - g*Arho*sin(phi); #-- mR
+    dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - A*(PR-P[end])*2/dx - lamda(mR,D,A,mu,K)/(2*D*Arho)*abs(mR)*mR - g*Arho*sin(phi)  #-- mR
     dy[k+3*nx+3] = eR -(0.5*cv_H2O*(abs(mR)*(T[end]-TR)+mR*(T[end]+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
 end
 

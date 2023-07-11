@@ -60,9 +60,11 @@ function plot_knoten!(knoten)
 		if obj <: Strom_Knoten
 			color = :red
 		elseif obj <: Gas_Knoten
-			color = :blue
+			color = :green
 		elseif obj <: Temp_Knoten
 			color = :magenta
+		elseif obj <: Wasser_Knoten
+			color = :blue
 		end
 		plot!([x],[y], seriestype = :scatter, markercolor = :white, markerstrokewidth = 2, markerstrokecolor = color)
 		tt = string(kk["Nr"])*" "*kk["Typ"]
@@ -95,13 +97,15 @@ function plot_kanten!(knoten, kanten)
 		else
 			s = Symbol(kk["Typ"],"_kante"); obj = getfield(FlexHyX, s)
 			if obj <: Strom_Kante
-				color = :blue
+				color = :red
 			elseif obj <: Gas_Kante
 				color = :green
 			elseif obj <: Temp_Kante
 				color = :red
 			elseif obj <: Gas_Strom_Kante
 				color = :orange
+			elseif obj <: Wasser_Kante
+				color = :blue
 			end
 		end
 		P = plot!([x0, x13, x23, x1], [y0, y13, y23, y1],

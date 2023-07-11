@@ -14,6 +14,7 @@ function solveNetzwerk(dir::String)
     pfad = get(J_cfg,"Pfad","."); pfad=dir*"/"*pfad*"/";
     netzfile = pfad*get(J_cfg,"Netzwerkfile",0)
     zeitfile = get(J_cfg,"Zeitreihenfile",nothing) 
+    dtmax = get(J_cfg,"dtmax",600)
 
     znamen = []; zwerte = []; zt = [];
     if zeitfile != nothing
@@ -23,25 +24,27 @@ function solveNetzwerk(dir::String)
     end
 
     knoten_infos, kanten_infos, eventfile = readNetz(dir, netzfile, zwerte, zt, znamen)
+
+    n_n = size(knoten_infos)[1]; n_e = size(kanten_infos)[1];  
   
     M = Int[]; 
-    kanten = []; knoten = []
+    kanten = Array{Any}(undef, n_e); knoten =  Array{Any}(undef, n_n);
 
     println("---------------- geänderte Parameter ------------------")
 
-    for i in eachindex(knoten_infos)  #-- Knoten erzeugen ----------------------------
+    for i = 1:n_n  #-- Knoten erzeugen ----------------------------
         kk = knoten_infos[i];  typ = kk["Typ"]; 
 
         #-- Parameter erzeugen und ändern
         Params = MakeParam(kk)
         #-- Knoten erzeugen
         s = Symbol(typ,"_Knoten"); obj = getfield(FlexHyX, s)
-        push!(knoten,obj(Param=Params, Z=kk))     #-- z.B. U0_Knoten()
+        knoten[i] = obj(Param=Params, Z=kk)     #-- z.B. U0_Knoten()
 
         M = vcat(M, knoten[i].M)
     end
 
-    for i in eachindex(kanten_infos)  #-- Kanten erzeugen ---------------------------- 
+    for i = 1:n_e  #-- Kanten erzeugen ---------------------------- 
         kk = kanten_infos[i]; typ = kk["Typ"]; 
         von = kk["VonNach"][1]; nach = kk["VonNach"][2]
         
@@ -49,45 +52,25 @@ function solveNetzwerk(dir::String)
             mE = kk["RefKante"]; 
             von_mE = mE["VonNach"][1]; nach_mE = mE["VonNach"][2]
             Params = MakeParam(kk)
-            push!(kanten,iE_kante(Param=Params, KUL=knoten[von], KUR=knoten[nach], KGL=knoten[von_mE], KGR=knoten[nach_mE], Z=kk))
-            M = vcat(M, kanten[end].M)
+            kanten[i] = iE_kante(Param=Params, KUL=knoten[von], KUR=knoten[nach], KGL=knoten[von_mE], KGR=knoten[nach_mE], Z=kk)
         elseif typ=="iBZ"
             mBZ = kk["RefKante"]; 
             von_mBZ = mBZ["VonNach"][1]; nach_mBZ = mBZ["VonNach"][2]
             Params = MakeParam(kk)
-            push!(kanten,iBZ_kante(Param=Params, KUL=knoten[von], KUR=knoten[nach], KGL=knoten[von_mBZ], KGR=knoten[nach_mBZ], Z=kk))
-            M = vcat(M, kanten[end].M)
+            kanten[i] = iBZ_kante(Param=Params, KUL=knoten[von], KUR=knoten[nach], KGL=knoten[von_mBZ], KGR=knoten[nach_mBZ], Z=kk)
         elseif typ=="mWRo"
+            kk["PL"] = knoten[von].y.P; kk["PR"] = knoten[nach].y.P;
+            kk["TL"] = knoten[von].y.T; kk["TR"] = knoten[nach].y.T;
+            if kk["PL"] == kk["PR"]
+                kk["P_vec"] = 0
+                kk["P"] = fill(kk["PL"],kk["nx"])
+            end
+            if kk["TL"] == kk["TR"]
+                kk["T_vec"] = 0
+                kk["T"] = fill(kk["TL"],kk["nx"])
+            end
             Params = MakeParam(kk)
-            #-- Linke Rand
-            push!(kanten,mWRo_kante_randL(Param=Params, KL=knoten[von], Z=kk))
-            M = vcat(M, kanten[end].M)
-            #-- Rohrmitte
-            nx = Params.nx
-            for j = 1:nx
-                push!(kanten,mWRo_kante_mitte(Param=Params, Z=kk))
-                M = vcat(M, kanten[end].M)
-            end
-            #-- Rechte Rand
-            push!(kanten,mWRo_kante_randR(Param=Params, KR=knoten[nach], Z=kk))
-            M = vcat(M, kanten[end].M)
-            #-- 
-            n = length(kanten)
-            k = 1
-            for j = n-nx:n-1
-                #-- Rechte und Linke Rohrabschnitt übergeben
-                kanten[j].RL = kanten[j-1]
-                kanten[j].RR = kanten[j+1]
-                #-- AW ändern
-                PL = knoten[von].y.P; PR = knoten[nach].y.P
-                TL = knoten[von].y.T; TR = knoten[nach].y.T
-                kanten[j].y.P = PL + (k-0.5)/nx*(PR-PL)
-                kanten[j].y.T = TL + (k-0.5)/nx*(TR-TL)
-                k = k+1
-            end
-            #-- Mittlere Rohrabschnitte an Ränder übergeben
-            kanten[end-nx-1].RL = kanten[end-nx]
-            kanten[end].RR = kanten[end-1]
+            kanten[i] = mWRo_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)
         elseif typ=="mWRo2"
             kk["PL"] = knoten[von].y.P; kk["PR"] = knoten[nach].y.P;
             kk["TL"] = knoten[von].y.T; kk["TR"] = knoten[nach].y.T;
@@ -100,63 +83,15 @@ function solveNetzwerk(dir::String)
                 kk["T"] = fill(kk["TL"],kk["nx"])
             end
             Params = MakeParam(kk)
-            push!(kanten,mWRo2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
-            M = vcat(M, kanten[end].M)   
+            kanten[i] = mWRo2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)  
         elseif typ=="mWTR"
             Params = MakeParam(kk) 
-            push!(kanten,mWTR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
-            M = vcat(M, kanten[end].M)
+            kanten[i] = mWTR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)
             PL = knoten[von].y.P; PR = knoten[nach].y.P
             TL = knoten[von].y.T; TR = knoten[nach].y.T
-            kanten[end].y.P = PL + 0.5*(PR-PL)
-            kanten[end].y.T = TL + 0.5*(TR-TL)
+            kanten[i].y.P = PL + 0.5*(PR-PL)
+            kanten[i].y.T = TL + 0.5*(TR-TL)
         elseif typ=="mWTaR"
-            Params = MakeParam(kk)
-            #-- Linke Rand
-            push!(kanten,mWTaR_kante_randL(Param=Params, KL=knoten[von], Z=kk))
-            M = vcat(M, kanten[end].M)
-            #-- Rohrmitte
-            nx = Params.nx
-            for j = 1:nx
-                push!(kanten,mWTaR_kante_mitte(Param=Params, Z=kk))
-                M = vcat(M, kanten[end].M)
-            end
-            #-- Rechte Rand
-            push!(kanten,mWTaR_kante_randR(Param=Params, KR=knoten[nach], Z=kk))
-            M = vcat(M, kanten[end].M)
-            #-- 
-            n = length(kanten)
-            k = 1
-            for j = n-nx:n-1
-                #-- Rechte und Linke Rohrabschnitt übergeben
-                kanten[j].RL = kanten[j-1]
-                kanten[j].RR = kanten[j+1]
-                #-- AW ändern
-                PL = knoten[von].y.P; PR = knoten[nach].y.P
-                TL = knoten[von].y.T; TR = knoten[nach].y.T
-                kanten[j].y.P = PL + (k-0.5)/nx*(PR-PL)
-                kanten[j].y.T = TL + (k-0.5)/nx*(TR-TL)
-                k = k+1
-            end
-            #-- Mittlere Rohrabschnitte an Ränder übergeben
-            kanten[end-nx-1].RL = kanten[end-nx]
-            kanten[end].RR = kanten[end-1]
-            #-- Rohrabschnitte Wärmeaustausch
-            if haskey(kk,"Richtung")
-                if kk["Richtung"] == "gleich"
-                    for j = n-nx:n-1
-                        kanten[j].RA = kanten[j-nx-2]
-                        kanten[j-nx-2].RA = kanten[j]
-                    end
-                end
-                if kk["Richtung"] == "gegen"
-                    for j = 1:nx
-                        kanten[end-nx+j-1].RA = kanten[end-nx-j-2]
-                        kanten[end-nx-j-2].RA = kanten[end-nx+j-1]
-                    end
-                end
-            end 
-        elseif typ=="mWTaR2"
             kk["PL"] = knoten[von].y.P; kk["PR"] = knoten[nach].y.P;
             kk["TL"] = knoten[von].y.T; kk["TR"] = knoten[nach].y.T;
             if kk["PL"] == kk["PR"]
@@ -168,40 +103,20 @@ function solveNetzwerk(dir::String)
                 kk["T"] = fill(kk["TL"],kk["nx"])
             end
             Params = MakeParam(kk) 
-            push!(kanten,mWTaR2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
-            M = vcat(M, kanten[end].M)
+            kanten[i] = mWTaR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
             if haskey(kk,"RohrAussen")
                 RA = kk["RohrAussen"]
-                kanten[end].RA = kanten[RA]
-                kanten[RA].RA = kanten[end]
-            end
-        elseif typ=="mWTaR3"
-            kk["PL"] = knoten[von].y.P; kk["PR"] = knoten[nach].y.P;
-            kk["TL"] = knoten[von].y.T; kk["TR"] = knoten[nach].y.T;
-            if kk["PL"] == kk["PR"]
-                kk["P_vec"] = 0
-                kk["P"] = fill(kk["PL"],kk["nx"])
-            end
-            if kk["TL"] == kk["TR"]
-                kk["T_vec"] = 0
-                kk["T"] = fill(kk["TL"],kk["nx"])
-            end
-            Params = MakeParam(kk) 
-            push!(kanten,mWTaR3_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)) 
-            M = vcat(M, kanten[end].M)
-            if haskey(kk,"RohrAussen")
-                RA = kk["RohrAussen"]
-                kanten[end].RA = kanten[RA]
-                kanten[RA].RA = kanten[end]
+                kanten[i].RA = kanten[RA]
+                kanten[RA].RA = kanten[i]
             end
         else
             #-- Parameter erzeugen und ändern
             Params = MakeParam(kk) 
             #-- Kante erzeugen
             s = Symbol(typ,"_kante"); obj = getfield(FlexHyX, s)
-            push!(kanten,obj(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk))    #-- z.B. iB_kante()
-            M = vcat(M, kanten[end].M)
+            kanten[i] = obj(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)    #-- z.B. iB_kante()
         end
+        M = vcat(M, kanten[i].M)
     end
 
     println("-------------------------------------------------------")
@@ -251,13 +166,14 @@ function solveNetzwerk(dir::String)
 
     M = sparse(diagm(M))
 
-    #-- Erzeuge Zustandsvektor y und Indizes wo was steht in y 
+    #-- Erzeuge Inzidenzmatrix 
     IM, IP = inzidenz(knoten,kanten) 
 
+    #-- Erzeuge Zustandsvektor y und Indizes wo was steht in y
     y, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, P_scale, idx_ele = netzwerk2array(knoten,kanten) 
 
     params = IM, IP, knoten, kanten, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele
-@show y
+
     #-- konsistente AW berechnen -----------
     ind_alg = findall(x->x==0,M[diagind(M)]);
     dy = 0*y;
@@ -269,7 +185,7 @@ function solveNetzwerk(dir::String)
     y[ind_alg] = res.zero;
     dgl!(dy,y,params,0.0);
     println("Test Nachher: ",Base.maximum(abs.(dy[ind_alg])))
-@show y
+
     #--------------
     #-- Jacobi Struktur
     #f!(x,z) = dgl!(x,z,params,0.0); 
@@ -285,7 +201,7 @@ function solveNetzwerk(dir::String)
 
     if isempty(eventfile) 
         n_events = 0 
-        sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}),progress=true, reltol=rtol,abstol=atol,dtmax=600)
+        sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}),progress=true, reltol=rtol,abstol=atol,dtmax=dtmax)
     else
         global n_events
         cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)

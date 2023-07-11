@@ -15,6 +15,7 @@ Base.@kwdef mutable struct mWTR_Param
     K = 1e-5 #-- Rauheit
     phi = 0.0 #-- Neigungswinkel
     kA = 25.0
+    T_aussen = 293.15
 end
 
 Base.@kwdef mutable struct y_mWTR
@@ -47,7 +48,7 @@ end
 
 function Kante!(dy,k,kante::mWTR_kante,t)
     #-- Parameter
-    (; a2,A,D,dx,Arho,leit,K,mu,phi,g,cv_H2O,lamW,kA) = kante.Param
+    (; a2,A,D,dx,Arho,leit,K,mu,phi,g,cv_H2O,lamW,kA,T_aussen) = kante.Param
     #--
 
     #-- Zustandsvariable
@@ -66,7 +67,7 @@ function Kante!(dy,k,kante::mWTR_kante,t)
     PR = KR.y.P
     TR = KR.y.T
 
-    T_aussen = 283.15
+    
 
 
     dy[k] = -(m^2-mL^2)*2/(dx*Arho) - A*(P-PL)*2/dx - lamda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi) #-- mL

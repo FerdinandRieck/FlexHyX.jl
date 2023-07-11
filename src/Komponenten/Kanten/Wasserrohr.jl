@@ -15,158 +15,137 @@ Base.@kwdef mutable struct mWRo_Param
     leit = lamW/(rho0*cv_H2O)
     K = 1e-5 #-- Rauheit
     phi = 0.0 #-- Neigungswinkel
+    PL = 10
+    PR = 0
+    TL = 10
+    TR = 0
+    P_vec = PL:(PR-PL)*0.5/nx:PR # [fill(PL,nx);fill(PR,nx+1)]
+    T_vec = TL:(TR-TL)*0.5/nx:TR
+    P = Vector(P_vec[2:2:end-1])
+    T = Vector(T_vec[2:2:end-1])
+    WENO = true
 end
 
 #-- Rohrränder ---------------------------------
-Base.@kwdef mutable struct y_mWRo_randL
+Base.@kwdef mutable struct y_mWRo
+    Param::mWRo_Param
     mL::Number = 0.0
     eL::Number = 0.0
-end
-
-Base.@kwdef mutable struct mWRo_kante_randL <: Wasser_Kante
-    #-- default Parameter
-    Param::mWRo_Param
-
-    #-- Zustandsvariablen
-    y = y_mWRo_randL()
-
-    #-- Wasserknoten links
-    KL::Wasser_Knoten
-
-    #-- Rohrabschnitt links 
-    RL = 0 
-
-    #-- M-Matrix
-    M::Array{Int} = [1; 0]
-
-    #-- zusätzliche Infos
-    Z::Dict
-end
-
-Base.@kwdef mutable struct y_mWRo_randR
+    P = Param.P
+    _m = zeros(Param.nx)
+    T = Param.T
     mR::Number = 0.0
     eR::Number = 0.0
 end
 
-Base.@kwdef mutable struct mWRo_kante_randR <: Wasser_Kante
+Base.@kwdef mutable struct mWRo_kante <: Wasser_Kante
     #-- default Parameter
     Param::mWRo_Param
 
     #-- Zustandsvariablen
-    y = y_mWRo_randR()
+    y = y_mWRo(Param=Param)
 
-    #-- Wasserknoten rechts
+    #-- Wasserknoten links und rechts
+    KL::Wasser_Knoten
     KR::Wasser_Knoten
 
-    #-- Rohrabschnitt rechts 
-    RR = 0
-
     #-- M-Matrix
-    M::Array{Int} = [1; 0]
+    M::Array{Int} = [1; 0; ones(Int,3*Param.nx); 1; 0]
 
     #-- zusätzliche Infos
     Z::Dict
 end
-#-----------------------------------------------
 
-#-- Rohrmitte ----------------------------------
-Base.@kwdef mutable struct y_mWRo_mitte
-    P::Number = 1.0 #???Warum diese Anfangswerte in MATLAB???
-    _m::Number = 0.0
-    T::Number = 3.0
-end
-
-Base.@kwdef mutable struct mWRo_kante_mitte <: Wasser_Kante
-    #-- default Parameter
-    Param::mWRo_Param
-
-    #-- Zustandsvariablen
-    y = y_mWRo_mitte()
-
-    #-- Rohrabschnitt links und rechts
-    RL = 0  
-    RR = 0 
-
-    #-- M-Matrix
-    M::Array{Int} = [1; 1; 1]
-
-    #-- zusätzliche Infos
-    Z::Dict
-end
-#-----------------------------------------------
-
-function Kante!(dy,k,kante::mWRo_kante_randL,t)
+function Kante!(dy,k,kante::mWRo_kante,t)
     #-- Parameter
-    (; dx,Arho,A,D,cv_H2O,mu,K,lamW,phi,g) = kante.Param
+    (; nx,dx,a2,leit,Arho,A,D,cv_H2O,mu,K,lamW,phi,g,WENO) = kante.Param
     #--
 
     #-- Zustandsvariablen
     mL = kante.y.mL
     eL = kante.y.eL
-    #--
-
-    (; KL,RL) = kante
-    PL = KL.y.P
-    TL = KL.y.T
-    m1 = RL.y._m
-    P1 = RL.y.P
-    T1 = RL.y.T
-
-    dy[k] = -(m1^2-mL^2)*2/(dx*Arho) - A*(P1-PL)*2/dx - lamda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi); #-- mL
-    dy[k+1] = eL -(0.5*cv_H2O*(abs(mL)*(TL-T1)+mL*(TL+T1)) + A/dx*2*lamW*(TL-T1)); #-- eL
-end
-
-function Kante!(dy,k,kante::mWRo_kante_randR,t)
-    #-- Parameter
-    (; dx,Arho,A,D,cv_H2O,mu,K,lamW,phi,g) = kante.Param
-    #--
-
-    #-- Zustandsvariablen
+    P = kante.y.P
+    m = kante.y._m
+    T = kante.y.T
     mR = kante.y.mR
     eR = kante.y.eR
     #--
 
-    (; KR,RR) = kante
+    (; KL,KR,Z) = kante
+    PL = KL.y.P
+    TL = KL.y.T
     PR = KR.y.P
     TR = KR.y.T
-    mnx = RR.y._m
-    Pnx = RR.y.P
-    Tnx = RR.y.T
 
-    dy[k] = -(mR^2-mnx^2)*2/(dx*Arho) - A*(PR-Pnx)*2/dx - lamda(mR,D,A,mu,K)/(2*D*Arho)*abs(mR)*mR - g*Arho*sin(phi); #-- mR
-    dy[k+1] = eR -(0.5*cv_H2O*(abs(mR)*(Tnx-TR)+mR*(Tnx+TR)) + A/dx*2*lamW*(Tnx-TR)) #-- eR
-end
-
-function Kante!(dy,k,kante::mWRo_kante_mitte,t)
-    #-- Parameter
-    (; a2,A,D,dx,Arho,leit,K,mu,phi,g) = kante.Param
-    #--
-
-    #-- Zustandsvariablen
-    P = kante.y.P
-    m = kante.y._m
-    T = kante.y.T
-    #--
-
-    (; RL,RR) = kante
-    if typeof(kante.RL)==mWRo_kante_randL
-        P_m12 = RL.KL.y.P; m_m12 = RL.y.mL; T_m12 = RL.KL.y.T
+    if WENO == true
+        fluxPL, fluxPR = recover_weno(P)
+        fluxmL, fluxmR = recover_weno(m)
+        fluxTL, fluxTR = recover_weno(T)
     else
-        P_m12 = 0.5*(P + RL.y.P); m_m12 = 0.5*(m + RL.y._m); T_m12 = 0.5*(T + RL.y.T)
+        fluxPL, fluxPR = recover(P)
+        fluxmL, fluxmR = recover(m)
+        fluxTL, fluxTR = recover(T)
     end
-    if typeof(kante.RR)==mWRo_kante_randR
-        P_p12 = RR.KR.y.P;  m_p12 = RR.y.mR; T_p12 = RR.KR.y.T 
-    else
-        P_p12 = 0.5*(P + RR.y.P); m_p12 = 0.5*(m + RR.y._m); T_p12 = 0.5*(T + RR.y.T)
-    end
-    dy[k] = -a2/A*(m_p12-m_m12)/dx  #-- P
-    dy[k+1] = -(m_p12^2-m_m12^2)/(dx*Arho) - A*(P_p12-P_m12)/dx - lamda(m,D,A,mu,K)/(2*D*Arho)*abs(m)*m - g*Arho*sin(phi)  #-- m
-    dy[k+2] = -1/Arho*m*ifxaorb(m,T-T_m12,T_p12-T)*2/dx + leit*2/(dx^2)*(T_m12-2*T+T_p12)  #-- T
-end
 
+
+    #-- Rohr links
+    dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - A*(P[1]-PL)*2/dx - lamda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi); #-- mL
+    dy[k+1] = eL -(0.5*cv_H2O*(abs(mL)*(TL-T[1])+mL*(TL+T[1])) + A/dx*2*lamW*(TL-T[1])); #-- eL
+    
+    #-- Rohr mitte
+    fRP = PL; fRm = mL; fRT = TL #-- linke Randbedingung
+    for i = 1:nx
+        fLP = fRP; fLm = fRm; fLT = fRT
+        if i == nx
+            fRP = PR; fRm = mR ; fRT = TR
+        else
+            fRP = 0.5*(fluxPL[i+1]+fluxPR[i+1]) 
+            fRm = 0.5*(fluxmL[i+1]+fluxmR[i+1]) 
+            fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
+        end
+        dy[k+i+1] = -a2/A*(fRm-fLm)/dx
+        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - A*(fRP-fLP)/dx - lamda(m[i],D,A,mu,K)/(2*D*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)
+        dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
+    end
+    
+    #-- Rohr rechts
+    dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - A*(PR-P[end])*2/dx - lamda(mR,D,A,mu,K)/(2*D*Arho)*abs(mR)*mR - g*Arho*sin(phi); #-- mR
+    dy[k+3*nx+3] = eR -(0.5*cv_H2O*(abs(mR)*(T[end]-TR)+mR*(T[end]+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
+end
 
 function lamda(m,D,A,mu,K)
     Re = abs(m)*D/(A*mu); Re = max(Re,1.0e-6)
     lam = 0.25/(log10(K/(3.7*D)+5.74/exp(0.9*log(Re)))^2)
     return lam
+end
+
+function recover(y)
+    yL = [2*y[1]-y[2]; y]; yR = [y; 2*y[end]-y[end-1]] 
+    return yL, yR
+end
+
+function recover_weno(y)
+    #-- Zellenmittelwerte auf Zellgrenzen interpolieren
+    #-- L = upwind, R = downwind, WENO 3. Ordnung
+    n = length(y);
+    yL = Array{Number}(undef, n+1); yR = Array{Number}(undef, n+1) 
+    yL[1] = 11/6*y[1]-7/6*y[2]+y[3]/3; yR[1] = yL[1]; #-- Randwerte
+    yL[2] = y[1]/3+5/6*y[2]-y[3]/6;
+    yL[n+1] = 11/6*y[n]-7/6*y[n-1]+y[n-2]/3; yR[n+1] = yL[n+1];
+    yR[n] = y[n]/3+5/6*y[n-1]-y[n-2]/6; 
+    for i=2:n-1
+        yR[i], yL[i+1] = weno3(y[i-1:i+1]); 
+    end
+    return yL, yR 
+end
+
+function weno3(y) #-- y = [y1,y2,y3]
+    ep = 1.0e-6; p = 0.6;
+    uL = y[2]-y[1]; uC = y[3]-2*y[2]+y[1]; uR = y[3]-y[2]; uCC = y[3]-y[1];
+    ISL = uL^2; ISC = 13/3*uC^2 +0.25*uCC^2; ISR = uR^2; aL = 0.25*(1/(ep+ISL))^p; aC = 0.5*(1/(ep+ISC))^p;
+    aR = 0.25*(1/(ep+ISR))^p;
+    suma = max(aL+aC+aR,eps(1.0)); wL = aL/suma; wC = aC/suma; wR = aR/suma;
+    y12 = (0.5*wL+5/12*wC)*y[1] + (0.5*wL+2/3*wC+1.5*wR)*y[2] + (-wC/12-0.5*wR)*y[3];
+    y23 = (-0.5*wL-wC/12)*y[1] + (1.5*wL+2/3*wC+0.5*wR)*y[2] + (5/12*wC+0.5*wR)*y[3];
+    return y12, y23
 end

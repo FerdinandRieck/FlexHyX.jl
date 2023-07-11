@@ -1,4 +1,4 @@
-Base.@kwdef mutable struct mWTaR2_Param
+Base.@kwdef mutable struct mWTaR_Param
     nx = 1
     L = 1.0
     dx = L/max(nx,1/2)
@@ -19,16 +19,18 @@ Base.@kwdef mutable struct mWTaR2_Param
     PR = 0
     TL = 10
     TR = 0
-    P_vec = PL:(PR-PL)*0.5/nx:PR
-    T_vec = TL:(TR-TL)*0.5/nx:TR
+    P_vec = PL:(PR-PL)*0.5/nx:PR #[fill(PL,nx);fill(PR,nx+1)]
+    T_vec = [fill(TL,nx);fill(TR,nx+1)] #TL:(TR-TL)*0.5/nx:TR
     P = Vector(P_vec[2:2:end-1])
     T = Vector(T_vec[2:2:end-1])
     kA = 380.0
+    WENO = true
+    Richtung = "gegen"
 end
 
 #-- Rohrränder ---------------------------------
-Base.@kwdef mutable struct y_mWTaR2
-    Param::mWTaR2_Param
+Base.@kwdef mutable struct y_mWTaR
+    Param::mWTaR_Param
     mL::Number = 0.0
     eL::Number = 0.0
     P = Param.P
@@ -38,12 +40,12 @@ Base.@kwdef mutable struct y_mWTaR2
     eR::Number = 0.0
 end
 
-Base.@kwdef mutable struct mWTaR2_kante <: Wasser_Kante
+Base.@kwdef mutable struct mWTaR_kante <: Wasser_Kante
     #-- default Parameter
-    Param::mWTaR2_Param
+    Param::mWTaR_Param
 
     #-- Zustandsvariablen
-    y = y_mWTaR2(Param=Param)
+    y = y_mWTaR(Param=Param)
 
     #-- Wasserknoten links und rechts
     KL::Wasser_Knoten
@@ -59,9 +61,9 @@ Base.@kwdef mutable struct mWTaR2_kante <: Wasser_Kante
     Z::Dict
 end
 
-function Kante!(dy,k,kante::mWTaR2_kante,t)
+function Kante!(dy,k,kante::mWTaR_kante,t)
     #-- Parameter
-    (; nx,dx,a2,leit,Arho,A,D,cv_H2O,mu,K,lamW,phi,g,kA) = kante.Param
+    (; nx,dx,a2,leit,Arho,A,D,cv_H2O,mu,K,lamW,phi,g,kA,WENO,Richtung) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -74,25 +76,29 @@ function Kante!(dy,k,kante::mWTaR2_kante,t)
     eR = kante.y.eR
     #--
 
-    (; KL,KR,RA,Z) = kante
+    (; KL,KR,RA) = kante
     PL = KL.y.P
     TL = KL.y.T
     PR = KR.y.P
     TR = KR.y.T
     T_aussen = RA.y.T
 
-    if haskey(Z,"WENO") 
-        if Z["WENO"] == true
-            fluxPL, fluxPR = recover_weno(P)
-            fluxmL, fluxmR = recover_weno(m)
-            fluxTL, fluxTR = recover_weno(T)
-        end
-        if Z["WENO"] == false
-            fluxPL, fluxPR = recover(P)
-            fluxmL, fluxmR = recover(m)
-            fluxTL, fluxTR = recover(T)
-        end
+    println(pointer_from_objref(kante.RA.y))
+
+    if WENO == true
+        fluxPL, fluxPR = recover_weno(P)
+        fluxmL, fluxmR = recover_weno(m)
+        fluxTL, fluxTR = recover_weno(T)
+    else
+        fluxPL, fluxPR = recover(P)
+        fluxmL, fluxmR = recover(m)
+        fluxTL, fluxTR = recover(T)
     end
+
+    if Richtung == "gegen"
+        T_aussen = reverse(T_aussen)
+    end
+
 
     #-- Rohr links
     dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - A*(P[1]-PL)*2/dx - lamda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi)  #-- mL

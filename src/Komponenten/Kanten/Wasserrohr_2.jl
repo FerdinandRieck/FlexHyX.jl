@@ -57,9 +57,9 @@ end
 
 function Kante!(dy,k,kante::mWRo2_kante,t)
     #-- Parameter
-    (; nx,dx,a2,leit,Arho,A,D,cv_H2O,mu,K,lamW,phi,g) = kante.Param
+    #(; nx,dx,a2,leit,Arho,A,D,cv_H2O,mu,K,lamW,phi,g) = kante.Param
     #--
-
+#=
     #-- Zustandsvariablen
     mL = kante.y.mL
     eL = kante.y.eL
@@ -70,112 +70,41 @@ function Kante!(dy,k,kante::mWRo2_kante,t)
     eR = kante.y.eR
     #--
 
-    (; KL,KR,Z) = kante
+    (; KL,KR) = kante
     PL = KL.y.P
     TL = KL.y.T
     PR = KR.y.P
     TR = KR.y.T
-    
-   # P = [PL; y[k+2:k+1+nx]; PR]
-   # m = [mL; y[k+2+nx:k+1+2*nx]; mR]
-   # T = [TL; y[k+2+2*nx:k+1+3*nx]; TR]
-
-   # Re = abs(m)*D/(A*var.mu); Re = max(Re,1.0e-6);
-   # lam = 0.25./(log10(K/(3.7*D)+5.74./exp(0.9*log(Re))).^2);
-
-    if haskey(Z,"WENO") 
-        if Z["WENO"] == true
-            fluxPL, fluxPR = recover_weno(P)
-            fluxmL, fluxmR = recover_weno(m)
-            fluxTL, fluxTR = recover_weno(T)
-        end
-        if Z["WENO"] == false
-            fluxPL, fluxPR = recover(P)
-            fluxmL, fluxmR = recover(m)
-            fluxTL, fluxTR = recover(T)
-        end
-    end
+=#
 
     #-- Rohr links
-    dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - A*(P[1]-PL)*2/dx - lamda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi); #-- mL
-    dy[k+1] = eL -(0.5*cv_H2O*(abs(mL)*(TL-T[1])+mL*(TL+T[1])) + A/dx*2*lamW*(TL-T[1])); #-- eL
+    dy[k] = -(kante.y._m[1]^2-kante.y.mL^2)*2/(kante.Param.dx*kante.Param.Arho) - kante.Param.A*(kante.y.P[1]-kante.KL.y.P)*2/kante.Param.dx - lamda(kante.y.mL,kante.Param.D,kante.Param.A,kante.Param.mu,kante.Param.K)/(2*kante.Param.D*kante.Param.Arho)*abs(kante.y.mL)*kante.y.mL - kante.Param.g*kante.Param.Arho*sin(kante.Param.phi); #-- mL
+    dy[k+1] = kante.y.eL -(0.5*kante.Param.cv_H2O*(abs(kante.y.mL)*(kante.KL.y.T-kante.y.T[1])+kante.y.mL*(kante.KL.y.T+kante.y.T[1])) + kante.Param.A/kante.Param.dx*2*kante.Param.lamW*(kante.KL.y.T-kante.y.T[1])); #-- eL
     
     #-- Rohr mitte
-    fRP = PL; fRm = mL; fRT = TL #-- linke Randbedingung
-    for i = 1:nx
-        fLP = fRP; fLm = fRm; fLT = fRT
-        if i == nx
-            fRP = PR; fRm = mR ; fRT = TR
-        else
-            fRP = 0.5*(fluxPL[i+1]+fluxPR[i+1]) 
-            fRm = 0.5*(fluxmL[i+1]+fluxmR[i+1]) 
-            fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
-        end
-        dy[k+i+1] = -a2/A*(fRm-fLm)/dx
-        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - A*(fRP-fLP)/dx - lamda(m[i],D,A,mu,K)/(2*D*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)
-        dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
-    end
-    
-    #=
-    for i = 1:nx
+    for i = 1:kante.Param.nx
         if i==1
-            P_m12 = PL; m_m12 = mL; T_m12 = TL;
+            P_m12 = kante.KL.y.P; m_m12 = kante.y.mL; T_m12 = kante.KL.y.T;
         else
-            P_m12 = 0.5*(P[i]+P[i-1]); 
-            m_m12 = 0.5*(m[i]+m[i-1])
-            T_m12 = 0.5*(T[i]+T[i-1]);
+            P_m12 = 0.5*(kante.y.P[i]+kante.y.P[i-1]); m_m12 = 0.5*(kante.y._m[i]+kante.y._m[i-1]); T_m12 = 0.5*(kante.y.T[i]+kante.y.T[i-1]);
         end
-        if i==nx
-            P_p12 = PR; m_p12 = mR; T_p12 = TR;
+        if i==kante.Param.nx
+            P_p12 = kante.KR.y.P; m_p12 = kante.y.mR; T_p12 = kante.KR.y.T;
         else
-            P_p12 = 0.5*(P[i]+P[i+1]);
-            m_p12 = 0.5*(m[i]+m[i+1]); 
-            T_p12 = 0.5*(T[i]+T[i+1]);
+            P_p12 = 0.5*(kante.y.P[i]+kante.y.P[i+1]); m_p12 = 0.5*(kante.y._m[i]+kante.y._m[i+1]); T_p12 = 0.5*(kante.y.T[i]+kante.y.T[i+1]);
         end
-        dy[k+i+1] = -a2/A*(m_p12-m_m12)/dx
-        dy[k+i+1+nx] = -(m_p12^2-m_m12^2)/(dx*Arho) - A*(P_p12-P_m12)/dx - lamda(m[i],D,A,mu,K)/(2*D*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)
-        dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-T_m12,T_p12-T[i])*2/dx + leit*2/(dx^2)*(T_m12-2*T[i]+T_p12)
+        dy[k+i+1] = -kante.Param.a2/kante.Param.A*(m_p12-m_m12)/kante.Param.dx
+        dy[k+i+1+kante.Param.nx] = -(m_p12^2-m_m12^2)/(kante.Param.dx*kante.Param.Arho) - kante.Param.A*(P_p12-P_m12)/kante.Param.dx - lamda(kante.y._m[i],kante.Param.D,kante.Param.A,kante.Param.mu,kante.Param.K)/(2*kante.Param.D*kante.Param.Arho)*abs(kante.y._m[i])*kante.y._m[i] - kante.Param.g*kante.Param.Arho*sin(kante.Param.phi)
+        dy[k+i+1+kante.Param.nx*2] = -1/kante.Param.Arho*kante.y._m[i]*ifxaorb(kante.y._m[i],kante.y.T[i]-T_m12,T_p12-kante.y.T[i])*2/kante.Param.dx + kante.Param.leit*2/(kante.Param.dx^2)*(T_m12-2*kante.y.T[i]+T_p12)
     end
-    =#
 
     #-- Rohr rechts
-    dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - A*(PR-P[end])*2/dx - lamda(mR,D,A,mu,K)/(2*D*Arho)*abs(mR)*mR - g*Arho*sin(phi); #-- mR
-    dy[k+3*nx+3] = eR -(0.5*cv_H2O*(abs(mR)*(T[end]-TR)+mR*(T[end]+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
+    dy[k+3*kante.Param.nx+2] = -(kante.y.mR^2-kante.y._m[end]^2)*2/(kante.Param.dx*kante.Param.Arho) - kante.Param.A*(kante.KR.y.P-kante.y.P[end])*2/kante.Param.dx - lamda(kante.y.mR,kante.Param.D,kante.Param.A,kante.Param.mu,kante.Param.K)/(2*kante.Param.D*kante.Param.Arho)*abs(kante.y.mR)*kante.y.mR - kante.Param.g*kante.Param.Arho*sin(kante.Param.phi); #-- mR
+    dy[k+3*kante.Param.nx+3] = kante.y.eR -(0.5*kante.Param.cv_H2O*(abs(kante.y.mR)*(kante.y.T[end]-kante.KR.y.T)+kante.y.mR*(kante.y.T[end]+kante.KR.y.T)) + kante.Param.A/kante.Param.dx*2*kante.Param.lamW*(kante.y.T[end]-kante.KR.y.T)) #-- eR
 end
 
 function lamda(m,D,A,mu,K)
     Re = abs(m)*D/(A*mu); Re = max(Re,1.0e-6)
     lam = 0.25/(log10(K/(3.7*D)+5.74/exp(0.9*log(Re)))^2)
     return lam
-end
-
-function recover(y)
-    yL = [2*y[1]-y[2]; y]; yR = [y; 2*y[end]-y[end-1]] 
-    return yL, yR
-end
-
-function recover_weno(y)
-    #-- Zellenmittelwerte auf Zellgrenzen interpolieren
-    #-- L = upwind, R = downwind, WENO 3. Ordnung
-    n = length(y);
-    yL = Array{Number}(undef, n+1); yR = Array{Number}(undef, n+1) 
-    yL[1] = 11/6*y[1]-7/6*y[2]+y[3]/3; yR[1] = yL[1]; #-- Randwerte
-    yL[2] = y[1]/3+5/6*y[2]-y[3]/6;
-    yL[n+1] = 11/6*y[n]-7/6*y[n-1]+y[n-2]/3; yR[n+1] = yL[n+1];
-    yR[n] = y[n]/3+5/6*y[n-1]-y[n-2]/6; 
-    for i=2:n-1
-        yR[i], yL[i+1] = weno3(y[i-1:i+1]); 
-    end
-    return yL, yR 
-end
-
-function weno3(y) #-- y = [y1,y2,y3]
-    ep = 1.0e-6; p = 0.6;
-    uL = y[2]-y[1]; uC = y[3]-2*y[2]+y[1]; uR = y[3]-y[2]; uCC = y[3]-y[1];
-    ISL = uL^2; ISC = 13/3*uC^2 +0.25*uCC^2; ISR = uR^2; aL = 0.25*(1/(ep+ISL))^p; aC = 0.5*(1/(ep+ISC))^p;
-    aR = 0.25*(1/(ep+ISR))^p;
-    suma = max(aL+aC+aR,eps(1.0)); wL = aL/suma; wC = aC/suma; wR = aR/suma;
-    y12 = (0.5*wL+5/12*wC)*y[1] + (0.5*wL+2/3*wC+1.5*wR)*y[2] + (-wC/12-0.5*wR)*y[3];
-    y23 = (-0.5*wL-wC/12)*y[1] + (1.5*wL+2/3*wC+0.5*wR)*y[2] + (5/12*wC+0.5*wR)*y[3];
-    return y12, y23
 end

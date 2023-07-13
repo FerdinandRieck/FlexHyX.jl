@@ -41,7 +41,23 @@ function solveNetzwerk(dir::String)
         s = Symbol(typ,"_Knoten"); obj = getfield(FlexHyX, s)
         knoten[i] = obj(Param=Params, Z=kk)     #-- z.B. U0_Knoten()
 
-        M = vcat(M, knoten[i].M)
+        M = append!(M, knoten[i].M)
+    end
+
+    #-- PW_max suchen--------------------------
+    PW_max = 0.0
+
+    for i in eachindex(knoten_infos)
+        if typeof(knoten[i]) <: Wasser_Knoten
+            if hasfield(typeof(knoten[i].y), :P) == true
+                PW_max = maximum([PW_max; knoten[i].y.P]) 
+            end
+        end
+    end
+    for i in eachindex(knoten_infos) #--- AW ändern ----
+        kk = knoten[i].Z; typ = kk["Typ"];
+        if typ=="WP" knoten[i].y.P = PW_max; end
+        # wieso kein T_max suchen? Wie können AW für Kopplungsknoten mit T besser bestimmt werden?
     end
 
     for i = 1:n_e  #-- Kanten erzeugen ---------------------------- 
@@ -70,20 +86,7 @@ function solveNetzwerk(dir::String)
                 kk["T"] = fill(kk["TL"],kk["nx"])
             end
             Params = MakeParam(kk)
-            kanten[i] = mWRo_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)
-        elseif typ=="mWRo2"
-            kk["PL"] = knoten[von].y.P; kk["PR"] = knoten[nach].y.P;
-            kk["TL"] = knoten[von].y.T; kk["TR"] = knoten[nach].y.T;
-            if kk["PL"] == kk["PR"]
-                kk["P_vec"] = 0
-                kk["P"] = fill(kk["PL"],kk["nx"])
-            end
-            if kk["TL"] == kk["TR"]
-                kk["T_vec"] = 0
-                kk["T"] = fill(kk["TL"],kk["nx"])
-            end
-            Params = MakeParam(kk)
-            kanten[i] = mWRo2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)  
+            kanten[i] = mWRo_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
         elseif typ=="mWTR"
             Params = MakeParam(kk) 
             kanten[i] = mWTR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)
@@ -116,23 +119,19 @@ function solveNetzwerk(dir::String)
             s = Symbol(typ,"_kante"); obj = getfield(FlexHyX, s)
             kanten[i] = obj(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)    #-- z.B. iB_kante()
         end
-        M = vcat(M, kanten[i].M)
+        M = append!(M, kanten[i].M)
     end
 
     println("-------------------------------------------------------")
 
-    #-- U_max, P_max, PW_max suchen--------------------------
-    U_max = 1.0; P_max = 101325; PW_max = 0.0
+    #-- U_max, P_max suchen--------------------------
+    U_max = 1.0; P_max = 101325;
 
     for i in eachindex(knoten_infos)
         if hasfield(typeof(knoten[i].y), :U) == true
             U_max = maximum([U_max; knoten[i].y.U])
         end
-        if typeof(knoten[i]) <: Wasser_Knoten
-            if hasfield(typeof(knoten[i].y), :P) == true
-                PW_max = maximum([PW_max; knoten[i].y.P]) 
-            end
-        else
+        if (typeof(knoten[i]) <: Wasser_Knoten) == false
             if hasfield(typeof(knoten[i].y), :P) == true
                 P_max = maximum([P_max; knoten[i].y.P]) 
             end
@@ -145,11 +144,7 @@ function solveNetzwerk(dir::String)
         if hasfield(typeof(kanten[i].Param), :U0) == true   #-- z. B. wegen U0 der Batterie
             U_max = maximum([U_max; kanten[i].Param.U0]) 
         end
-        if typeof(kanten[i]) <: Wasser_Kante
-            if hasfield(typeof(kanten[i].y), :P) == true
-                PW_max = maximum([PW_max; kanten[i].y.P]) 
-            end
-        else
+        if (typeof(kanten[i]) <: Wasser_Kante) == false
             if hasfield(typeof(kanten[i].y), :P) == true
                 P_max = maximum([P_max; kanten[i].y.P]) 
             end
@@ -159,7 +154,6 @@ function solveNetzwerk(dir::String)
         kk = knoten[i].Z; typ = kk["Typ"];
         if typ=="U" knoten[i].y.U = U_max; end 
         if typ=="GP" knoten[i].y.P = P_max; end 
-        if typ=="WP" knoten[i].y.P = PW_max; end
         # wieso kein T_max suchen? Wie können AW für Kopplungsknoten mit T besser bestimmt werden?
     end
     #-----------------------------------------------------

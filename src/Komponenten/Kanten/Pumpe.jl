@@ -41,6 +41,6 @@ function Kante!(dy,k,kante::mWPu_kante,t)
     TL = KL.y.T
     TR = KR.y.T
 
-    dy[k] = m - 0.01*(2 - 1.0e-5*(PR-PL))
+    dy[k] = m - 15*(2 - 1.0e-5*(PR-PL))
     dy[k+1] = e - cv_H2O*m*ifxaorb(m,TL,TR)
 end

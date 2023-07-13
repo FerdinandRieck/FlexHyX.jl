@@ -1,10 +1,11 @@
 function plotSol(sol,x,y)
     n_par = 1
-    p1 = plot(sol.t,sol'[:,x], linewidth = 2, xlabel = "Zeit /s") # ylims=(0.494, 0.5)
+    p1 = plot(sol.t,sol'[:,x], linewidth = 2, xlabel = "Zeit /s")#, ylims=(101300, 103000))
     #p2 = plot(sol.t/3600,sol'[:,y]/(18.3*3600*n_par), linewidth = 2, xlabel = "Zeit /h", ylabel = "soc", title = "Ladezustand", label = "soc",legend=:topleft)
     #p = plot(p1,p2,layout = (2, 1))
     p = plot(p1)
-    display(p)
+    #p = plot(sol,idxs=x, linewidth = 2, xlabel = "Zeit /s")#, ylims=(101300, 103000))
+    return p
 end
 
 function plotSol(sol,t,x,y)
@@ -12,7 +13,7 @@ function plotSol(sol,t,x,y)
   p1 = plot(t/3600,sol[x,:], linewidth = 2, xlabel = "Zeit /h") # ylims=(0.494, 0.5)
   p2 = plot(t/3600,sol[y,:]/(18.3*3600*n_par), linewidth = 2, xlabel = "Zeit /h", ylabel = "soc", title = "Ladezustand", label = "soc",legend=:topleft)
   p = plot(p1,p2,layout = (2, 1))
-  display(p)
+  return p
 end
 
 function plotSol(sol)
@@ -24,7 +25,7 @@ function plotSol(sol)
   p5 = plot(sol.t/3600,sol'[:,22], linewidth = 2, xlabel = "Zeit /h", ylabel = "%", title = "Beladung MHS", label = "Θ",legend=:top)
    
   p = plot(p1,p2,p3,p4,p5, layout = (5, 1), size=(1000,1000))
-  display(p)
+  return p
 end
 
 function plotSol(sol,t)
@@ -39,5 +40,5 @@ function plotSol(sol,t)
   p5 = plot(t/3600,sol[22,:], linewidth = 2, xlabel = "Zeit /h", ylabel = "%", title = "Beladung MHS", label = "Θ",legend=:top)
   
   p = plot(p1,p2,p4,p5, layout = (4, 1), size=(1000,1000))
-  display(p)
+  return p
 end

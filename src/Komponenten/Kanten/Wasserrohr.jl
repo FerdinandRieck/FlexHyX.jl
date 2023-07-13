@@ -1,3 +1,4 @@
+#=
 Base.@kwdef mutable struct mWRo_Param
     nx = 1
     L = 1.0
@@ -80,7 +81,7 @@ function Kante!(dy,k,kante::mWRo_kante,t)
     if WENO == true
         fluxPL, fluxPR = recover_weno(P)
         fluxmL, fluxmR = recover_weno(m)
-        fluxTL, fluxTR = recover_weno(T)
+        fluxTL, fluxTR = recover_weno(T) #??? hier vieleicht nur recover(T), da bereits ubwind Diskertisierung mit ifxaorb(m[i],T[i]-fLT,fRT-T[i])??? 
     else
         fluxPL, fluxPR = recover(P)
         fluxmL, fluxmR = recover(m)
@@ -89,7 +90,7 @@ function Kante!(dy,k,kante::mWRo_kante,t)
 
 
     #-- Rohr links
-    dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - A*(P[1]-PL)*2/dx - lamda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi); #-- mL
+    dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - A*(P[1]-PL)*2/dx - lambda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi); #-- mL
     dy[k+1] = eL -(0.5*cv_H2O*(abs(mL)*(TL-T[1])+mL*(TL+T[1])) + A/dx*2*lamW*(TL-T[1])); #-- eL
     
     #-- Rohr mitte
@@ -104,23 +105,27 @@ function Kante!(dy,k,kante::mWRo_kante,t)
             fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
         end
         dy[k+i+1] = -a2/A*(fRm-fLm)/dx
-        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - A*(fRP-fLP)/dx - lamda(m[i],D,A,mu,K)/(2*D*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)
+        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - A*(fRP-fLP)/dx - lambda(m[i],D,A,mu,K)/(2*D*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)
         dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
     end
     
     #-- Rohr rechts
-    dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - A*(PR-P[end])*2/dx - lamda(mR,D,A,mu,K)/(2*D*Arho)*abs(mR)*mR - g*Arho*sin(phi); #-- mR
+    dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - A*(PR-P[end])*2/dx - lambda(mR,D,A,mu,K)/(2*D*Arho)*abs(mR)*mR - g*Arho*sin(phi); #-- mR
     dy[k+3*nx+3] = eR -(0.5*cv_H2O*(abs(mR)*(T[end]-TR)+mR*(T[end]+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
 end
 
-function lamda(m,D,A,mu,K)
+function lambda(m,D,A,mu,K)
     Re = abs(m)*D/(A*mu); Re = max(Re,1.0e-6)
     lam = 0.25/(log10(K/(3.7*D)+5.74/exp(0.9*log(Re)))^2)
     return lam
 end
 
 function recover(y)
-    yL = [2*y[1]-y[2]; y]; yR = [y; 2*y[end]-y[end-1]] 
+    if length(y) == 1
+        yL = 0; yR = 0
+    else
+        yL = [2*y[1]-y[2]; y]; yR = [y; 2*y[end]-y[end-1]] 
+    end
     return yL, yR
 end
 
@@ -128,13 +133,17 @@ function recover_weno(y)
     #-- Zellenmittelwerte auf Zellgrenzen interpolieren
     #-- L = upwind, R = downwind, WENO 3. Ordnung
     n = length(y);
-    yL = Array{Number}(undef, n+1); yR = Array{Number}(undef, n+1) 
-    yL[1] = 11/6*y[1]-7/6*y[2]+y[3]/3; yR[1] = yL[1]; #-- Randwerte
-    yL[2] = y[1]/3+5/6*y[2]-y[3]/6;
-    yL[n+1] = 11/6*y[n]-7/6*y[n-1]+y[n-2]/3; yR[n+1] = yL[n+1];
-    yR[n] = y[n]/3+5/6*y[n-1]-y[n-2]/6; 
-    for i=2:n-1
-        yR[i], yL[i+1] = weno3(y[i-1:i+1]); 
+    if n == 1
+        yL = 0; yR = 0
+    else
+        yL = Array{Number}(undef, n+1); yR = Array{Number}(undef, n+1) 
+        yL[1] = 11/6*y[1]-7/6*y[2]+y[3]/3; yR[1] = yL[1]; #-- Randwerte
+        yL[2] = y[1]/3+5/6*y[2]-y[3]/6;
+        yL[n+1] = 11/6*y[n]-7/6*y[n-1]+y[n-2]/3; yR[n+1] = yL[n+1];
+        yR[n] = y[n]/3+5/6*y[n-1]-y[n-2]/6; 
+        for i=2:n-1
+            yR[i], yL[i+1] = weno3(y[i-1:i+1]); 
+        end 
     end
     return yL, yR 
 end
@@ -149,3 +158,4 @@ function weno3(y) #-- y = [y1,y2,y3]
     y23 = (-0.5*wL-wC/12)*y[1] + (1.5*wL+2/3*wC+0.5*wR)*y[2] + (5/12*wC+0.5*wR)*y[3];
     return y12, y23
 end
+=#

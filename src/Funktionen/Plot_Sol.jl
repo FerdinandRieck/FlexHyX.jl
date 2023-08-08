@@ -1,9 +1,7 @@
 function plotSol(sol,x,y)
-    n_par = 1
-    p1 = plot(sol.t,sol'[:,x], linewidth = 2, xlabel = "Zeit /s")#, ylims=(101300, 103000))
+    p = plot(sol.t,sol'[:,x], linewidth = 2, xlabel = "Zeit /s")#, ylims=(360, 366))
     #p2 = plot(sol.t/3600,sol'[:,y]/(18.3*3600*n_par), linewidth = 2, xlabel = "Zeit /h", ylabel = "soc", title = "Ladezustand", label = "soc",legend=:topleft)
     #p = plot(p1,p2,layout = (2, 1))
-    p = plot(p1)
     #p = plot(sol,idxs=x, linewidth = 2, xlabel = "Zeit /s")#, ylims=(101300, 103000))
     return p
 end

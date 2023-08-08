@@ -1,4 +1,4 @@
-Base.@kwdef struct WPSP_Param
+Base.@kwdef struct WPSP2_Param
     P0 = 1.0e5
     T0 = 293.15
     D = 1.0
@@ -6,23 +6,22 @@ Base.@kwdef struct WPSP_Param
     cv_H2O = 4182; #-- noch faglich
 end
 
-Base.@kwdef mutable struct y_WPSP
-    Param::WPSP_Param
+Base.@kwdef mutable struct y_WPSP2
+    Param::WPSP2_Param
     M::Number = Param.P0*Param.A/9.81
-    MT::Number = M*Param.T0 
-    P::Number = Param.P0
     T::Number = Param.T0
+    P::Number = Param.P0
 end
 
-Base.@kwdef mutable struct WPSP_Knoten <: Wasser_Knoten
+Base.@kwdef mutable struct WPSP2_Knoten <: Wasser_Knoten
     #-- default Parameter
-    Param::WPSP_Param
+    Param::WPSP2_Param
 
     #-- Zustandsvariablen 
-    y = y_WPSP(Param=Param)
+    y = y_WPSP2(Param=Param)
 
     #-- M-Matrix
-    M::Array{Int} = [1; 1; 0; 0] 
+    M::Array{Int} = [1; 1; 0] 
 
     #-- zusätzeliche Infos
     Z::Dict
@@ -30,17 +29,21 @@ Base.@kwdef mutable struct WPSP_Knoten <: Wasser_Knoten
     #-- Knotenbilanz
     sum_m::Number = 0.0
     sum_e::Number = 0.0
+
+    #-- Kanten
+    in::Array{Any} = []
+    out::Array{Any} = []
 end
 
-function Knoten!(dy,k,knoten::WPSP_Knoten,t)
+function Knoten!(dy,k,knoten::WPSP2_Knoten,t)
     #-- Parameter
-    (; A,cv_H2O) = knoten.Param
+    (; A) = knoten.Param
     #--
 
-    (; M, MT, P, T) = knoten.y
+    (; M, P) = knoten.y
 
-    dy[k] = knoten.sum_m
-    dy[k+1] = knoten.sum_e/cv_H2O
+    #dy[k] = knoten.sum_m
+    dy[k] =  sum_m(knoten.in,knoten.out)
+    dy[k+1] = knoten.sum_e/M
     dy[k+2] = P-M*9.81/A
-    dy[k+3] = T-MT/M
 end

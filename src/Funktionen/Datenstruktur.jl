@@ -34,7 +34,7 @@ function netzwerk2array(knoten,kanten)
                 else 
                     push!(P_scale, 0.0) 
                 end             
-                leg_i = string(knoten[i].Z["Nr"],ff)
+                leg_i = string(ff,knoten[i].Z["Nr"])
                 idx_ele[leg_i] = [i k]  #-- Dictionary
             end
         end

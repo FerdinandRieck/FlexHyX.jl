@@ -60,57 +60,52 @@ function solveNetzwerk(dir::String)
         # wieso kein T_max suchen? Wie können AW für Kopplungsknoten mit T besser bestimmt werden?
     end
 
+
     for i = 1:n_e  #-- Kanten erzeugen ---------------------------- 
         kk = kanten_infos[i]; typ = kk["Typ"]; 
         von = kk["VonNach"][1]; nach = kk["VonNach"][2]
         
-        if typ=="iE"
+        if typ=="iE"  #-- Elektrolyseeinheit
             mE = kk["RefKante"]; 
             von_mE = mE["VonNach"][1]; nach_mE = mE["VonNach"][2]
             Params = MakeParam(kk)
             kanten[i] = iE_kante(Param=Params, KUL=knoten[von], KUR=knoten[nach], KGL=knoten[von_mE], KGR=knoten[nach_mE], Z=kk)
-        elseif typ=="iBZ"
+        elseif typ=="iBZ"  #-- Brennstoffzelle
             mBZ = kk["RefKante"]; 
             von_mBZ = mBZ["VonNach"][1]; nach_mBZ = mBZ["VonNach"][2]
             Params = MakeParam(kk)
             kanten[i] = iBZ_kante(Param=Params, KUL=knoten[von], KUR=knoten[nach], KGL=knoten[von_mBZ], KGR=knoten[nach_mBZ], Z=kk)
-        elseif typ=="mWRo"
-            kk["PL"] = knoten[von].y.P; kk["PR"] = knoten[nach].y.P;
-            kk["TL"] = knoten[von].y.T; kk["TR"] = knoten[nach].y.T;
-            if kk["PL"] == kk["PR"]
-                kk["P_vec"] = 0
-                kk["P"] = fill(kk["PL"],kk["nx"])
-            end
-            if kk["TL"] == kk["TR"]
-                kk["T_vec"] = 0
-                kk["T"] = fill(kk["TL"],kk["nx"])
-            end
-            Params = MakeParam(kk)
-            kanten[i] = mWRo_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-        elseif typ=="mWTR"
-            Params = MakeParam(kk) 
-            kanten[i] = mWTR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)
-            PL = knoten[von].y.P; PR = knoten[nach].y.P
-            TL = knoten[von].y.T; TR = knoten[nach].y.T
-            kanten[i].y.P = PL + 0.5*(PR-PL)
-            kanten[i].y.T = TL + 0.5*(TR-TL)
-        elseif typ=="mWTaR"
-            kk["PL"] = knoten[von].y.P; kk["PR"] = knoten[nach].y.P;
-            kk["TL"] = knoten[von].y.T; kk["TR"] = knoten[nach].y.T;
-            if kk["PL"] == kk["PR"]
-                kk["P_vec"] = 0
-                kk["P"] = fill(kk["PL"],kk["nx"])
-            end
-            if kk["TL"] == kk["TR"]
-                kk["T_vec"] = 0
-                kk["T"] = fill(kk["TL"],kk["nx"])
-            end
+        elseif typ=="mWTaR"  #-- Wärmetauscher
             Params = MakeParam(kk) 
             kanten[i] = mWTaR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
             if haskey(kk,"RohrAussen")
                 RA = kk["RohrAussen"]
                 kanten[i].RA = kanten[RA]
                 kanten[RA].RA = kanten[i]
+            end
+        elseif typ=="mWTaR2"  #-- Wärmetauscher_reduziert
+            Params = MakeParam(kk) 
+            kanten[i] = mWTaR2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+            if haskey(kk,"RohrAussen")
+                RA = kk["RohrAussen"]
+                kanten[i].RA = kanten[RA]
+                kanten[RA].RA = kanten[i]
+            end
+        elseif typ=="mWTaRK"  #-- Wärmetauscher_mdot_konstant
+            Params = MakeParam(kk) 
+            kanten[i] = mWTaRK_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+            if haskey(kk,"RohrAussen")
+                RA = kk["RohrAussen"]
+                kanten[i].RA = kanten[RA]
+                kanten[RA].RA = kanten[i]
+            end
+        elseif typ=="mWTRK"  #-- Wärmeübertragung_mdot_konstant
+            Params = MakeParam(kk) 
+            kanten[i] = mWTRK_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+            if haskey(kk,"KnotenAussen")
+                KA = kk["KnotenAussen"]
+                kanten[i].KA = knoten[KA]
+                knoten[KA].in = kanten[[i]]
             end
         else
             #-- Parameter erzeugen und ändern
@@ -127,7 +122,7 @@ function solveNetzwerk(dir::String)
     #-- U_max, P_max suchen--------------------------
     U_max = 1.0; P_max = 101325;
 
-    for i in eachindex(knoten_infos)
+    for i in eachindex(knoten)
         if hasfield(typeof(knoten[i].y), :U) == true
             U_max = maximum([U_max; knoten[i].y.U])
         end
@@ -137,7 +132,7 @@ function solveNetzwerk(dir::String)
             end
         end
     end
-    for i in eachindex(kanten_infos)
+    for i in eachindex(kanten)
         if hasfield(typeof(kanten[i].y), :U) == true
             U_max = maximum([U_max; kanten[i].y.U]) 
         end
@@ -150,7 +145,7 @@ function solveNetzwerk(dir::String)
             end
         end
     end
-    for i in eachindex(knoten_infos) #--- AW ändern ----
+    for i in eachindex(knoten) #--- AW ändern ----
         kk = knoten[i].Z; typ = kk["Typ"];
         if typ=="U" knoten[i].y.U = U_max; end 
         if typ=="GP" knoten[i].y.P = P_max; end 
@@ -162,11 +157,25 @@ function solveNetzwerk(dir::String)
 
     #-- Erzeuge Inzidenzmatrix 
     IM, IP = inzidenz(knoten,kanten) 
+    
+    for i in eachindex(knoten)
+        in = findall(!iszero, IP[i,:])
+        out = findall(!iszero, IM[i,:])
+        if isempty(in) == false
+            in
+            knoten[i].in = kanten[in]
+        end
+        if isempty(out) == false
+            knoten[i].out = kanten[out]    
+        end
+    end
 
     #-- Erzeuge Zustandsvektor y und Indizes wo was steht in y
     y, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, P_scale, idx_ele = netzwerk2array(knoten,kanten) 
 
     params = IM, IP, knoten, kanten, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele
+
+@show y 
 
     #-- konsistente AW berechnen -----------
     ind_alg = findall(x->x==0,M[diagind(M)]);
@@ -179,6 +188,8 @@ function solveNetzwerk(dir::String)
     y[ind_alg] = res.zero;
     dgl!(dy,y,params,0.0);
     println("Test Nachher: ",Base.maximum(abs.(dy[ind_alg])))
+
+@show y 
 
     #--------------
     #-- Jacobi Struktur
@@ -199,7 +210,7 @@ function solveNetzwerk(dir::String)
     else
         global n_events
         cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
-        sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=600)
+        sol = solve(prob_ode,Rodas5P(autodiff=false,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=dtmax)
     end
     t1 = time()-t0
     println("CPU: ",t1)
@@ -277,3 +288,5 @@ function Leitsung_anhängen(y,knoten,kanten,idx_iflussL,idx_iflussR,IM,IP)
     end
     return y
 end
+
+

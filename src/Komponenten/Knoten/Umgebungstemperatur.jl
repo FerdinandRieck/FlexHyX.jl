@@ -7,7 +7,7 @@ Base.@kwdef mutable struct y_T0
     T::Number = Param.T0
 end
 
-Base.@kwdef mutable struct T0_Knoten <: Temp_Knoten
+Base.@kwdef mutable struct T0_Knoten <: Knoten
     #-- default Parameter
     Param::T0_Param
 
@@ -19,6 +19,10 @@ Base.@kwdef mutable struct T0_Knoten <: Temp_Knoten
 
     #-- zusätzeliche Infos
     Z::Dict
+
+    #-- Kanten
+    in::Array{Any} = []
+    out::Array{Any} = []
 end
 
 function Knoten!(dy,k,knoten::T0_Knoten,t)

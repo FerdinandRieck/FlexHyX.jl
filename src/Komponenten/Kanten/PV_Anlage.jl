@@ -61,8 +61,6 @@ function Kante!(dy,k,kante::iPV_kante,t)
         P = wert*t_scale*kante.Param.Module
         dy[k] = io*P/(UR-UL) - iPV
     else #-- U-I Kennlinie
-        
-
         (; G_ref,I_sc_stc,I_ph_stc,V_oc_stc,Vmpp_stc,Impp_stc,a_sc,Tc_stc,eG,Ns,faktor_a,Rs_pv,Rp,G,T_PV) = kante.Param
 
         U = UR - UL

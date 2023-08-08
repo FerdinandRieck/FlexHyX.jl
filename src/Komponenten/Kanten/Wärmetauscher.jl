@@ -15,27 +15,23 @@ Base.@kwdef mutable struct mWTaR_Param
     leit = lamW/(rho0*cv_H2O)
     K = 1e-5 #-- Rauheit
     phi = 0.0 #-- Neigungswinkel
-    PL = 10
-    PR = 0
-    TL = 10
-    TR = 0
-    P_vec = PL:(PR-PL)*0.5/nx:PR #[fill(PL,nx);fill(PR,nx+1)]
-    T_vec = [fill(TL,nx);fill(TR,nx+1)] #TL:(TR-TL)*0.5/nx:TR
-    P = Vector(P_vec[2:2:end-1])
-    T = Vector(T_vec[2:2:end-1])
     kA = 380.0
     WENO = true
-    Richtung = "gegen"
+    Richtung = "gleich"
+    fluxPL = Array{Number}(undef, nx+1)
+    fluxPR = Array{Number}(undef, nx+1)
+    fluxmL = Array{Number}(undef, nx+1)
+    fluxmR = Array{Number}(undef, nx+1)
+    fluxTL = Array{Number}(undef, nx+1)
+    fluxTR = Array{Number}(undef, nx+1)
 end
 
-#-- Rohrränder ---------------------------------
 Base.@kwdef mutable struct y_mWTaR
-    Param::mWTaR_Param
     mL::Number = 0.0
     eL::Number = 0.0
-    P = Param.P
-    _m = zeros(Param.nx)
-    T = Param.T
+    P
+    _m
+    T
     mR::Number = 0.0
     eR::Number = 0.0
 end
@@ -44,12 +40,15 @@ Base.@kwdef mutable struct mWTaR_kante <: Wasser_Kante
     #-- default Parameter
     Param::mWTaR_Param
 
-    #-- Zustandsvariablen
-    y = y_mWTaR(Param=Param)
+    #-- Knoten links und rechts
+    KL::Knoten
+    KR::Knoten
 
-    #-- Wasserknoten links und rechts
-    KL::Wasser_Knoten
-    KR::Wasser_Knoten
+    #-- Zustandsvariablen
+    y = y_mWTaR(P = f(Vector(1:2:2*Param.nx), KL.y.P, KR.y.P, Param.nx), 
+                T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx),
+                _m = zeros(Param.nx)
+                )
 
     #-- Rohr aussen
     RA = 0
@@ -63,7 +62,7 @@ end
 
 function Kante!(dy,k,kante::mWTaR_kante,t)
     #-- Parameter
-    (; nx,dx,a2,leit,Arho,A,D,cv_H2O,mu,K,lamW,phi,g,kA,WENO,Richtung) = kante.Param
+    (; nx,dx,a2,leit,Arho,rho0,A,D,cv_H2O,mu,K,lamW,phi,g,kA,WENO,Richtung,fluxPL,fluxPR,fluxmL,fluxmR,fluxTL,fluxTR) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -84,19 +83,18 @@ function Kante!(dy,k,kante::mWTaR_kante,t)
     T_aussen = RA.y.T
 
     if WENO == true
-        fluxPL, fluxPR = recover_weno(P)
-        fluxmL, fluxmR = recover_weno(m)
-        fluxTL, fluxTR = recover_weno(T)
+        recover_weno!(P,fluxPL,fluxPR)
+        recover_weno!(m,fluxmL,fluxmR)
+        recover_weno!(T,fluxTL,fluxTR) #??? hier vieleicht nur recover!(T), da bereits ubwind Diskertisierung mit ifxaorb(m[i],T[i]-fLT,fRT-T[i])??? 
     else
-        fluxPL, fluxPR = recover(P)
-        fluxmL, fluxmR = recover(m)
-        fluxTL, fluxTR = recover(T)
+        recover!(P,fluxPL,fluxPR)
+        recover!(m,fluxmL,fluxmR)
+        recover!(T,fluxTL,fluxTR)
     end
 
-    if Richtung == "gegen"
+    if (Richtung == "gegen") && nx > 1
         T_aussen = reverse(T_aussen)
     end
-
 
     #-- Rohr links
     dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - A*(P[1]-PL)*2/dx - lambda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi)  #-- mL
@@ -115,7 +113,7 @@ function Kante!(dy,k,kante::mWTaR_kante,t)
         end
         dy[k+i+1] = -a2/A*(fRm-fLm)/dx  #-- P 
         dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - A*(fRP-fLP)/dx - lambda(m[i],D,A,mu,K)/(2*D*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)  #-- m #!!! Nicht klar ob Winkel Angegeben werden darf, wegen GL.88 (Herleitung aus Text Rohr (Wasser))
-        dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) - kA/(Arho*D)*(T[i]-T_aussen[i])  #-- T
+        dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) - 4*kA/(rho0*D*cv_H2O)*(T[i]-T_aussen[i])  #-- T
     end
 
     #-- Rohr rechts

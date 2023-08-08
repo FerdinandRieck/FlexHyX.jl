@@ -57,6 +57,7 @@ function plot_knoten!(knoten)
         kk = knoten[i]
         x = knoten[i]["XY"][1]; y = knoten[i]["XY"][2]
 		s = Symbol(kk["Typ"],"_Knoten"); obj = getfield(FlexHyX, s)
+		color = :blue
 		if obj <: Strom_Knoten
 			color = :red
 		elseif obj <: Gas_Knoten
@@ -79,7 +80,7 @@ end
 function plot_kanten!(knoten, kanten)
     #-- Kanten plotten
     A = zeros(length(knoten),length(knoten))
-    for i = 1:length(kanten)
+    for i in eachindex(kanten)
 		kk = kanten[i]
 		iv = kk["VonNach"][1]; in = kk["VonNach"][2]
 		x0 = knoten[iv]["XY"][1]; y0 = knoten[iv]["XY"][2]
@@ -92,6 +93,7 @@ function plot_kanten!(knoten, kanten)
 		x13 = x0 + xv/3 + xq; x23 = x0 + 2*xv / 3 + xq
 		y13 = y0 + yv/3 + yq; y23 = y0 + 2*yv/3 + yq
 		x12 = x13+0.75*(x23-x13); y12 = y13+0.75*(y23-y13);
+		color = :blue
 		if (kk["Typ"] == "mE") || (kk["Typ"] == "mBZ")
 			color = :green
 		else

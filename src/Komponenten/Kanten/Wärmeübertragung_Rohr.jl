@@ -21,9 +21,9 @@ end
 Base.@kwdef mutable struct y_mWTR
     mL::Number = 0.0
     eL::Number = 0.0
-    P::Number = 1.0 
+    P::Number
     _m::Number = 0.0
-    T::Number = 3.0
+    T::Number
     mR::Number = 0.0
     eR::Number = 0.0
 end
@@ -32,12 +32,14 @@ Base.@kwdef mutable struct mWTR_kante <: Temp_Kante
     #-- default Parameter
     Param::mWTR_Param
 
-    #-- Zustandsvariablen
-    y = y_mWTR()
-
     #-- Wasserknoten links und rechts
     KL::Wasser_Knoten  
     KR::Wasser_Knoten  
+
+    #-- Zustandsvariablen
+    y = y_mWTR(P = KL.y.P + 0.5*(KR.y.P-KL.y.P), 
+               T = KL.y.T + 0.5*(KR.y.T-KL.y.T)
+               )
 
     #-- M-Matrix
     M::Array{Int} = [1; 0; 1; 1; 1; 1; 0] 
@@ -48,7 +50,7 @@ end
 
 function Kante!(dy,k,kante::mWTR_kante,t)
     #-- Parameter
-    (; a2,A,D,dx,Arho,leit,K,mu,phi,g,cv_H2O,lamW,kA,T_aussen) = kante.Param
+    (; a2,A,D,dx,Arho,rho0,leit,K,mu,phi,g,cv_H2O,lamW,kA,T_aussen) = kante.Param
     #--
 
     #-- Zustandsvariable
@@ -61,7 +63,7 @@ function Kante!(dy,k,kante::mWTR_kante,t)
     T = kante.y.T
     #--
 
-    (; KL,KR) = kante
+    (; KL,KR,Z) = kante
     PL = KL.y.P
     TL = KL.y.T
     PR = KR.y.P
@@ -71,7 +73,13 @@ function Kante!(dy,k,kante::mWTR_kante,t)
     dy[k+1] = eL -(0.5*cv_H2O*(abs(mL)*(TL-T)+mL*(TL+T)) + A/dx*2*lamW*(TL-T)); #-- eL
     dy[k+2] = -a2/A*(mR-mL)/dx  #-- P
     dy[k+3] = -(mR^2-mL^2)/(dx*Arho) - A*(PR-PL)/dx - lambda(m,D,A,mu,K)/(2*D*Arho)*abs(m)*m - g*Arho*sin(phi)  #-- m
-    dy[k+4] = -1/Arho*m*ifxaorb(m,T-TL,TR-T)*2/dx + leit*2/(dx^2)*(TL-2*T+TR) - kA/(Arho*D)*(T-T_aussen)  #-- T
+    dy[k+4] = -1/Arho*m*ifxaorb(m,T-TL,TR-T)*2/dx + leit*2/(dx^2)*(TL-2*T+TR)  #-- T
     dy[k+5] = -(mR^2-m^2)*2/(dx*Arho) - A*(PR-P)*2/dx - lambda(mR,D,A,mu,K)/(2*D*Arho)*abs(mR)*mR - g*Arho*sin(phi) #-- mR
     dy[k+6] = eR -(0.5*cv_H2O*(abs(mR)*(T-TR)+mR*(T+TR)) + A/dx*2*lamW*(T-TR)) #-- eR
+
+    if haskey(Z,"T_aussen")
+        dy[k+4] = dy[k+4] - 4*kA/(rho0*D*cv_H2O)*(T-Z["T_aussen"])    
+    elseif haskey(Z,"Q_dot") 
+        dy[k+6] = dy[k+6] - Z["Q_dot"]
+    end
 end

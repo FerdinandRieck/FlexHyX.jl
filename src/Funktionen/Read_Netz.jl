@@ -39,7 +39,9 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 					kk[k] = getfield(FlexHyX, Symbol(fcn))
 				end
 			end
-			if (haskey(kk,"Schaltzeit")==true) kk["Schaltdauer"] = 0.1 end
+			if (haskey(kk,"Schaltzeit")==true) && (haskey(kk,"Schaltdauer")==false)
+				kk["Schaltdauer"] = 0.1 
+			end
 			if (haskey(kk,"Zeitreihe")==true)
 				spalte = first(findall(x->x==kk["Zeitreihe"],znamen))
 				kk["zt"] = zt
@@ -71,16 +73,14 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 	for i = 1:n_e
 		nr2ka[i] = kanten[i]["Nr"];
 	end
-	#i_Rohr = 0
 	for i = 1:n_e
-		#=
-		if haskey(kanten[i],"nx")
-			i_Rohr = i_Rohr + kanten[i]["nx"] + 1  #-- + 1 wegen Rohr Links
-		end
-		=#
 		if haskey(kanten[i],"RohrAussen")
 			i_ka = findall(x->x==kanten[i]["RohrAussen"],nr2ka)[1];
-			kanten[i]["RohrAussen"] = i_ka #+ i_Rohr;
+			kanten[i]["RohrAussen"] = i_ka 
+		end
+		if haskey(kanten[i],"KnotenAussen")
+			i_kn = findall(x->x==kanten[i]["KnotenAussen"],nr2kn)[1];
+			kanten[i]["KnotenAussen"] = i_kn 
 		end
 		kanten[i]["VonNach"][1] = findall(x->x==kanten[i]["VonNach"][1],nr2kn)[1];
 		kanten[i]["VonNach"][2] = findall(x->x==kanten[i]["VonNach"][2],nr2kn)[1];

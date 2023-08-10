@@ -1,5 +1,5 @@
 Base.@kwdef mutable struct T_Param
-
+    cv_H2O = 4182.0
 end
 
 Base.@kwdef mutable struct y_T
@@ -29,6 +29,7 @@ end
 
 
 function Knoten!(dy,k,knoten::T_Knoten,t)
+    (; cv_H2O) = knoten.Param
     Masse = 0.1
-    dy[k] =  knoten.sum_e/Masse 
+    dy[k] =  knoten.sum_e/(Masse*cv_H2O)
 end

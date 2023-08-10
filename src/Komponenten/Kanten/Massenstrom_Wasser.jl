@@ -41,6 +41,6 @@ function Kante!(dy,k,kante::mWf_kante,t)
 
     io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
 
-    dy[k] = m - io*m_dot - (1 - io)*0.1
+    dy[k] = m - io*m_dot #- (1 - io)*0.01
     dy[k+1] = e - m*(TL-TR) 
 end

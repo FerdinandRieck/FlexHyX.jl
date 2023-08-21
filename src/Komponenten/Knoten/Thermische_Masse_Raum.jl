@@ -38,7 +38,7 @@ function Knoten!(dy,k,knoten::TMHR_Knoten,t)
     TL = knoten.in[1].KL.y.T
     TR = knoten.in[1].KR.y.T
 
-    e_in = cv_H2O*m*(TL-TR)
+    e_in = m*(TL-TR)*cv_H2O 
     e_out = knoten.out[1].y.e
 
     dy[k] = (e_in - e_out)/(Masse*c) #!!! Verhältnis cw/cL fehlt hier!!!

@@ -3,9 +3,9 @@ Base.@kwdef mutable struct mWTaRK_Param
     L = 0.286
     dx = L/max(nx,1/2)
     rho0 = 1000
-    Di = 0.05
+    Dü = 0.02
     Da = 0.1
-    A = pi/4*(Da^2-Di^2)
+    A = pi/4*abs(Da^2-Dü^2)
     lamW = 0.6
     cv_H2O = 4182.0; #-- noch faglich
     Arho = A*rho0
@@ -37,8 +37,8 @@ Base.@kwdef mutable struct mWTaRK_kante <: Wasser_Kante
     #-- Zustandsvariablen
     y = y_mWTaRK(T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx))
 
-    #-- Rohr aussen
-    RA = 0
+    #-- Rohr aussen/innen
+    R = 0
 
     #-- M-Matrix
     M::Array{Int} = [0; 0; 0; ones(Int,Param.nx)]
@@ -49,7 +49,7 @@ end
 
 function Kante!(dy,k,kante::mWTaRK_kante,t)
     #-- Parameter
-    (; nx,dx,leit,Arho,Di,cv_H2O,lamW,kA,WENO,Richtung,fluxTL,fluxTR) = kante.Param
+    (; nx,dx,leit,Arho,Dü,cv_H2O,lamW,kA,WENO,Richtung,fluxTL,fluxTR) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -59,11 +59,11 @@ function Kante!(dy,k,kante::mWTaRK_kante,t)
     T = kante.y.T
     #--
 
-    (; KL,KR,RA) = kante
+    (; KL,KR,R) = kante
     TL = KL.y.T
     TR = KR.y.T
     mL = KL.in[1].y.m
-    T_aussen = RA.y.T
+    T_aussen = R.y.T
 
     if WENO == true
         recover_weno!(T,fluxTL,fluxTR) #??? hier vieleicht nur recover!(T), da bereits ubwind Diskertisierung mit ifxaorb(m[i],T[i]-fLT,fRT-T[i])??? 
@@ -77,11 +77,11 @@ function Kante!(dy,k,kante::mWTaRK_kante,t)
 
     #-- Rohr links
     dy[k] = m - mL #-- m
-    dy[k+1] = eL - cv_H2O*m*(TL-T[1]) #- A/dx*2*lamW*(TL-T[1]) Wärmeübetragung weglassen
+    dy[k+1] = eL - m*(TL-T[1])*cv_H2O  #- A/dx*2*lamW*(TL-T[1]) Wärmeübetragung weglassen
     #dy[k+1] = eL -(0.5*cv_H2O*(abs(m)*(TL-T[1])+m*(TL+T[1])) + A/dx*2*lamW*(TL-T[1])); #-- eL
 
     #-- Rohr rechts
-    dy[k+2] = eR - cv_H2O*m*(T[nx]-TR) #- A/dx*2*lamW*(T[nx]-TR) Wärmeübertragung weglassen
+    dy[k+2] = eR - m*(T[nx]-TR)*cv_H2O  #- A/dx*2*lamW*(T[nx]-TR) Wärmeübertragung weglassen
     #dy[k+2] = eR -(0.5*cv_H2O*(abs(m)*(T[end]-TR)+m*(T[end]+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
 
     #-- Rohr mitte
@@ -93,6 +93,6 @@ function Kante!(dy,k,kante::mWTaRK_kante,t)
         else 
             fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
         end
-        dy[k+i+2] = -1/Arho*m*ifxaorb(m,T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) - kA*pi*Di/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
+        dy[k+i+2] = -1/Arho*m*ifxaorb(m,T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) - kA*pi*Dü/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
     end
 end

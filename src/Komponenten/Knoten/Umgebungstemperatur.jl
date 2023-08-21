@@ -29,5 +29,17 @@ function Knoten!(dy,k,knoten::T0_Knoten,t)
     (; T0) = knoten.Param
     T = knoten.y.T
 
-    dy[k] = T-T0
+    (; Z) = knoten
+
+    if haskey(Z,"T0_fcn") 
+        dy[k] = T-Z["T0_fcn"](t)
+    else
+        dy[k] = T-T0
+    end 
+end
+
+function fcn_T_aussen(t)
+    A = 10.0
+    P = -A+A*sin(t*2*pi/(24*3600)-pi/2)+273.15
+    P = P
 end

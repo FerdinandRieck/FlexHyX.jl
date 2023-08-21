@@ -31,6 +31,8 @@ Base.@kwdef mutable struct mWTRK_kante <: Wasser_Kante
     #-- Wasserknoten links und rechts
     KL::Wasser_Knoten
     KR::Wasser_Knoten
+    
+    #-- Knoten aussen
     KA = []
 
     #-- Zustandsvariablen
@@ -45,7 +47,7 @@ end
 
 function Kante!(dy,k,kante::mWTRK_kante,t)
     #-- Parameter
-    (; nx,dx,leit,Arho,cv_H2O,D,lam,kA,WENO,fluxTL,fluxTR) = kante.Param
+    (; nx,dx,leit,Arho,cv_H2O,D,lam,kA,WENO,fluxTL,fluxTR,rho0) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -70,10 +72,10 @@ function Kante!(dy,k,kante::mWTRK_kante,t)
 
     #-- Rohr links
     dy[k] = m - mL #-- m
-    dy[k+1] = eL - cv_H2O*m*(TL-T[1]) #- A/dx*2*lamW*(TL-T[1]) Wärmeübetragung weglassen
+    dy[k+1] = eL - m*(TL-T[1])*cv_H2O  #- A/dx*2*lamW*(TL-T[1]) Wärmeübetragung weglassen
     #dy[k+1] = eL -(0.5*cv*(abs(m)*(TL-T[1])+m*(TL+T[1])) + A/dx*2*lamW*(TL-T[1])); #-- eL
     #-- Rohr rechts
-    dy[k+2] = eR - cv_H2O*m*(T[nx]-TR) #- A/dx*2*lamW*(T[nx]-TR) Wärmeübertragung weglassen
+    dy[k+2] = eR - m*(T[nx]-TR)*cv_H2O  #- A/dx*2*lamW*(T[nx]-TR) Wärmeübertragung weglassen
     #dy[k+2] = eR -(0.5*cv*(abs(m)*(T[end]-TR)+m*(T[end]+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
     if haskey(Z,"Q_dot") 
         if isa(Z["Q_dot"],Number) dy[k+2] = dy[k+2] - io*Z["Q_dot"] end 
@@ -90,11 +92,11 @@ function Kante!(dy,k,kante::mWTRK_kante,t)
         end
         dy[k+i+2] = -1/Arho*m*ifxaorb(m,T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)  #-- T
         if haskey(Z,"T_aussen")
-            dy[k+i+2] = dy[k+i+2] - 4*kA/(Arho*D*cv_H2O)*(T[i]-Z["T_aussen"])
+            dy[k+i+2] = dy[k+i+2] - 4*kA/(rho0*D*cv_H2O)*(T[i]-Z["T_aussen"])
         end
         if haskey(Z,"KnotenAussen")
             T_aussen = KA.y.T
-            dy[k+i+2] = dy[k+i+2] - 4*kA/(Arho*D*cv_H2O)*(T[i]-T_aussen)
+            dy[k+i+2] = dy[k+i+2] - 4*kA/(rho0*D*cv_H2O)*(T[i]-T_aussen)
         end
     end
 end
@@ -114,6 +116,6 @@ function fcn_Q_dot(t,kante)
     TL = kante.KL.y.T
     TR = kante.KR.y.T
     cv_H2O = kante.Param.cv_H2O
-    e = cv_H2O*m*(TL-TR)
+    e = m*(TL-TR)*cv_H2O 
     return e*-1.0
 end

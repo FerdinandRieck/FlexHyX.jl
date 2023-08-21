@@ -42,7 +42,7 @@ end
 
 function Kante!(dy,k,kante::mWRoK_kante,t)
     #-- Parameter
-    (; nx,dx,leit,Arho,A,cv_H2O,lamW,WENO,fluxTL,fluxTR) = kante.Param
+    (; nx,dx,leit,Arho,rho0,D,cv_H2O,lamW,WENO,fluxTL,fluxTR) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -52,7 +52,7 @@ function Kante!(dy,k,kante::mWRoK_kante,t)
     T = kante.y.T
     #--
 
-    (; KL,KR) = kante
+    (; KL,KR,Z) = kante
     TL = KL.y.T
     TR = KR.y.T
     mL = KL.in[1].y.m
@@ -66,10 +66,10 @@ function Kante!(dy,k,kante::mWRoK_kante,t)
 
     #-- Rohr links
     dy[k] = m - mL #-- m
-    dy[k+1] = eL - m*(TL-T[1]) #- A/dx*2*lamW*(TL-T[1]) Wärmeübetragung weglassen
+    dy[k+1] = eL - m*(TL-T[1])*cv_H2O  #- A/dx*2*lamW*(TL-T[1]) Wärmeübetragung weglassen
     #dy[k+1] = eL -(0.5*cv_H2O*(abs(m)*(TL-T[1])+m*(TL+T[1])) + A/dx*2*lamW*(TL-T[1])); #-- eL
     #-- Rohr rechts
-    dy[k+2] = eR - m*(T[nx]-TR) #- A/dx*2*lamW*(T[nx]-TR) Wärmeübertragung weglassen
+    dy[k+2] = eR - m*(T[nx]-TR)*cv_H2O  #- A/dx*2*lamW*(T[nx]-TR) Wärmeübertragung weglassen
     #dy[k+2] = eR -(0.5*cv_H2O*(abs(m)*(T[end]-TR)+m*(T[end]+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
     #-- Rohr mitte
     fRT = TL #-- linke Randbedingung
@@ -81,6 +81,9 @@ function Kante!(dy,k,kante::mWRoK_kante,t)
             fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
         end
         dy[k+i+2] = -1/Arho*m*ifxaorb(m,T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
+        if haskey(Z,"T_aussen")
+            dy[k+i+2] = dy[k+i+2] - 4*Z["kA"]/(rho0*D*cv_H2O)*(T[i]-Z["T_aussen"])
+        end
     end
 end
 

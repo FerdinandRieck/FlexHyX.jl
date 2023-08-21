@@ -75,8 +75,8 @@ function Kante!(dy,k,kante::eWT_kante,t)
     TR = KR.y.T
 
     if (haskey(Z,"alpha")==true) && (haskey(Z,"A")==true)
-        dy[k] = e - Z["alpha"]*Z["A"]*(TL-TR)
+        dy[k] = e - Z["alpha"]*Z["A"]*(TL-TR)#*4182.0
     else
-        dy[k] = e - kA*(TL-TR)  #-- hier noch dot m einfügen
+        dy[k] = e - kA*(TL-TR)  #-- hier noch dot m einfügen 
     end
 end

@@ -18,6 +18,15 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 			if typ=="GPMH"
 				if haskey(kk,"Theta0")==true kk["Θ0"] = kk["Theta0"] end
 			end
+			for (k, v) in kk
+				if v[1]=='@'
+					fcn = v[2:end];
+					kk[k] = getfield(FlexHyX, Symbol(fcn))
+				end
+			end
+			if (haskey(kk,"Schaltzeit")==true) && (haskey(kk,"Schaltdauer")==false)
+				kk["Schaltdauer"] = 0.1 
+			end
 			push!(knoten,kk);
         end
     end
@@ -74,9 +83,9 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 		nr2ka[i] = kanten[i]["Nr"];
 	end
 	for i = 1:n_e
-		if haskey(kanten[i],"RohrAussen")
-			i_ka = findall(x->x==kanten[i]["RohrAussen"],nr2ka)[1];
-			kanten[i]["RohrAussen"] = i_ka 
+		if haskey(kanten[i],"RohrAustausch")
+			i_ka = findall(x->x==kanten[i]["RohrAustausch"],nr2ka)[1];
+			kanten[i]["RohrAustausch"] = i_ka 
 		end
 		if haskey(kanten[i],"KnotenAussen")
 			i_kn = findall(x->x==kanten[i]["KnotenAussen"],nr2kn)[1];

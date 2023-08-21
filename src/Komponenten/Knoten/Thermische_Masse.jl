@@ -29,5 +29,5 @@ end
 function Knoten!(dy,k,knoten::TM_Knoten,t)
     (; Masse, c) = knoten.Param
 
-    dy[k] = knoten.sum_e/(c )
+    dy[k] = knoten.sum_e/(c * Masse)
 end

@@ -44,22 +44,23 @@ function solveNetzwerk(dir::String)
         M = append!(M, knoten[i].M)
     end
 
-    #-- PW_max suchen--------------------------
-    PW_max = 0.0
+    #-- PW_max und TW_max suchen--------------------------
+    PW_max = 0.0; TW_max = 0.0
 
     for i in eachindex(knoten_infos)
         if typeof(knoten[i]) <: Wasser_Knoten
             if hasfield(typeof(knoten[i].y), :P) == true
                 PW_max = maximum([PW_max; knoten[i].y.P]) 
+                TW_max = maximum([TW_max; knoten[i].y.T])
             end
         end
     end
     for i in eachindex(knoten_infos) #--- AW ändern ----
         kk = knoten[i].Z; typ = kk["Typ"];
         if typ=="WP" knoten[i].y.P = PW_max; end
+        if typ=="T" knoten[i].y.T = TW_max; end
         # wieso kein T_max suchen? Wie können AW für Kopplungsknoten mit T besser bestimmt werden?
     end
-
 
     for i = 1:n_e  #-- Kanten erzeugen ---------------------------- 
         kk = kanten_infos[i]; typ = kk["Typ"]; 
@@ -94,10 +95,10 @@ function solveNetzwerk(dir::String)
         elseif typ=="mWTaRK"  #-- Wärmetauscher_mdot_konstant
             Params = MakeParam(kk) 
             kanten[i] = mWTaRK_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"RohrAussen")
-                RA = kk["RohrAussen"]
-                kanten[i].RA = kanten[RA]
-                kanten[RA].RA = kanten[i]
+            if haskey(kk,"RohrAustausch")
+                R = kk["RohrAustausch"]
+                kanten[i].R = kanten[R]
+                kanten[R].R = kanten[i]
             end
         elseif typ=="mWTRK"  #-- Wärmeübertragung_mdot_konstant
             Params = MakeParam(kk) 
@@ -107,6 +108,24 @@ function solveNetzwerk(dir::String)
                 kanten[i].KA = knoten[KA]
                 knoten[KA].in = kanten[[i]]
             end
+        elseif typ=="mWTR"  #-- Wärmeübertragung_Rohr_reduziert
+            Params = MakeParam(kk) 
+            kanten[i] = mWTR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+            if haskey(kk,"KnotenAussen")
+                KA = kk["KnotenAussen"]
+                kanten[i].KA = knoten[KA]
+                knoten[KA].in = kanten[[i]]
+            end
+        elseif typ=="mPI"  #-- PI-Regler
+            Params = MakeParam(kk) 
+            kanten[i] = mPI_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+            K = kk["KnotenAussen"]
+            kanten[i].K = knoten[K]
+        elseif typ=="mPID"  #-- PID-Regler
+            Params = MakeParam(kk) 
+            kanten[i] = mPID_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+            K = kk["KnotenAussen"]
+            kanten[i].K = knoten[K]
         else
             #-- Parameter erzeugen und ändern
             Params = MakeParam(kk) 
@@ -175,7 +194,7 @@ function solveNetzwerk(dir::String)
 
     params = IM, IP, knoten, kanten, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele
 
-@show y 
+    println("Anzahl Gleichungen: ",length(y))
 
     #-- konsistente AW berechnen -----------
     ind_alg = findall(x->x==0,M[diagind(M)]);
@@ -188,8 +207,6 @@ function solveNetzwerk(dir::String)
     y[ind_alg] = res.zero;
     dgl!(dy,y,params,0.0);
     println("Test Nachher: ",Base.maximum(abs.(dy[ind_alg])))
-
-@show y 
 
     #--------------
     #-- Jacobi Struktur

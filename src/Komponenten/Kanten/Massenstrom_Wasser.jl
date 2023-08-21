@@ -1,5 +1,6 @@
 Base.@kwdef mutable struct mWf_Param
     m_dot = 1.0
+    cv_H2O = 4182.0; #-- noch faglich
 end
 
 Base.@kwdef mutable struct y_mWf
@@ -27,7 +28,7 @@ end
 
 function Kante!(dy,k,kante::mWf_kante,t)
     #-- Parameter
-    (; m_dot) = kante.Param
+    (; m_dot, cv_H2O) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -42,5 +43,5 @@ function Kante!(dy,k,kante::mWf_kante,t)
     io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
 
     dy[k] = m - io*m_dot #- (1 - io)*0.01
-    dy[k+1] = e - m*(TL-TR) 
+    dy[k+1] = e - m*(TL-TR)*cv_H2O 
 end

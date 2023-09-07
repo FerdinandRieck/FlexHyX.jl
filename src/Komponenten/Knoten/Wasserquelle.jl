@@ -21,6 +21,10 @@ Base.@kwdef mutable struct WP0_Knoten <: Wasser_Knoten
 
     #-- zusätzliche Infos
     Z::Dict
+
+    #-- Kanten
+    in::Array{Any} = []
+    out::Array{Any} = []
 end
 
 function Knoten!(dy,k,knoten::WP0_Knoten,t)

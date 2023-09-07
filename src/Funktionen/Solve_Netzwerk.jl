@@ -55,13 +55,19 @@ function solveNetzwerk(dir::String)
             end
         end
     end
+
+    # !!! AW lieber für jeden Knoten individuell vergeben !!!
+    #=
     for i in eachindex(knoten_infos) #--- AW ändern ----
         kk = knoten[i].Z; typ = kk["Typ"];
-        if typ=="WP" knoten[i].y.P = PW_max; end
+        if typ=="WP" 
+            knoten[i].y.P = PW_max; 
+            knoten[i].y.T = TW_max;
+        end
         if typ=="T" knoten[i].y.T = TW_max; end
         # wieso kein T_max suchen? Wie können AW für Kopplungsknoten mit T besser bestimmt werden?
     end
-
+    =#
     for i = 1:n_e  #-- Kanten erzeugen ---------------------------- 
         kk = kanten_infos[i]; typ = kk["Typ"]; 
         von = kk["VonNach"][1]; nach = kk["VonNach"][2]
@@ -79,18 +85,18 @@ function solveNetzwerk(dir::String)
         elseif typ=="mWTaR"  #-- Wärmetauscher
             Params = MakeParam(kk) 
             kanten[i] = mWTaR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"RohrAussen")
-                RA = kk["RohrAussen"]
-                kanten[i].RA = kanten[RA]
-                kanten[RA].RA = kanten[i]
+            if haskey(kk,"RohrAustausch")
+                R = kk["RohrAustausch"]
+                kanten[i].R = kanten[R]
+                kanten[RA].R = kanten[i]
             end
         elseif typ=="mWTaR2"  #-- Wärmetauscher_reduziert
             Params = MakeParam(kk) 
             kanten[i] = mWTaR2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"RohrAussen")
-                RA = kk["RohrAussen"]
-                kanten[i].RA = kanten[RA]
-                kanten[RA].RA = kanten[i]
+            if haskey(kk,"RohrAustausch")
+                R = kk["RohrAustausch"]
+                kanten[i].R = kanten[R]
+                kanten[R].R = kanten[i]
             end
         elseif typ=="mWTaRK"  #-- Wärmetauscher_mdot_konstant
             Params = MakeParam(kk) 
@@ -100,9 +106,25 @@ function solveNetzwerk(dir::String)
                 kanten[i].R = kanten[R]
                 kanten[R].R = kanten[i]
             end
+        elseif typ=="mWTaRK2"  #-- Wärmetauscher_mdot_konstant
+            Params = MakeParam(kk) 
+            kanten[i] = mWTaRK2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+            if haskey(kk,"RohrAustausch")
+                R = kk["RohrAustausch"]
+                kanten[i].R = kanten[R]
+                kanten[R].R = kanten[i]
+            end
         elseif typ=="mWTRK"  #-- Wärmeübertragung_mdot_konstant
             Params = MakeParam(kk) 
             kanten[i] = mWTRK_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+            if haskey(kk,"KnotenAussen")
+                KA = kk["KnotenAussen"]
+                kanten[i].KA = knoten[KA]
+                knoten[KA].in = kanten[[i]]
+            end
+        elseif typ=="mWTRK2"  #-- Wärmeübertragung_mdot_konstant
+            Params = MakeParam(kk) 
+            kanten[i] = mWTRK2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
             if haskey(kk,"KnotenAussen")
                 KA = kk["KnotenAussen"]
                 kanten[i].KA = knoten[KA]
@@ -119,6 +141,11 @@ function solveNetzwerk(dir::String)
         elseif typ=="mPI"  #-- PI-Regler
             Params = MakeParam(kk) 
             kanten[i] = mPI_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+            K = kk["KnotenAussen"]
+            kanten[i].K = knoten[K]
+        elseif typ=="mPI2"  #-- PI-Regler
+            Params = MakeParam(kk) 
+            kanten[i] = mPI2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
             K = kk["KnotenAussen"]
             kanten[i].K = knoten[K]
         elseif typ=="mPID"  #-- PID-Regler
@@ -177,11 +204,11 @@ function solveNetzwerk(dir::String)
     #-- Erzeuge Inzidenzmatrix 
     IM, IP = inzidenz(knoten,kanten) 
     
+    #-- Knoten bekommen Kanten zugewiesen
     for i in eachindex(knoten)
         in = findall(!iszero, IP[i,:])
         out = findall(!iszero, IM[i,:])
         if isempty(in) == false
-            in
             knoten[i].in = kanten[in]
         end
         if isempty(out) == false
@@ -196,6 +223,7 @@ function solveNetzwerk(dir::String)
 
     println("Anzahl Gleichungen: ",length(y))
 
+#=
     #-- konsistente AW berechnen -----------
     ind_alg = findall(x->x==0,M[diagind(M)]);
     dy = 0*y;
@@ -207,7 +235,102 @@ function solveNetzwerk(dir::String)
     y[ind_alg] = res.zero;
     dgl!(dy,y,params,0.0);
     println("Test Nachher: ",Base.maximum(abs.(dy[ind_alg])))
+=#
+@show y
+mdot = 0.99963629446
+#y[22] = mdot; y[24] = mdot; y[26] = mdot; y[28:29] .= mdot; y[32] = mdot; y[34] = mdot; y[40:43] .= mdot; y[48] = mdot; y[50] = mdot; y[54:55] .= mdot; y[58] = mdot;
 
+#y[6] = 100072.7278; y[8] = 100049.0657; y[10] = 100023.6620
+
+#y[5] = 48702.52316253358
+#=
+y = [8053.007131347572
+2.72865351955833e6
+99999.99994749326
+338.83659545471227
+48702.52316253358
+100072.72782578308
+338.83659499156335
+100049.06570141336
+334.83950795171194
+100023.66207186297
+330.71353776425536
+1610.601427115188
+538691.9417690618
+19999.999999999993
+334.4663258705379
+334.46632473434954
+323.6453843080431
+293.0909130199527
+272.0863264032341
+294.25581068879313
+293.964411061757
+0.9996362944676938
+1.4164992661268825e6
+0.9996362944676938
+1.4164992661268825e6
+100066.81229469062
+100054.9812325058
+0.9996362944683146
+0.9996362944670729
+337.80941735257727
+335.82947746813977
+0.9996362944676938
+1.3997895259115628e6
+0.9996362944676938
+1.3997895259115628e6
+100045.8902477196
+100039.53934033193
+100033.18843294441
+100026.83752555674
+0.9996362944665181
+0.9996362944688694
+0.9996362944665181
+0.9996362944688694
+334.81573442167246
+334.64516108038424
+334.0312038233961
+331.8194260759086
+0.9996362944676938
+1.382540995822992e6
+0.9996362944676938
+1.382540995822992e6
+100017.74654077053
+100005.9154785857
+0.9996362944680475
+0.9996362944673403
+329.8368438486653
+328.14692148812776
+0.9996362944676938
+1.3682789461639782e6
+0.04778767256102701
+4778.767256083745
+66842.44189550127
+0.04778767256102701
+66842.44189550127
+64679.89791614069
+331.4547813368431
+326.2485161791208
+5881.284252681201
+0.04778767256102701
+64679.89791614069
+58806.448987750526
+311.5269765878768
+301.04497215668505
+296.5188644976864
+0.04778767256102701
+58806.448987750526
+58748.209846368554
+294.17464499213173
+294.0344773820677
+0.04778767256102701
+58748.209846368554
+66948.2513075483
+317.1015909169419
+329.94611239806244
+333.51129529270816
+334.50094853932546]
+=#
     #--------------
     #-- Jacobi Struktur
     #f!(x,z) = dgl!(x,z,params,0.0); 

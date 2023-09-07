@@ -13,7 +13,7 @@ function sum_m(IN,OUT)
         if isempty(OUT) == false
             if hasfield(typeof(OUT[i].y), :mL)
                 sum_OUT = sum_OUT + OUT[i].y.mL
-            elseif hasfield(typeof(IN[i].y), :m)
+            elseif hasfield(typeof(OUT[i].y), :m)
                 sum_OUT = sum_OUT + OUT[i].y.m
             end
         end

@@ -1,19 +1,19 @@
-Base.@kwdef mutable struct mWf2_Param
+Base.@kwdef mutable struct mWf_Param
     m_dot = 1.0
     cv_H2O = 4182.0; #-- noch faglich
 end
 
-Base.@kwdef mutable struct y_mWf2
+Base.@kwdef mutable struct y_mWf
     m::Number = 0.0
     e::Number = 0.0
 end
 
-Base.@kwdef mutable struct mWf2_kante <: Wasser_Kante
+Base.@kwdef mutable struct mWf_kante <: Wasser_Kante
     #-- default Parameter
-    Param::mWf2_Param
+    Param::mWf_Param
 
     #-- Zustandsvariablen
-    y = y_mWf2()
+    y = y_mWf()
 
     #-- Gasknoten links und rechts
     KL::Wasser_Knoten
@@ -26,7 +26,7 @@ Base.@kwdef mutable struct mWf2_kante <: Wasser_Kante
     Z::Dict
 end
 
-function Kante!(dy,k,kante::mWf2_kante,t)
+function Kante!(dy,k,kante::mWf_kante,t)
     #-- Parameter
     (; m_dot, cv_H2O) = kante.Param
     #--
@@ -43,5 +43,5 @@ function Kante!(dy,k,kante::mWf2_kante,t)
     io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
 
     dy[k] = m - io*m_dot
-    dy[k+1] = e - m*(TL-TR)*cv_H2O
+    dy[k+1] = e - cv_H2O*m*ifxaorb(m,TL,TR) 
 end

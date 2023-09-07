@@ -1,4 +1,4 @@
-Base.@kwdef mutable struct mWTaRK_Param
+Base.@kwdef mutable struct mWTaRK2_Param
     nx = 1
     L = 0.286
     dx = L/max(nx,1/2)
@@ -18,7 +18,7 @@ Base.@kwdef mutable struct mWTaRK_Param
     m_dot = 1.0
 end
 
-Base.@kwdef mutable struct y_mWTaRK
+Base.@kwdef mutable struct y_mWTaRK2
     m::Number = 0.0
     eL::Number = 0.0
     eR::Number = 0.0
@@ -26,16 +26,16 @@ Base.@kwdef mutable struct y_mWTaRK
 end
 
 
-Base.@kwdef mutable struct mWTaRK_kante <: Wasser_Kante
+Base.@kwdef mutable struct mWTaRK2_kante <: Wasser_Kante
     #-- default Parameter
-    Param::mWTaRK_Param
+    Param::mWTaRK2_Param
 
     #-- Knoten links und rechts
     KL::Knoten
     KR::Knoten
 
     #-- Zustandsvariablen
-    y = y_mWTaRK(T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx))
+    y = y_mWTaRK2(T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx))
 
     #-- Rohr aussen/innen
     R = 0
@@ -47,7 +47,7 @@ Base.@kwdef mutable struct mWTaRK_kante <: Wasser_Kante
     Z::Dict
 end
 
-function Kante!(dy,k,kante::mWTaRK_kante,t)
+function Kante!(dy,k,kante::mWTaRK2_kante,t)
     #-- Parameter
     (; nx,dx,leit,Arho,Dü,cv_H2O,lamW,kA,WENO,Richtung,fluxTL,fluxTR) = kante.Param
     #--

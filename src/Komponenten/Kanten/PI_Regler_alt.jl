@@ -1,22 +1,22 @@
-Base.@kwdef mutable struct mPI2_Param
+Base.@kwdef mutable struct mPI_Param
     Kp = 0.001
     Ki = 0.005
     T_soll = 293.15
     cv_H2O = 4182.0; #-- noch faglich
 end
 
-Base.@kwdef mutable struct y_mPI2
+Base.@kwdef mutable struct y_mPI
     m::Number = 0.0
     T_err_dt::Number = 0.0
     e::Number = 0.0
 end
 
-Base.@kwdef mutable struct mPI2_kante <: Wasser_Kante
+Base.@kwdef mutable struct mPI_kante <: Wasser_Kante
     #-- default Parameter
-    Param::mPI2_Param
+    Param::mPI_Param
 
     #-- Zustandsvariablen
-    y = y_mPI2()
+    y = y_mPI()
 
     #-- Gasknoten links und rechts
     KL::Wasser_Knoten
@@ -30,7 +30,7 @@ Base.@kwdef mutable struct mPI2_kante <: Wasser_Kante
     Z::Dict
 end
 
-function Kante!(dy,k,kante::mPI2_kante,t)
+function Kante!(dy,k,kante::mPI_kante,t)
     #-- Parameter
     (; T_soll, Kp, Ki, cv_H2O) = kante.Param
     #--
@@ -54,5 +54,5 @@ function Kante!(dy,k,kante::mPI2_kante,t)
     dy[k] = u # = min(max(u,u_min),u_max)
     #dy[k] = m - 0.029 #- (1 - io)*0.01
     dy[k+1] = T_soll-T
-    dy[k+2] = e - m*(TL-TR)*cv_H2O 
+    dy[k+2] = e - cv_H2O*m*ifxaorb(m,TL,TR)
 end

@@ -1,9 +1,11 @@
 Base.@kwdef mutable struct T_Param
     cv_H2O = 4182.0
+    T0 = 293.15
 end
 
 Base.@kwdef mutable struct y_T
-    T::Number = 293.15
+    Param::T_Param
+    T::Number = Param.T0
 end
 
 Base.@kwdef mutable struct T_Knoten <: Wasser_Knoten
@@ -11,10 +13,10 @@ Base.@kwdef mutable struct T_Knoten <: Wasser_Knoten
     Param::T_Param
 
     #-- Zustandsvariablen
-    y = y_T()
+    y = y_T(Param=Param)
     
     #-- M-Matrix
-    M::Array{Int} = [1] 
+    M::Array{Int} = [0] 
 
     #-- zusätzeliche Infos
     Z::Dict
@@ -31,5 +33,5 @@ end
 function Knoten!(dy,k,knoten::T_Knoten,t)
     (; cv_H2O) = knoten.Param
     Masse = 0.1
-    dy[k] =  knoten.sum_e/(Masse*cv_H2O)
+    dy[k] =  knoten.sum_e#/(Masse*cv_H2O)
 end

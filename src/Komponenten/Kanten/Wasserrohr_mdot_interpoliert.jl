@@ -1,4 +1,4 @@
-Base.@kwdef mutable struct mWRoK2_Param
+Base.@kwdef mutable struct mWRoK2i_Param
     nx = 1
     L = 1.0
     dx = L/max(nx,1/2)
@@ -15,23 +15,23 @@ Base.@kwdef mutable struct mWRoK2_Param
     m_dot = 1.0
 end
 
-Base.@kwdef mutable struct y_mWRoK2
+Base.@kwdef mutable struct y_mWRoK2i
     m::Number = 0.0
     eL::Number = 0.0
     eR::Number = 0.0
     T
 end
 
-Base.@kwdef mutable struct mWRoK2_kante <: Wasser_Kante
+Base.@kwdef mutable struct mWRoK2i_kante <: Wasser_Kante
     #-- default Parameter
-    Param::mWRoK2_Param
+    Param::mWRoK2i_Param
 
     #-- Wasserknoten links und rechts
     KL::Wasser_Knoten
     KR::Wasser_Knoten
 
     #-- Zustandsvariablen
-    y = y_mWRoK2(T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx))
+    y = y_mWRoK2i(T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx))
 
     #-- M-Matrix
     M::Array{Int} = [0; 0; 0; ones(Int,Param.nx)]
@@ -40,7 +40,7 @@ Base.@kwdef mutable struct mWRoK2_kante <: Wasser_Kante
     Z::Dict
 end
 
-function Kante!(dy,k,kante::mWRoK2_kante,t)
+function Kante!(dy,k,kante::mWRoK2i_kante,t)
     #-- Parameter
     (; nx,dx,leit,A,Arho,rho0,D,cv_H2O,lamW,WENO,fluxTL,fluxTR) = kante.Param
     #--
@@ -66,9 +66,11 @@ function Kante!(dy,k,kante::mWRoK2_kante,t)
 
     #-- Rohr links
     dy[k] = m - mL #-- m
-    dy[k+1] = eL - m*(TL-T[1])*cv_H2O  #- A/dx*2*lamW*(TL-T[1]) Wärmeübetragung weglassen
+    TRL = T[1] - (T[1]-T[2])/dx * -0.5*dx #- Temp. am linken Rand linear extrapoliert
+    dy[k+1] = eL - m*(TL-TRL)*cv_H2O  #- A/dx*2*lamW*(TL-T[1]) Wärmeübetragung weglassen
     #-- Rohr rechts
-    dy[k+2] = eR - m*(T[nx]-TR)*cv_H2O  #- A/dx*2*lamW*(T[nx]-TR) Wärmeübertragung weglassen
+    TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx #- Temp. am rechten Rand linear extrapoliert
+    dy[k+2] = eR - m*(TRR-TR)*cv_H2O  #- A/dx*2*lamW*(T[nx]-TR) Wärmeübertragung weglassen
     #-- Rohr mitte
     fRT = TL #-- linke Randbedingung
     for i = 1:nx

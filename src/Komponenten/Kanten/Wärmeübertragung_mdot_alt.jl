@@ -5,10 +5,11 @@ Base.@kwdef mutable struct mWTRK_Param
     rho0 = 1000.0
     D = 0.1
     A = pi/4*D^2
-    lam = 0.6
+    Aü = pi*D*L
+    lamW = 0.6
     cv_H2O = 4182.0; #-- noch faglich
     Arho = A*rho0
-    leit = lam/(rho0*cv_H2O)
+    leit = lamW/(rho0*cv_H2O)
     kA = 380.0
     WENO = true
     fluxTL = Array{Number}(undef, nx+1)
@@ -47,7 +48,7 @@ end
 
 function Kante!(dy,k,kante::mWTRK_kante,t)
     #-- Parameter
-    (; nx,dx,leit,Arho,cv_H2O,D,lam,kA,WENO,fluxTL,fluxTR,rho0) = kante.Param
+    (; nx,dx,leit,A,Arho,cv_H2O,D,lamW,kA,WENO,fluxTL,fluxTR,rho0) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -71,12 +72,12 @@ function Kante!(dy,k,kante::mWTRK_kante,t)
     io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end    
 
     #-- Rohr links
-    dy[k] = m - mL #-- m
-    dy[k+1] = eL - m*(TL-T[1])*cv_H2O  #- A/dx*2*lamW*(TL-T[1]) Wärmeübetragung weglassen
-    #dy[k+1] = eL -(0.5*cv*(abs(m)*(TL-T[1])+m*(TL+T[1])) + A/dx*2*lamW*(TL-T[1])); #-- eL
+    dy[k] = m - mL #-- m    
+    TRL = T[1] - (T[1]-T[2])/dx * -0.5*dx
+    dy[k+1] = eL -(0.5*cv_H2O*(abs(m)*(TL-TRL)+m*(TL+TRL)) + A/dx*2*lamW*(TL-T[1])); #-- eL
     #-- Rohr rechts
-    dy[k+2] = eR - m*(T[nx]-TR)*cv_H2O  #- A/dx*2*lamW*(T[nx]-TR) Wärmeübertragung weglassen
-    #dy[k+2] = eR -(0.5*cv*(abs(m)*(T[end]-TR)+m*(T[end]+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
+    TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
+    dy[k+2] = eR -(0.5*cv_H2O*(abs(m)*(TRR-TR)+m*(TRR+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
     if haskey(Z,"Q_dot") 
         if isa(Z["Q_dot"],Number) dy[k+2] = dy[k+2] - io*Z["Q_dot"] end 
         if isa(Z["Q_dot"],Function) dy[k+2] = dy[k+2] - io*Z["Q_dot"](t,kante) end
@@ -118,4 +119,17 @@ function fcn_Q_dot(t,kante)
     cv_H2O = kante.Param.cv_H2O
     e = m*(TL-TR)*cv_H2O 
     return e*-1.0
+end
+
+function fcn_Q_dot3(t,kante)
+    #m = kante.KL.in[1].KL.in[1].y.m
+    #TL = kante.KL.in[1].KL.in[1].KL.y.T
+    #TR = kante.KL.in[1].KL.in[1].KR.y.T
+    #@show  kante.KL.in[1].KL.in[1].KL.y.T
+    T = sum(kante.y.T)/length(kante.y.T)
+    TA = kante.KA.y.T
+    Aü = kante.Param.Aü
+    kA = kante.Param.kA
+    e = kA*Aü*(T-TA)
+    return -e
 end

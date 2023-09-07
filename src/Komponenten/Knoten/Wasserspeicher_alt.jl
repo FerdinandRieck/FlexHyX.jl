@@ -30,6 +30,10 @@ Base.@kwdef mutable struct WPSP_Knoten <: Wasser_Knoten
     #-- Knotenbilanz
     sum_m::Number = 0.0
     sum_e::Number = 0.0
+
+    #-- Kanten
+    in::Array{Any} = []
+    out::Array{Any} = []
 end
 
 function Knoten!(dy,k,knoten::WPSP_Knoten,t)

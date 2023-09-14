@@ -83,10 +83,6 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 		nr2ka[i] = kanten[i]["Nr"];
 	end
 	for i = 1:n_e
-		if haskey(kanten[i],"RohrAustausch")
-			i_ka = findall(x->x==kanten[i]["RohrAustausch"],nr2ka)[1];
-			kanten[i]["RohrAustausch"] = i_ka 
-		end
 		if haskey(kanten[i],"Ringspalt")
 			i_ka = findall(x->x==kanten[i]["Ringspalt"],nr2ka)[1];
 			kanten[i]["Ringspalt"] = i_ka 

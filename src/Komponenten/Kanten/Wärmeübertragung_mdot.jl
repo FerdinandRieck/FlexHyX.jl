@@ -3,11 +3,13 @@ Base.@kwdef mutable struct mWTRK2_Param
     L = 1.0
     dx = L/max(nx,1/2)
     rho0 = 1000.0
-    D = 0.1
-    A = pi/4*D^2
+    Di = 0.02
+    Da = 0.022
+    A = pi/4*Di^2
     Aü = pi*D*L
     lamW = 0.6
     cv_H2O = 4182.0; #-- noch faglich
+    mu = 1.0e-3
     Arho = A*rho0
     leit = lamW/(rho0*cv_H2O)
     kA = 380.0
@@ -102,12 +104,6 @@ function Kante!(dy,k,kante::mWTRK2_kante,t)
     end
 end
 
-function fcn_Q_dot2(t,kante)
-    A = 1000.0
-    P = 2*A+A*sin(t*2*pi/(24*3600))
-    P = -P
-end
-
 function fcn_Q_dot(t,kante)
     #m = kante.KL.in[1].KL.in[1].y.m
     #TL = kante.KL.in[1].KL.in[1].KL.y.T
@@ -119,6 +115,23 @@ function fcn_Q_dot(t,kante)
     cv_H2O = kante.Param.cv_H2O
     e = m*(TL-TR)*cv_H2O 
     return e*-1.0
+end
+
+function fcn_Q_dot1(t,kante)
+    #m = kante.KL.in[1].KL.in[1].y.m
+    #TL = kante.KL.in[1].KL.in[1].KL.y.T
+    #TR = kante.KL.in[1].KL.in[1].KR.y.T
+    #@show  kante.KL.in[1].KL.in[1].KL.y.T
+    eL = kante.y.eL
+    eR = kante.y.eR
+    e_zu = eR-eL
+    return e_zu
+end
+
+function fcn_Q_dot2(t,kante)
+    A = 1000.0
+    P = 2*A+A*sin(t*2*pi/(24*3600))
+    P = -P
 end
 
 function fcn_Q_dot3(t,kante)

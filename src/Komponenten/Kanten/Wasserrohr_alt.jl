@@ -92,7 +92,7 @@ function Kante!(dy,k,kante::mWRo_kante,t)
     #-- Rohr links
     dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - A*(P[1]-PL)*2/dx - lambda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi); #-- mL
     TRL = T[1] - (T[1]-T[2])/dx * - 0.5*dx
-    dy[k+1] = eL -(0.5*cv_H2O*(abs(mL)*(TL-TRL)+mL*(TL+TRL)) + A/dx*2*lamW*(TL-T[1])); #-- eL
+    dy[k+1] = eL -(0.5*cv_H2O*(abs(mL)*(TL-TRL)+mL*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
     
     #-- Rohr mitte
     fRP = PL; fRm = mL; fRT = TL #-- linke Randbedingung
@@ -116,7 +116,7 @@ function Kante!(dy,k,kante::mWRo_kante,t)
     #-- Rohr rechts
     dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - A*(PR-P[end])*2/dx - lambda(mR,D,A,mu,K)/(2*D*Arho)*abs(mR)*mR - g*Arho*sin(phi); #-- mR
     TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
-    dy[k+3*nx+3] = eR -(0.5*cv_H2O*(abs(mR)*(TRR-TR)+mR*(TRR+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
+    dy[k+3*nx+3] = eR -(0.5*cv_H2O*(abs(mR)*(TRR-TR)+mR*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
 end
 
 function lambda(m,D,A,mu,K)
@@ -154,6 +154,9 @@ function recover_weno!(y,yL,yR)
     end
     return nothing
 end
+
+
+
 
 
 #= Benchmark Tests mit revover_weno Funktionen

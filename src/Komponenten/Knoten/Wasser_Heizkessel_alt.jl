@@ -53,5 +53,5 @@ function Knoten!(dy,k,knoten::WPH_Knoten,t)
     dy[k+1] = (knoten.sum_e + e_zu)/cv_H2O
     dy[k+2] = P-M*9.81/A
     dy[k+3] = T-MT/M
-    dy[k+4] = e_zu + io*knoten.sum_e*1.01
+    dy[k+4] = e_zu + io*knoten.sum_e*1.1
 end

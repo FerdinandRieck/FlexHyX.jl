@@ -3,14 +3,19 @@ Base.@kwdef mutable struct mWTRK_Param
     L = 1.0
     dx = L/max(nx,1/2)
     rho0 = 1000.0
-    D = 0.1
-    A = pi/4*D^2
-    Aü = pi*D*L
+    Di = 0.02
+    Dm = 0.022
+    Da = 0.026
+    A = pi/4*Di^2
     lamW = 0.6
-    cv_H2O = 4182.0; #-- noch faglich
+    lamRohr1 = 401.0 #-- Wärmleitung Kupfer
+    lamRohr2 = 0.13 #-- Wärmleitung Holz
+    alpha_a = 7.69 #-- Wärmeübergang bei einer Luftbewegung von 0.1 m/s (arbeitswissenschaftliche Empfehlung für Büroraum)
+    cv_H2O = 4182.0 #-- noch faglich
     Arho = A*rho0
     leit = lamW/(rho0*cv_H2O)
-    kA = 380.0
+    mu = 1.0e-3
+    kA = 100.0
     WENO = true
     fluxTL = Array{Number}(undef, nx+1)
     fluxTR = Array{Number}(undef, nx+1)
@@ -48,7 +53,7 @@ end
 
 function Kante!(dy,k,kante::mWTRK_kante,t)
     #-- Parameter
-    (; nx,dx,leit,A,Arho,cv_H2O,D,lamW,kA,WENO,fluxTL,fluxTR,rho0) = kante.Param
+    (; nx,dx,leit,A,Arho,cv_H2O,Di,lamW,WENO,fluxTL,fluxTR,rho0) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -61,6 +66,7 @@ function Kante!(dy,k,kante::mWTRK_kante,t)
     (; KL,KR,KA,Z) = kante
     TL = KL.y.T
     TR = KR.y.T
+    T_aussen = KA.y.T
     mL = KL.in[1].y.m
 
     if WENO == true
@@ -78,10 +84,7 @@ function Kante!(dy,k,kante::mWTRK_kante,t)
     #-- Rohr rechts
     TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
     dy[k+2] = eR -(0.5*cv_H2O*(abs(m)*(TRR-TR)+m*(TRR+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
-    if haskey(Z,"Q_dot") 
-        if isa(Z["Q_dot"],Number) dy[k+2] = dy[k+2] - io*Z["Q_dot"] end 
-        if isa(Z["Q_dot"],Function) dy[k+2] = dy[k+2] - io*Z["Q_dot"](t,kante) end
-    end 
+
     #-- Rohr mitte 
     fRT = TL #-- linke Randbedingung
     for i = 1:nx
@@ -92,12 +95,13 @@ function Kante!(dy,k,kante::mWTRK_kante,t)
             fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
         end
         dy[k+i+2] = -1/Arho*m*ifxaorb(m,T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)  #-- T
-        if haskey(Z,"T_aussen")
-            dy[k+i+2] = dy[k+i+2] - 4*kA/(rho0*D*cv_H2O)*(T[i]-Z["T_aussen"])
-        end
-        if haskey(Z,"KnotenAussen")
-            T_aussen = KA.y.T
-            dy[k+i+2] = dy[k+i+2] - 4*kA/(rho0*D*cv_H2O)*(T[i]-T_aussen)
+        if haskey(Z,"kA")
+            if isa(Z["kA"],Number) 
+                dy[k+i+2] = dy[k+i+2] - 4*Z["kA"]/(rho0*Di*cv_H2O)*(T[i]-T_aussen) 
+            end
+            if isa(Z["kA"],Function)
+                dy[k+i+2] = dy[k+i+2] - 4*Z["kA"](kante)/(rho0*Di*cv_H2O)*(T[i]-T_aussen)
+            end
         end
     end
 end

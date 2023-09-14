@@ -40,6 +40,6 @@ end
 
 function fcn_T_aussen(t)
     A = 10.0
-    P = -A+A*sin(t*2*pi/(24*3600)-pi/2)+273.15
+    P = A*sin(t*2*pi/(24*3600)-pi/2)+273.15
     P = P
 end

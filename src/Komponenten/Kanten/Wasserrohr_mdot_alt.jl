@@ -10,7 +10,7 @@ Base.@kwdef mutable struct mWRoK_Param
     lamW = 0.6
     lamRohr1 = 0.13
     lamRohr2 = 0.040
-    alpha_a = 7.69 #-- Wärmeübergang bei einer Luftbewegung von 0.1 m/s (arbeitswissenschaftliche Empfehlung für Büroraum)
+    alpha_a = 10.0 #-- Wärmeübergang bei einer Luftbewegung von 0.1 m/s (arbeitswissenschaftliche Empfehlung für Büroraum)
     cv_H2O = 4182.0; #-- noch faglich
     mu = 1.0e-3
     Arho = A*rho0

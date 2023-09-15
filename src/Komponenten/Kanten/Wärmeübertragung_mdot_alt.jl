@@ -8,9 +8,9 @@ Base.@kwdef mutable struct mWTRK_Param
     Da = 0.026
     A = pi/4*Di^2
     lamW = 0.6
-    lamRohr1 = 401.0 #-- Wärmleitung Kupfer
+    lamRohr1 = 160.0 #-- Wärmleitung Aluminium
     lamRohr2 = 0.13 #-- Wärmleitung Holz
-    alpha_a = 7.69 #-- Wärmeübergang bei einer Luftbewegung von 0.1 m/s (arbeitswissenschaftliche Empfehlung für Büroraum)
+    alpha_a = 10.0 #-- Wärmeübergang bei einer Luftbewegung von 0.1 m/s (arbeitswissenschaftliche Empfehlung für Büroraum)
     cv_H2O = 4182.0 #-- noch faglich
     Arho = A*rho0
     leit = lamW/(rho0*cv_H2O)

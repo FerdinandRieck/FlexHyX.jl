@@ -55,7 +55,7 @@ end
 
 function Kante!(dy,k,kante::mWTaRK_kante,t)
     #-- Parameter
-    (; nx,dx,leit,Ai,Aa,Aarho,Airho,Da,Dm,Di,cv_H2O,lamW,WENO,Richtung,fluxTL,fluxTR,Ringspalt) = kante.Param
+    (; nx,dx,leit,Ai,Aa,Aarho,Airho,Dm,cv_H2O,lamW,WENO,Richtung,fluxTL,fluxTR,Ringspalt) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -88,12 +88,10 @@ function Kante!(dy,k,kante::mWTaRK_kante,t)
             kA = Z["kA"]
         end
         Arho = Aarho
-        D = Dm
         A = Aa
     else
         kA = Z["kA"]
         Arho = Airho
-        D = Di
         A = Ai
     end
 
@@ -114,6 +112,6 @@ function Kante!(dy,k,kante::mWTaRK_kante,t)
         else 
             fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
         end
-        dy[k+i+2] = -1/Arho*m*ifxaorb(m,T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) - kA*pi*D/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
+        dy[k+i+2] = -1/Arho*m*ifxaorb(m,T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) - kA*pi*Dm/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
     end
 end

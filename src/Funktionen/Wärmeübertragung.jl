@@ -156,26 +156,4 @@ function Wärmeduchgang_Wärmeübertragung(kante)
     kA = Wärmeduchgang(alpha_i,alpha_a,Di,Da,lamRohr)
     return kA
 end
-
-function Wärmeduchgang_Wärmeübertragung_Fussboden(kante)
-    m = kante.y.m
-    Di = kante.Param.Di
-    Dm = kante.Param.Dm
-    Da = kante.Param.Da
-    A = kante.Param.A
-    L = kante.Param.L
-    mu = kante.Param.mu
-    cv_H2O = kante.Param.cv_H2O
-    lamW = kante.Param.lamW
-    lamRohr1 = kante.Param.lamRohr1
-    lamRohr2 = kante.Param.lamRohr2
-    Re = Reynolds(m,Di,A,mu)
-    Pr = Prandtl(cv_H2O,mu,lamW)
-    Nu = Nusselt(Re,Pr,Di,L)
-    alpha_i = Wärmeübergang(Nu,lamW,Di)
-    alpha_a = kante.Param.alpha_a
-    kA = Wärmeduchgang(alpha_i,alpha_a,Di,Dm,Da,lamRohr1,lamRohr2)
-    #@show kA
-    return kA
-end
 #-----------------------

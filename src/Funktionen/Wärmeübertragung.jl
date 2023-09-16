@@ -117,7 +117,6 @@ function Wärmeduchgang_Wärmetauscher_Ringspalt(kante)
     alpha_i = Wärmeübergang_Wärmetauscher_Rohrinnen(kante.R)
     kA = Wärmeduchgang(alpha_i,alpha_a,Di,Dm,lamRohr)
     kante.R.Z["kA"] = kA
-    #@show kA
     return kA
 end
 

@@ -50,9 +50,7 @@ function Kante!(dy,k,kante::mPI_kante,t)
 
     u = Kp*(T_soll-T) + Ki*T_err_dt 
 
-    #u_max=0.00001; u_min=-0.00001;
-    dy[k] = u # = min(max(u,u_min),u_max)
-    #dy[k] = m - 0.029 #- (1 - io)*0.01
+    dy[k] = u 
     dy[k+1] = T_soll-T
     dy[k+2] = e - cv_H2O*m*ifxaorb(m,TL,TR)
 end

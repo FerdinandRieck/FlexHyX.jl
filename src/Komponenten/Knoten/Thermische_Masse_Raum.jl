@@ -37,7 +37,7 @@ function Knoten!(dy,k,knoten::TMHR_Knoten,t)
     eR = knoten.in[1].y.eR
 
     e_in = eL-eR
-    e_out = knoten.out[1].y.e + knoten.out[2].y.e
+    e_out = knoten.out[1].y.e #+ knoten.out[2].y.e
 
-    dy[k] = (e_in - e_out)/(Masse*c) #!!! Verhältnis cw/cL fehlt hier!!!
+    dy[k] = (e_in - e_out)/(Masse*c) 
 end

@@ -55,5 +55,5 @@ function Kante!(dy,k,kante::mVentil_kante,t)
 
     dy[k] = m - KV*A*P/(sqrt(abs(P)+100));
     dy[k+1] = e - cv*m*ifxaorb(m,TL,TR)
-    dy[k+2] = diff/alpha*ifxaorb(diff,A_max-A,A-A_min) - (1-io)*A
+    dy[k+2] = diff/alpha*ifxaorb(diff,A_max-A,A-A_min) - (1-io)*A #
 end

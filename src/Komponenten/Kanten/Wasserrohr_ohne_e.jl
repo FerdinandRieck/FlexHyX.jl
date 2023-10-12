@@ -1,4 +1,4 @@
-Base.@kwdef mutable struct mWRo_Param
+Base.@kwdef mutable struct mWRoE_Param
     nx = 1
     L = 1.0
     dx = L/max(nx,1/2)
@@ -31,52 +31,48 @@ Base.@kwdef mutable struct mWRo_Param
     fluxTR = Array{Number}(undef, nx+1)
 end
 
-Base.@kwdef mutable struct y_mWRo
-    Param::mWRo_Param
+Base.@kwdef mutable struct y_mWRoE
+    Param::mWRoE_Param
     mL::Number = Param.m
-    eL::Number = 0.0
+    mR::Number = Param.m
     P
     _m
     T
-    mR::Number = Param.m
-    eR::Number = 0.0
 end
 
-Base.@kwdef mutable struct mWRo_kante <: Wasser_Kante
+Base.@kwdef mutable struct mWRoE_kante <: Wasser_Kante
     #-- default Parameter
-    Param::mWRo_Param
+    Param::mWRoE_Param
 
     #-- Wasserknoten links und rechts
     KL::Wasser_Knoten
     KR::Wasser_Knoten
 
     #-- Zustandsvariablen
-    y = y_mWRo(Param=Param,
+    y = y_mWRoE(Param=Param,
                P = f(Vector(1:2:2*Param.nx), KL.y.P, KR.y.P, Param.nx), 
                T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx),
                _m = fill(Param.m,Param.nx)
                )
 
     #-- M-Matrix
-    M::Array{Int} = [1; 0; ones(Int,3*Param.nx); 1; 0]
+    M::Array{Int} = [1; 1; ones(Int,3*Param.nx)]
 
     #-- zusätzliche Infos
     Z::Dict
 end
 
-function Kante!(dy,k,kante::mWRo_kante,t)
+function Kante!(dy,k,kante::mWRoE_kante,t)
     #-- Parameter
     (; nx,dx,a2,leit,Arho,rho0,A,Di,cv_H2O,mu,K,lamW,phi,g,WENO,fluxPL,fluxPR,fluxmL,fluxmR,fluxTL,fluxTR) = kante.Param
     #--
 
     #-- Zustandsvariablen
     mL = kante.y.mL
-    eL = kante.y.eL
+    mR = kante.y.mR
     P = kante.y.P
     m = kante.y._m
     T = kante.y.T
-    mR = kante.y.mR
-    eR = kante.y.eR
     #--
 
     (; KL,KR,Z) = kante
@@ -84,29 +80,6 @@ function Kante!(dy,k,kante::mWRo_kante,t)
     TL = KL.y.T
     PR = KR.y.P
     TR = KR.y.T
-
-
-    #=
-    if typeof(KL.in[1]) == mWf_kante
-        io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
-        M_dot = KL.in[1].y.m
-        #M_dot = io*3
-        KR.out[1].Z["M_dot"] = M_dot
-    else
-        M_dot = Z["M_dot"]
-        if typeof(KR.out[1]) != mWf_kante
-            KR.out[1].Z["M_dot"] = M_dot
-        end
-    end
-    =#
-
-    #=
-    if Z["Nr"] == 17
-        if (t > 970) & (t<1020)
-            @show mL-M_dot
-        end
-    end
-    =#
 
     if WENO == true
         recover_weno!(P,fluxPL,fluxPR)
@@ -119,15 +92,9 @@ function Kante!(dy,k,kante::mWRo_kante,t)
     end
 
     #-- Rohr links
-    dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - A*(P[1]-PL)*2/dx - lambda(mL,Di,A,mu,K)/(2*Di*Arho)*abs(mL)*mL - g*Arho*sin(phi); #-- mL
-    TRL = T[1] - (T[1]-T[2])/dx * - 0.5*dx
-    if haskey(Z,"m_dot") 
-        dy[k+1] = eL - 1e-6*(cv_H2O*0.5*(abs(Z["m_dot"])*(TL-TRL)+Z["m_dot"]*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
-    else
-        #dy[k+1] = eL - 1e-6*(cv_H2O*0.5*(abs(M_dot)*(TL-TRL)+M_dot*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
-        dy[k+1] = eL - 1e-6*(cv_H2O*0.5*(abs(mL)*(TL-TRL)+mL*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
-        #dy[k+1] = eL - 1e-6*(cv_H2O*mL*ifxaorb(mL,TL,TRL) + A/dx*2*lamW*(TL-TRL))
-    end       
+    dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - 1e5*A*(P[1]-PL)*2/dx - lambda(mL,Di,A,mu,K)/(2*Di*Arho)*abs(mL)*mL - g*Arho*sin(phi); #-- mL
+    #-- Rohr rechts
+    dy[k+1] = -(mR^2-m[end]^2)*2/(dx*Arho) - 1e5*A*(PR-P[end])*2/dx - lambda(mR,Di,A,mu,K)/(2*Di*Arho)*abs(mR)*mR - g*Arho*sin(phi); #-- mR
     
     #-- Rohr mitte
     fRP = PL; fRm = mL; fRT = TL #-- linke Randbedingung
@@ -140,14 +107,9 @@ function Kante!(dy,k,kante::mWRo_kante,t)
             fRm = 0.5*(fluxmL[i+1]+fluxmR[i+1]) 
             fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
         end
-        dy[k+i+1] = -a2/A*(fRm-fLm)/dx
-        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - A*(fRP-fLP)/dx - lambda(m[i],Di,A,mu,K)/(2*Di*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)
-        if haskey(Z,"m_dot") 
-            dy[k+i+1+nx*2] = -1/Arho*Z["m_dot"]*ifxaorb(Z["m_dot"],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
-        else
-            #dy[k+i+1+nx*2] = -1/Arho*M_dot*ifxaorb(M_dot,T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
-            dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
-        end
+        dy[k+i+1] = -a2/A*(fRm-fLm)/dx*1e-5
+        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - 1e5*A*(fRP-fLP)/dx - lambda(m[i],Di,A,mu,K)/(2*Di*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)
+        dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
         if haskey(Z,"kA")
             if isa(Z["kA"],Number) 
                 dy[k+i+1+nx*2] = dy[k+i+1+nx*2] - 4*Z["kA"]/(rho0*Di*cv_H2O)*(T[i]-Z["T_aussen"]) 
@@ -158,16 +120,12 @@ function Kante!(dy,k,kante::mWRo_kante,t)
         end
     end
     
-    #-- Rohr rechts
-    dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - A*(PR-P[end])*2/dx - lambda(mR,Di,A,mu,K)/(2*Di*Arho)*abs(mR)*mR - g*Arho*sin(phi); #-- mR
+    #-- Energieflüsse berechnen und Zusatzinfos schreiben
+    TRL = T[1] - (T[1]-T[2])/dx * - 0.5*dx 
     TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
-    if haskey(Z,"m_dot") 
-        dy[k+3*nx+3] = eR -(cv_H2O*0.5*(abs(Z["m_dot"])*(TRR-TR)+Z["m_dot"]*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
-    else
-        #dy[k+3*nx+3] = eR - 1e-6*(cv_H2O*0.5*(abs(M_dot)*(TRR-TR)+M_dot*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
-        dy[k+3*nx+3] = eR - 1e-6*(cv_H2O*0.5*(abs(mR)*(TRR-TR)+mR*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
-        #dy[k+3*nx+3] = eR - 1e-6*(cv_H2O*mR*ifxaorb(mR,TRR,TR) + A/dx*2*lamW*(TRR-TR))
-    end 
+    eL = 1e-6*(cv_H2O*0.5*(abs(mL)*(TL-TRL)+mL*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
+    eR = 1e-6*(cv_H2O*0.5*(abs(mR)*(TRR-TR)+mR*(TRR+TR)) + A/dx*2*lamW*(TRR-TR))
+    Z["eL"] = eL; Z["eR"] = eR
 end
 
 function lambda(m,D,A,mu,K)

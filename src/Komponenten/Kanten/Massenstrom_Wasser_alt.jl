@@ -44,4 +44,5 @@ function Kante!(dy,k,kante::mWf_kante,t)
 
     dy[k] = m - io*m_dot
     dy[k+1] = e - cv_H2O*m*ifxaorb(m,TL,TR)
+    #dy[k+1] = e - cv_H2O*0.5*(abs(m)*(TL-TR)+m*(TL+TR))
 end

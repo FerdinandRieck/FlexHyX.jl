@@ -15,6 +15,7 @@ Base.@kwdef mutable struct mWRo2_Param
     leit = lamW/(rho0*cv_H2O)
     K = 1e-5 #-- Rauheit
     phi = 0.0 #-- Neigungswinkel
+    m = 0.0
     WENO = true
 end
 
@@ -44,7 +45,7 @@ Base.@kwdef mutable struct mWRo2_kante <: Wasser_Kante
     #-- Zustandsvariablen
     y = y_mWRo2(P = f(Vector(1:2:2*Param.nx), KL.y.P, KR.y.P, Param.nx), 
                 T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx),
-                _m = zeros(Param.nx)
+                _m = fill(Param.m,Param.nx)
                 )
 
     #-- M-Matrix
@@ -57,7 +58,7 @@ end
 
 function Kante!(dy,k,kante::mWRo2_kante,t)
     #-- Parameter
-    (; nx,dx,a2,leit,Arho,A,D,cv_H2O,mu,K,lamW,phi,g,WENO,a) = kante.Param
+    (; nx,dx,a2,leit,Arho,A,D,cv_H2O,mu,K,lamW,phi,g,WENO,a,rho0) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -87,7 +88,8 @@ function Kante!(dy,k,kante::mWRo2_kante,t)
     end
     #-- Rohr links
     dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - A*(P[1]-PL)*2/dx - lamda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi); #-- mL
-    dy[k+1] =  eL - cv_H2O*mL*(TL-T[1]) - A/dx*2*lamW*(TL-T[1]) 
+    TRL = T[1] - (T[1]-T[2])/dx * - 0.5*dx
+    dy[k+1] =  eL - mL*(TL-TRL) #- A/dx*2*lamW*(TL-T[1]) 
     #-- Rohr mitte
     fRP = PL; fRm = mL; fRT = TL #-- linke Randbedingung
     fCRP = 0.5*(fluxPR[1]-PL); fCRm = 0.5*(fluxmR[1]-mL)  #-- Flusskorrekturen
@@ -115,7 +117,8 @@ function Kante!(dy,k,kante::mWRo2_kante,t)
     end
     #-- Rohr rechts
     dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - A*(PR-P[end])*2/dx - lamda(mR,D,A,mu,K)/(2*D*Arho)*abs(mR)*mR - g*Arho*sin(phi); #-- mR
-    dy[k+3*nx+3] = eR - cv_H2O*mR*(T[nx]-TR) - A/dx*2*lamW*(T[nx]-TR) 
+    TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
+    dy[k+3*nx+3] = eR - mR*(TRR-TR) #- A/dx*2*lamW*(T[nx]-TR) 
 end
 
 function lamda(m,D,A,mu,K)
@@ -127,7 +130,11 @@ function lamda(m,D,A,mu,K)
 end
 
 function recover(y)
-    yL = [2*y[1]-y[2]; y]; yR = [y; 2*y[end]-y[end-1]] 
+    if length(y) > 1
+        yL = [2*y[1]-y[2]; y]; yR = [y; 2*y[end]-y[end-1]] 
+    else
+        yL = [y[1]; y[1]]; yR = [y[end]; y[end]]
+    end
     return yL, yR
 end
 

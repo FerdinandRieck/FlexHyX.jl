@@ -42,7 +42,7 @@ function solveNetzwerk(dir::String)
         s = Symbol(typ,"_Knoten"); obj = getfield(FlexHyX, s)
         knoten[i] = obj(Param=Params, Z=kk)     #-- z.B. U0_Knoten()
 
-        M = append!(M, knoten[i].M)
+        append!(M, knoten[i].M)
     end
 
     #-- PW_max und TW_max suchen--------------------------
@@ -52,11 +52,12 @@ function solveNetzwerk(dir::String)
         if typeof(knoten[i]) <: Wasser_Knoten
             if hasfield(typeof(knoten[i].y), :P) == true
                 PW_max = maximum([PW_max; knoten[i].y.P]) 
+            end
+            if hasfield(typeof(knoten[i].y), :T) == true
                 TW_max = maximum([TW_max; knoten[i].y.T])
             end
         end
     end
-
     # !!! AW lieber für jeden Knoten individuell vergeben !!!
     #=
     for i in eachindex(knoten_infos) #--- AW ändern ----
@@ -69,6 +70,7 @@ function solveNetzwerk(dir::String)
         # wieso kein T_max suchen? Wie können AW für Kopplungsknoten mit T besser bestimmt werden?
     end
     =#
+    M2 = Int[]; 
     for i = 1:n_e  #-- Kanten erzeugen ---------------------------- 
         kk = kanten_infos[i]; typ = kk["Typ"]; 
         von = kk["VonNach"][1]; nach = kk["VonNach"][2]
@@ -86,16 +88,16 @@ function solveNetzwerk(dir::String)
         elseif typ=="mWTaR"  #-- Wärmetauscher
             Params = MakeParam(kk) 
             kanten[i] = mWTaR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"RohrAustausch")
-                R = kk["RohrAustausch"]
+            if haskey(kk,"Ringspalt")
+                R = kk["Ringspalt"]
                 kanten[i].R = kanten[R]
                 kanten[RA].R = kanten[i]
             end
         elseif typ=="mWTaR2"  #-- Wärmetauscher_reduziert
             Params = MakeParam(kk) 
             kanten[i] = mWTaR2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"RohrAustausch")
-                R = kk["RohrAustausch"]
+            if haskey(kk,"Ringspalt")
+                R = kk["Ringspalt"]
                 kanten[i].R = kanten[R]
                 kanten[R].R = kanten[i]
             end
@@ -112,8 +114,8 @@ function solveNetzwerk(dir::String)
         elseif typ=="mWTaRK2"  #-- Wärmetauscher_mdot_konstant
             Params = MakeParam(kk) 
             kanten[i] = mWTaRK2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"RohrAustausch")
-                R = kk["RohrAustausch"]
+            if haskey(kk,"Ringspalt")
+                R = kk["Ringspalt"]
                 kanten[i].R = kanten[R]
                 kanten[R].R = kanten[i]
             end
@@ -163,8 +165,10 @@ function solveNetzwerk(dir::String)
             s = Symbol(typ,"_kante"); obj = getfield(FlexHyX, s)
             kanten[i] = obj(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)    #-- z.B. iB_kante()
         end
-        M = append!(M, kanten[i].M)
+        append!(M2, kanten[i].M)
     end
+
+    prepend!(M, M2)
 
     println("-------------------------------------------------------")
 
@@ -220,7 +224,7 @@ function solveNetzwerk(dir::String)
     end
 
     #-- Erzeuge Zustandsvektor y und Indizes wo was steht in y
-    y, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, P_scale, idx_ele = netzwerk2array(knoten,kanten) 
+    y, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, P_scale, idx_ele = netzwerk2array_2(knoten,kanten) 
 
     params = IM, IP, knoten, kanten, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele
 
@@ -230,26 +234,26 @@ function solveNetzwerk(dir::String)
         #-- konsistente AW berechnen -----------
         ind_alg = findall(x->x==0,M[diagind(M)]);
         dy = 0*y;
-        dgl!(dy,y,params,0.0);
+        dgl2!(dy,y,params,0.0);
         println("Test Vorher: ",Base.maximum(abs.(dy[ind_alg])))
         y_alg = copy(y[ind_alg])
-        g!(dy_alg,y_alg) = f_aw!(dy_alg,y_alg,ind_alg,y,params)
+        g!(dy_alg,y_alg) = f_aw2!(dy_alg,y_alg,ind_alg,y,params)
         res = nlsolve(g!,y_alg)
         y[ind_alg] = res.zero;
-        dgl!(dy,y,params,0.0);
+        dgl2!(dy,y,params,0.0);
         println("Test Nachher: ",Base.maximum(abs.(dy[ind_alg])))
     end
 
     #--------------
     #-- Jacobi Struktur
-    #f!(x,z) = dgl!(x,z,params,0.0); 
+    #f!(x,z) = dgl2!(x,z,params,0.0); 
     #jac_sparsity = Symbolics.jacobian_sparsity(f!, similar(y), similar(y))  #-- funktioniert nicht immer
     dy0 = copy(y)
-    jac_sparsity = Symbolics.jacobian_sparsity((dy, y) -> dgl!(dy, y, params, 0.0),dy0, y)
+    jac_sparsity = Symbolics.jacobian_sparsity((dy, y) -> dgl2!(dy, y, params, 0.0),dy0, y)
     #--------------
 
     t0 = time()
-    f = ODEFunction(dgl!; mass_matrix=M)#, jac_prototype = float.(jac_sparsity))
+    f = ODEFunction(dgl2!; mass_matrix=M)#, jac_prototype = float.(jac_sparsity))
     tspan = (0.0,simdauer)
     prob_ode = ODEProblem(f,y,tspan,params)
 
@@ -259,7 +263,7 @@ function solveNetzwerk(dir::String)
     else
         global n_events
         cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
-        sol = solve(prob_ode,Rodas5P(autodiff=false,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=dtmax)
+        sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=dtmax)
     end
     t1 = time()-t0
     println("CPU: ",t1)

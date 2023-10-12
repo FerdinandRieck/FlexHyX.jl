@@ -42,8 +42,12 @@ function Knoten!(dy,k,knoten::WPSP2_Knoten,t)
 
     (; M, P) = knoten.y
 
-    dy[k] = knoten.sum_m
-    #dy[k] =  sum_m(knoten.in,knoten.out)
-    dy[k+1] = knoten.sum_e/(M*cv_H2O)
+    sum_E = sum_e(knoten.in,knoten.out)
+    if typeof(sum_E) == Symbolics.Num
+        sum_E = 0.0
+    end
+
+    dy[k] =  sum_m(knoten.in,knoten.out)
+    dy[k+1] = sum_E/(1e-16*M*cv_H2O)
     dy[k+2] = P-M*9.81/A
 end

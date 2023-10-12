@@ -1,40 +1,36 @@
-Base.@kwdef mutable struct mWPu2_Param
-    
+Base.@kwdef mutable struct mWPuE_Param
+    cv_H2O = 4182.0; #-- noch faglich
 end
 
-Base.@kwdef mutable struct y_mWPu2
+Base.@kwdef mutable struct y_mWPuE
     m::Number = 0.0
-    e::Number = 0.0
 end
 
-Base.@kwdef mutable struct mWPu2_kante <: Wasser_Kante
+Base.@kwdef mutable struct mWPuE_kante <: Wasser_Kante
     #-- default Parameter
-    Param::mWPu2_Param
+    Param::mWPuE_Param
 
     #-- Zustandsvariablen
-    y = y_mWPu2()
+    y = y_mWPuE()
 
     #-- Gasknoten links und rechts
     KL::Wasser_Knoten
     KR::Wasser_Knoten
 
     #-- M-Matrix
-    M::Array{Int} = [0; 0] 
+    M::Array{Int} = [0] 
 
     #-- zusätzliche Infos
     Z::Dict
 end
 
-function Kante!(dy,k,kante::mWPu2_kante,t)
+function Kante!(dy,k,kante::mWPuE_kante,t)
     #-- Parameter
-    (; ) = kante.Param
+    (; cv_H2O) = kante.Param
     #--
-
-    cv_H2O = 4182.0
 
     #-- Zustandsvariablen
     m = kante.y.m
-    e = kante.y.e
     #--
 
     (; KL,KR,Z) = kante
@@ -44,9 +40,10 @@ function Kante!(dy,k,kante::mWPu2_kante,t)
     TR = KR.y.T
 
     io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
-    a0 = 1.0e5; #-- max 1 bar Druckerhöhung
-    m_max = 1; a1 = a0 / m_max^2 #-- max. Massenfluss = m_max
+    a0 = 10; #-- max 10 bar Druckerhöhung
+    m_max = 7; a1 = a0 / m_max^2 #-- max. Massenfluss = m_max
     dP = PR - PL; 
     dy[k] = m - io*sqrt(max(0.0,(a0-dP)/a1))
-    dy[k+1] = e - m*(TL-TR) 
+    e = 1e-6*cv_H2O*m*ifxaorb(m,TL,TR) 
+    Z["e"] = e
 end

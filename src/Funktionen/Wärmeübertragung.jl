@@ -55,7 +55,7 @@ function Wärmeduchgang(alpha_i,alpha_a,Di,Dm,Da,lamRohr1,lamRohr2)
 end
 
 #-- Berechnung Wärmedurchgangskoeffizienten Rohr
-function Wärmeduchgang_Rohr_aussen(kante)
+function Wärmeduchgang_Rohr_aussen(kante::mWRoK_kante)
     m = kante.y.m
     Di = kante.Param.Di
     Dm = kante.Param.Dm
@@ -75,8 +75,49 @@ function Wärmeduchgang_Rohr_aussen(kante)
     return kA
 end
 
-function Wärmeduchgang_Rohr_innen(kante)
+function Wärmeduchgang_Rohr_innen(kante::mWRoK_kante)
     m = kante.y.m
+    Di = kante.Param.Di
+    Dm = kante.Param.Dm
+    Da = kante.Param.Da
+    A = kante.Param.A
+    L = kante.Param.L
+    mu = kante.Param.mu
+    cv_H2O = kante.Param.cv_H2O
+    lamW = kante.Param.lamW
+    lamRohr1 = kante.Param.lamRohr1
+    lamRohr2 = kante.Param.lamRohr2
+    alpha_a = kante.Param.alpha_a
+    Re = Reynolds(m,Di,A,mu)
+    Pr = Prandtl(cv_H2O,mu,lamW)
+    Nu = Nusselt(Re,Pr,Di,L)
+    alpha_i = Wärmeübergang(Nu,lamW,Di)
+    kA = Wärmeduchgang(alpha_i,alpha_a,Di,Dm,Da,lamRohr1,lamRohr2)
+    return kA
+end
+
+function Wärmeduchgang_Rohr_aussen(kante::mWRo_kante)
+    m = kante.y.mL
+    Di = kante.Param.Di
+    Dm = kante.Param.Dm
+    Da = kante.Param.Da
+    A = kante.Param.A
+    L = kante.Param.L
+    mu = kante.Param.mu
+    cv_H2O = kante.Param.cv_H2O
+    lamW = kante.Param.lamW
+    lamRohr1 = kante.Param.lamRohr1
+    lamRohr2 = kante.Param.lamRohr2
+    Re = Reynolds(m,Di,A,mu)
+    Pr = Prandtl(cv_H2O,mu,lamW)
+    Nu = Nusselt(Re,Pr,Di,L)
+    alpha_i = Wärmeübergang(Nu,lamW,Di)
+    kA = Wärmeduchgang(alpha_i,Di,Dm,Da,lamRohr1,lamRohr2)
+    return kA
+end
+
+function Wärmeduchgang_Rohr_innen(kante::mWRo_kante)
+    m = kante.y.mL
     Di = kante.Param.Di
     Dm = kante.Param.Dm
     Da = kante.Param.Da
@@ -98,8 +139,30 @@ end
 #-----------------------
 
 #-- Berechnung Wärmedurchgangskoeffizienten Wärmetauscher
-function Wärmeduchgang_Wärmetauscher_Ringspalt(kante)
+function Wärmeduchgang_Wärmetauscher_Ringspalt(kante::mWTaRK_kante)
     m = kante.y.m
+    Di = kante.Param.Di
+    Dm = kante.Param.Dm
+    Da = kante.Param.Da
+    Dgl = Da-Dm
+    A = kante.Param.Aa
+    L = kante.Param.L
+    mu = kante.Param.mu
+    cv_H2O = kante.Param.cv_H2O
+    lamW = kante.Param.lamW
+    lamRohr = kante.Param.lamRohr
+    Re = Reynolds(m,Dgl,A,mu)
+    Pr = Prandtl(cv_H2O,mu,lamW)
+    Nu = Nusselt(Re,Pr,Dgl,L)
+    alpha_a = Wärmeübergang(Nu,lamW,Dgl)
+    alpha_i = Wärmeübergang_Wärmetauscher_Rohrinnen(kante.R)
+    kA = Wärmeduchgang(alpha_i,alpha_a,Di,Dm,lamRohr)
+    kante.R.Z["kA"] = kA
+    return kA
+end
+
+function Wärmeduchgang_Wärmetauscher_Ringspalt(kante::mWTaR_kante)
+    m = kante.y.mL
     Di = kante.Param.Di
     Dm = kante.Param.Dm
     Da = kante.Param.Da

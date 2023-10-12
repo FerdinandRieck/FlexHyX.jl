@@ -14,9 +14,9 @@ module FlexHyX
         pfad = filter(contains(r".jl$"), readdir(pwd()*"/Events/";join=true))
         include.(pfad)
     end
-    
-    #-- Funktionen einfügen
-    pfad = filter(contains(r".jl$"), readdir(dir*"/Funktionen/";join=true))
+
+    #-- Datenstruktur einfügen
+    pfad = filter(contains(r".jl$"), readdir(dir*"/Datenstruktur/";join=true))
     include.(pfad)
 
     #-- Knoten einfügen
@@ -27,6 +27,10 @@ module FlexHyX
     pfad = filter(contains(r".jl$"), readdir(dir*"/Komponenten/Kanten/";join=true))
     include.(pfad)
     
+    #-- Funktionen einfügen
+    pfad = filter(contains(r".jl$"), readdir(dir*"/Funktionen/";join=true))
+    include.(pfad)
+
     #=
     #-- Typenhierarchie anzeigen
     using AbstractTrees

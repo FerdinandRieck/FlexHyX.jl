@@ -71,11 +71,15 @@ function Kante!(dy,k,kante::mWRoK_kante,t)
 
     #-- Rohr links
     dy[k] = m - mL #-- m
+    m2 = m + rand(1)[1]*m*1e-5
+    if typeof(m2) != Symbolics.Num m2 = round(m2, digits=3) end
     TRL = T[1] - (T[1]-T[2])/dx * - 0.5*dx
-    dy[k+1] = eL -(0.5*cv_H2O*(abs(m)*(TL-TRL)+m*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
+    dy[k+1] = eL - (0.5*cv_H2O*(abs(m2)*(TL-TRL)+m2*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
     #-- Rohr rechts
     TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
-    dy[k+2] = eR -(0.5*cv_H2O*(abs(m)*(TRR-TR)+m*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
+    #TRR = rand(1)[1]*1e-6#T[nx] #+ rand(1)[1]*T[nx]*1e-6
+    dy[k+2] = eR - (0.5*cv_H2O*(abs(m2)*(TRR-TR)+m2*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
+    #dy[k+2] = eR - cv_H2O*m2*TRR
     #-- Rohr mitte
     fRT = TL #-- linke Randbedingung
     for i = 1:nx

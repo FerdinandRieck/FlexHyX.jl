@@ -13,7 +13,7 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 		if haskey(kk,"#")==false && haskey(kk,"#Nr")==false
 			typ = kk["Typ"]; 
 			if haskey(kk,"T0")==true kk["T0"] = kk["T0"] + 273.15 end 
-			if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end 
+			#if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end 
             if (typ=="U0") & (haskey(kk,"Spannung")==true) kk["U0"] = kk["Spannung"] end 
 			if typ=="GPMH"
 				if haskey(kk,"Theta0")==true kk["Θ0"] = kk["Theta0"] end
@@ -35,7 +35,7 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 		if haskey(kk,"#")==false && haskey(kk,"#Nr")==false
 			typ = kk["Typ"]; 
 			if (haskey(kk,"T0")==true) kk["T0"] = kk["T0"] + 273.15 end 
-			if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end 
+			#if haskey(kk,"P0")==true kk["P0"] = kk["P0"]*1.0e5 end 
 			if (typ=="iPV")  
 				if (haskey(kk,"Temp")==true) kk["T_PV"] = kk["Temp"] + 273.15; end
 				if (haskey(kk,"Strahlung")==true) kk["G"] = kk["Strahlung"] end

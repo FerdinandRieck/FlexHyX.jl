@@ -32,9 +32,34 @@ Base.@kwdef mutable struct WP2_Knoten <: Wasser_Knoten
     out::Array{Any} = []
 end
 
-
 function Knoten!(dy,k,knoten::WP2_Knoten,t)
+    (; cv_H2O) = knoten.Param
+
+    sum_E = sum_e(knoten.in,knoten.out)
+    if typeof(sum_E) == Symbolics.Num
+        sum_E = 0.0
+    end
+
+    #sum_E = -abs(max(min(1e-6,sum_E),-1e-6))
+    if t > 980
+        if knoten.Z["Nr"] == 15
+           # @show sum_E
+        end
+    end
+
+   
+
     Masse = 0.1
     dy[k] = sum_m(knoten.in,knoten.out)
-    dy[k+1] =  knoten.sum_e/(Masse*cv_H2O) 
+    dy[k+1] = sum_E/(1e-6*Masse*cv_H2O) 
 end
+
+#=
+function Knoten!(dy,k,knoten::WP2_Knoten,t)
+    (; cv_H2O) = knoten.Param
+
+    Masse = 0.1
+    dy[k] = sum_m(knoten.in,knoten.out)
+    dy[k+1] =  knoten.sum_e/(Masse*cv_H2O*1e-16) 
+end
+=#

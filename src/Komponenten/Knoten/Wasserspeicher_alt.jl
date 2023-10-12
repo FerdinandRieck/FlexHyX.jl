@@ -44,7 +44,7 @@ function Knoten!(dy,k,knoten::WPSP_Knoten,t)
     (; M, MT, P, T) = knoten.y
 
     dy[k] = knoten.sum_m
-    dy[k+1] = knoten.sum_e/cv_H2O
+    dy[k+1] = knoten.sum_e/(cv_H2O)
     dy[k+2] = P-M*9.81/A
     dy[k+3] = T-MT/M
 end

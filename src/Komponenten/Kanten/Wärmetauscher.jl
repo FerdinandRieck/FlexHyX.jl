@@ -2,25 +2,29 @@ Base.@kwdef mutable struct mWTaR_Param
     nx = 1
     L = 1.0
     dx = L/max(nx,1/2)
-    Dü = 0.02
+    rho0 = 1000
+    Di = 0.02
+    Dm = 0.022
     Da = 0.1
-    D = Da
-    A = pi/4*abs(Da^2-Dü^2)
+    Aa = pi/4*(Da^2-Dm^2)
+    Ai = pi/4*Di^2
+    Aarho = Aa*rho0
+    Airho = Ai*rho0
+    lamW = 0.6
+    lamRohr = 401.0 #-- Wärmleitung Kupfer
+    kA = 2000.0
+    cv_H2O = 4182.0; #-- noch faglich
+    leit = lamW/(rho0*cv_H2O)
+    mu = 1.0e-3
+    WENO = true
+    Richtung = "gleich"
+    Ringspalt = true
     g = 9.81
     a = 1414
     a2 = a^2
-    mu = 1.0e-3
-    rho0 = 1000.0
-    lamW = 0.6
-    cv_H2O = 4182.0; #-- noch faglich
-    Arho = A*rho0
-    leit = lamW/(rho0*cv_H2O)
     K = 1e-5 #-- Rauheit
     phi = 0.0 #-- Neigungswinkel
-    kA = 380.0
     m = 0.0
-    WENO = true
-    Richtung = "gleich"
     fluxPL = Array{Number}(undef, nx+1)
     fluxPR = Array{Number}(undef, nx+1)
     fluxmL = Array{Number}(undef, nx+1)
@@ -67,7 +71,7 @@ end
 
 function Kante!(dy,k,kante::mWTaR_kante,t)
     #-- Parameter
-    (; nx,dx,a2,leit,Arho,rho0,A,Dü,D,cv_H2O,mu,K,lamW,phi,g,kA,WENO,Richtung,fluxPL,fluxPR,fluxmL,fluxmR,fluxTL,fluxTR) = kante.Param
+    (; nx,dx,a2,leit,Ai,Aa,Aarho,Airho,Dm,cv_H2O,mu,K,lamW,phi,g,WENO,Richtung,fluxPL,fluxPR,fluxmL,fluxmR,fluxTL,fluxTR,Ringspalt) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -80,7 +84,7 @@ function Kante!(dy,k,kante::mWTaR_kante,t)
     eR = kante.y.eR
     #--
 
-    (; KL,KR,R) = kante
+    (; KL,KR,R,Z) = kante
     PL = KL.y.P
     TL = KL.y.T
     PR = KR.y.P
@@ -101,10 +105,28 @@ function Kante!(dy,k,kante::mWTaR_kante,t)
         T_aussen = reverse(T_aussen)
     end
 
+    if Ringspalt==true
+        if isa(Z["kA"],Function)
+            kA = Z["kA"](kante)
+        else
+            kA = Z["kA"]
+        end
+        Arho = Aarho
+        A = Aa
+    else
+        kA = Z["kA"]
+        Arho = Airho
+        A = Ai
+    end
+
     #-- Rohr links
-    dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - A*(P[1]-PL)*2/dx - lambda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi)  #-- mL
+    dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - A*(P[1]-PL)*2/dx - lambda(mL,Dm,A,mu,K)/(2*Dm*Arho)*abs(mL)*mL - g*Arho*sin(phi)  #-- mL
     TRL = T[1] - (T[1]-T[2])/dx * -0.5*dx
-    dy[k+1] = eL -(0.5*cv_H2O*(abs(mL)*(TL-TRL)+mL*(TL+TRL)) + A/dx*2*lamW*(TL-T[1])); #-- eL
+    if haskey(Z,"m_dot") 
+        dy[k+1] = eL -(cv_H2O*0.5*(abs(Z["m_dot"])*(TL-TRL)+Z["m_dot"]*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
+    else
+        dy[k+1] = eL -(cv_H2O*0.5*(abs(mL)*(TL-TRL)+mL*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
+    end   
     
     #-- Rohr mitte
     fRP = PL; fRm = mL; fRT = TL #-- linke Randbedingung
@@ -118,12 +140,20 @@ function Kante!(dy,k,kante::mWTaR_kante,t)
             fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
         end
         dy[k+i+1] = -a2/A*(fRm-fLm)/dx  #-- P 
-        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - A*(fRP-fLP)/dx - lambda(m[i],D,A,mu,K)/(2*D*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)  #-- m #!!! Nicht klar ob Winkel Angegeben werden darf, wegen GL.88 (Herleitung aus Text Rohr (Wasser))
-        dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) -  kA*pi*Dü/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
+        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - A*(fRP-fLP)/dx - lambda(m[i],Dm,A,mu,K)/(2*Dm*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)  #-- m #!!! Nicht klar ob Winkel Angegeben werden darf, wegen GL.88 (Herleitung aus Text Rohr (Wasser))
+        if haskey(Z,"m_dot") 
+            dy[k+i+1+nx*2] = -1/Arho*Z["m_dot"]*ifxaorb(Z["m_dot"],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) -  kA*pi*Dm/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
+        else
+            dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) -  kA*pi*Dm/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
+        end
     end
 
     #-- Rohr rechts
-    dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - A*(PR-P[end])*2/dx - lambda(mR,D,A,mu,K)/(2*D*Arho)*abs(mR)*mR - g*Arho*sin(phi)  #-- mR
+    dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - A*(PR-P[end])*2/dx - lambda(mR,Dm,A,mu,K)/(2*Dm*Arho)*abs(mR)*mR - g*Arho*sin(phi)  #-- mR
     TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
-    dy[k+3*nx+3] = eR -(0.5*cv_H2O*(abs(mR)*(TRR-TR)+mR*(TRR+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
+    if haskey(Z,"m_dot") 
+        dy[k+3*nx+3] = eR -(cv_H2O*0.5*(abs(Z["m_dot"])*(TRR-TR)+Z["m_dot"]*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
+    else
+        dy[k+3*nx+3] = eR -(cv_H2O*0.5*(abs(mR)*(TRR-TR)+mR*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
+    end
 end

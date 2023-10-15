@@ -43,6 +43,5 @@ function Kante!(dy,k,kante::mWf_kante,t)
     io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
 
     dy[k] = m - io*m_dot
-    dy[k+1] = e - cv_H2O*m*ifxaorb(m,TL,TR)
-    #dy[k+1] = e - cv_H2O*0.5*(abs(m)*(TL-TR)+m*(TL+TR))
+    dy[k+1] = e - 1e-6*cv_H2O*m*ifxaorb(m,TL,TR)
 end

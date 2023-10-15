@@ -1,5 +1,5 @@
 Base.@kwdef struct WPHR2_Param
-    P0 = 1.0e5
+    PW0 = 1.0
     T0 = 293.15
     D = 1.0
     A = pi*(D/2)^2
@@ -10,14 +10,14 @@ Base.@kwdef struct WPHR2_Param
     Niveau = 1
     T_aussen = 273.15
     ϕ0 = 0.5
-    e_max = 5.0e4
+    e_max = 0.05
 end
 
 Base.@kwdef mutable struct y_WPHR2
     Param::WPHR2_Param
-    M::Number = Param.P0*Param.A/9.81
+    M::Number = Param.PW0*1e5*Param.A/9.81
     MT::Number = M*Param.T0 
-    P::Number = Param.P0
+    P::Number = Param.PW0
     T::Number = Param.T0
     ϕ::Number = Param.ϕ0
     e_zu::Number = 0.0
@@ -57,6 +57,10 @@ function Knoten!(dy,k,knoten::WPHR2_Knoten,t)
     (; M, MT, P, T, e_zu, ϕ, VT_Soll) = knoten.y
     Z = knoten.Z
 
+    if (t > 12000 ) && (t<15000)
+        @show t
+    end
+
     io = 1.0;  
     if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
 
@@ -64,10 +68,10 @@ function Knoten!(dy,k,knoten::WPHR2_Knoten,t)
     ϕ = min(max(ϕ,ϕ_min),ϕ_max)
 
     dy[k] = sum_m(knoten.in,knoten.out)
-    dy[k+1] = (knoten.sum_e + e_zu)/cv_H2O
-    dy[k+2] = P-M*9.81/A
+    dy[k+1] = (knoten.sum_e + e_zu)/(1e-6*cv_H2O)
+    dy[k+2] = P-M*9.81/A*1e-5
     dy[k+3] = T-MT/M
-    dy[k+4] = Kp*(VT_Soll-T)*ifxaorb((VT_Soll-T),ϕ_max-ϕ,ϕ-ϕ_min) - (1-io)*ϕ
+    dy[k+4] = Kp*(VT_Soll-T)*ifxaorb((VT_Soll-T),ϕ_max-ϕ,ϕ-ϕ_min)- (1-io)*ϕ
     dy[k+5] = e_zu  - ϕ*e_max
     dy[k+6] = e_zu 
     if haskey(Z,"T_aussen") 

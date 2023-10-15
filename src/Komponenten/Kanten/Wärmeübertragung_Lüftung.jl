@@ -47,5 +47,5 @@ function Kante!(dy,k,kante::eWTL_kante,t)
 
     M = KL.Param.Masse/t_lüften
 
-    dy[k] = e - io*M*cL*(TL-TR) 
+    dy[k] = e - 1e-6*io*M*cL*(TL-TR)
 end

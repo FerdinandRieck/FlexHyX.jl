@@ -25,16 +25,25 @@ function ifxaorb(x,a,b)
      y = b-(b-a)*fstep(x,0,1.0e-4); return y
 end
 
+function ein(t,ts,schaltzeit)
+    y = 0.0;
+    for i=1:length(ts)
+        y = y + fstep(t,ts[i],schaltzeit);
+    end
+    return y
+end
+
 function einaus(t,ts,schaltzeit)
     y = 0.0;
     for i=1:2:length(ts)
         y = y + fstep(t,ts[i],schaltzeit);
     end
     for i=2:2:length(ts)
-        y = y - fstep(t,ts[i],schaltzeit);
+        y = y + fstep(t,ts[i],schaltzeit);
     end 
     return y
 end
+
 
 function status_io(t,ts)
     status = 0

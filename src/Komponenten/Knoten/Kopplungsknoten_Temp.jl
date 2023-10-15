@@ -33,5 +33,5 @@ end
 function Knoten!(dy,k,knoten::T_Knoten,t)
     (; cv_H2O) = knoten.Param
     Masse = 0.1
-    dy[k] =  knoten.sum_e/(Masse*cv_H2O)
+    dy[k] =  knoten.sum_e/(1e-6*Masse*cv_H2O)
 end

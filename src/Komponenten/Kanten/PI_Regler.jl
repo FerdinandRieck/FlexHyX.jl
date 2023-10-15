@@ -50,7 +50,7 @@ function Kante!(dy,k,kante::mPI2_kante,t)
 
     u = Kp*(T_soll-T) + Ki*T_err_dt 
 
-    dy[k] = u 
+    dy[k] = io*u 
     dy[k+1] = T_soll-T
     dy[k+2] = e - m*(TL-TR)*cv_H2O 
 end

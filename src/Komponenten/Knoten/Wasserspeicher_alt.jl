@@ -1,5 +1,5 @@
 Base.@kwdef struct WPSP_Param
-    P0 = 1.0e5
+    PW0 = 1.0
     T0 = 293.15
     D = 1.0
     A = pi*(D/2)^2
@@ -8,9 +8,9 @@ end
 
 Base.@kwdef mutable struct y_WPSP
     Param::WPSP_Param
-    M::Number = Param.P0*Param.A/9.81
+    M::Number = Param.PW0*1e5*Param.A/9.81
     MT::Number = M*Param.T0 
-    P::Number = Param.P0
+    P::Number = Param.PW0
     T::Number = Param.T0
 end
 
@@ -44,7 +44,7 @@ function Knoten!(dy,k,knoten::WPSP_Knoten,t)
     (; M, MT, P, T) = knoten.y
 
     dy[k] = knoten.sum_m
-    dy[k+1] = knoten.sum_e/(cv_H2O)
-    dy[k+2] = P-M*9.81/A
+    dy[k+1] = knoten.sum_e/(1e-6*cv_H2O)
+    dy[k+2] = P-M*9.81/A*1e-5
     dy[k+3] = T-MT/M
 end

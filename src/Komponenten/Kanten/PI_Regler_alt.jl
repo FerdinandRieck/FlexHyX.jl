@@ -52,5 +52,5 @@ function Kante!(dy,k,kante::mPI_kante,t)
 
     dy[k] = u 
     dy[k+1] = T_soll-T
-    dy[k+2] = e - cv_H2O*m*ifxaorb(m,TL,TR)
+    dy[k+2] = e - 1e-6*cv_H2O*m*ifxaorb(m,TL,TR)
 end

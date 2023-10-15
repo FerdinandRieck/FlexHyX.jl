@@ -37,7 +37,11 @@ function Knoten!(dy,k,knoten::TMHR_Knoten,t)
     eR = knoten.in[1].y.eR
 
     e_in = eL-eR
-    e_out = knoten.out[1].y.e #+ knoten.out[2].y.e
+    e_out = 0.0
 
-    dy[k] = (e_in - e_out)/(Masse*c) 
+    for i=1:length(knoten.out)
+        e_out = e_out + knoten.out[i].y.e
+    end
+   
+    dy[k] = (e_in - e_out)/(1e-6*Masse*c) 
 end

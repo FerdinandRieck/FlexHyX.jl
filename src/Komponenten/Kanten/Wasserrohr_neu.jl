@@ -18,7 +18,7 @@ Base.@kwdef mutable struct mWRo3_Param
     g = 9.81
     a = 1414
     a2 = a^2
-    K = 1e-5 #-- Rauheit
+    K = 1e-3 #-- Rauheit
     phi = 0.0 #-- Neigungswinkel
     m = 0.0
     WENO = true
@@ -90,7 +90,6 @@ function Kante!(dy,k,kante::mWRo3_kante,t)
     if typeof(KL.in[1]) == mWf_kante
         io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
         M_dot = KL.in[1].y.m
-        #M_dot = io*3
         KR.out[1].Z["M_dot"] = M_dot
     else
         M_dot = Z["M_dot"]
@@ -100,13 +99,7 @@ function Kante!(dy,k,kante::mWRo3_kante,t)
     end
     =#
 
-    #=
-    if Z["Nr"] == 17
-        if (t > 970) & (t<1020)
-            @show mL-M_dot
-        end
-    end
-    =#
+
 
     if WENO == true
         recover_weno!(P,fluxPL,fluxPR)
@@ -120,19 +113,12 @@ function Kante!(dy,k,kante::mWRo3_kante,t)
 
     #-- Rohr links
     dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - 1e5*A*(P[1]-PL)*2/dx - lambda(mL,Di,A,mu,K)/(2*Di*Arho)*abs(mL)*mL - g*Arho*sin(phi); #-- mL
-    TRL = T[1] #- (T[1]-T[2])/dx * - 0.5*dx
+    TRL = T[1] - (T[1]-T[2])/dx * - 0.5*dx
     if haskey(Z,"m_dot") 
         dy[k+1] = eL - 1e-6*(cv_H2O*0.5*(abs(Z["m_dot"])*(TL-TRL)+Z["m_dot"]*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
     else
         #dy[k+1] = eL - 1e-6*(cv_H2O*0.5*(abs(M_dot)*(TL-TRL)+M_dot*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
-        mL2 = mL
-        eLL = 1e-6*(cv_H2O*0.5*(abs(mL2)*(TL-TRL)+mL2*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
-        if typeof(mL) != Symbolics.Num 
-            mL2 = mL #round(mL, digits=3) 
-            #eLL = round(eLL, digits=3)
-        end
-        dy[k+1] = eL - eLL
-        #dy[k+1] = eL - 1e-6*(cv_H2O*mL*ifxaorb(mL,TL,TRL) + A/dx*2*lamW*(TL-TRL))
+        dy[k+1] = eL - 1e-6*(cv_H2O*0.5*(abs(mL)*(TL-TRL)+mL*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
     end       
     
     #-- Rohr mitte
@@ -166,19 +152,12 @@ function Kante!(dy,k,kante::mWRo3_kante,t)
     
     #-- Rohr rechts
     dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - 1e5*A*(PR-P[end])*2/dx - lambda(mR,Di,A,mu,K)/(2*Di*Arho)*abs(mR)*mR - g*Arho*sin(phi); #-- mR
-    TRR = T[nx]#-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
+    TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
     if haskey(Z,"m_dot") 
         dy[k+3*nx+3] = eR -(cv_H2O*0.5*(abs(Z["m_dot"])*(TRR-TR)+Z["m_dot"]*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
     else
         #dy[k+3*nx+3] = eR - 1e-6*(cv_H2O*0.5*(abs(M_dot)*(TRR-TR)+M_dot*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
-        mR2 = mR
-        eRR = 1e-6*(cv_H2O*0.5*(abs(mR2)*(TRR-TR)+mR2*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) 
-        if typeof(mR) != Symbolics.Num 
-            mR2 = mR #round(mR, digits=3)
-            #eRR = round(eRR, digits=3)
-        end
-        dy[k+3*nx+3] = eR - eRR #-- eR
-        #dy[k+3*nx+3] = eR - 1e-6*(cv_H2O*mR*ifxaorb(mR,TRR,TR) + A/dx*2*lamW*(TRR-TR))
+        dy[k+3*nx+3] = eR - 1e-6*(cv_H2O*0.5*(abs(mR)*(TRR-TR)+mR*(TRR+TR)) + A/dx*2*lamW*(TRR-TR))  #-- eR
     end 
 end
 

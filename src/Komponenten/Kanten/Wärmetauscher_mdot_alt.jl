@@ -98,10 +98,10 @@ function Kante!(dy,k,kante::mWTaRK_kante,t)
     #-- Rohr links
     dy[k] = m - mL #-- m
     TRL = T[1] - (T[1]-T[2])/dx * -0.5*dx
-    dy[k+1] = eL -(0.5*cv_H2O*(abs(m)*(TL-TRL)+m*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
+    dy[k+1] = eL -1e-6*(0.5*cv_H2O*(abs(m)*(TL-TRL)+m*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
     #-- Rohr rechts
     TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
-    dy[k+2] = eR -(0.5*cv_H2O*(abs(m)*(TRR-TR)+m*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
+    dy[k+2] = eR -1e-6*(0.5*cv_H2O*(abs(m)*(TRR-TR)+m*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
 
     #-- Rohr mitte
     fRT = TL #-- linke Randbedingung

@@ -44,7 +44,8 @@ function solveNetzwerk(dir::String)
 
         append!(M, knoten[i].M)
     end
-
+    # !!! AW lieber für jeden Knoten individuell vergeben !!!
+    #=
     #-- PW_max und TW_max suchen--------------------------
     PW_max = 0.0; TW_max = 0.0
 
@@ -58,8 +59,7 @@ function solveNetzwerk(dir::String)
             end
         end
     end
-    # !!! AW lieber für jeden Knoten individuell vergeben !!!
-    #=
+
     for i in eachindex(knoten_infos) #--- AW ändern ----
         kk = knoten[i].Z; typ = kk["Typ"];
         if typ=="WP" 
@@ -70,7 +70,6 @@ function solveNetzwerk(dir::String)
         # wieso kein T_max suchen? Wie können AW für Kopplungsknoten mit T besser bestimmt werden?
     end
     =#
-    M2 = Int[]; 
     for i = 1:n_e  #-- Kanten erzeugen ---------------------------- 
         kk = kanten_infos[i]; typ = kk["Typ"]; 
         von = kk["VonNach"][1]; nach = kk["VonNach"][2]
@@ -165,10 +164,8 @@ function solveNetzwerk(dir::String)
             s = Symbol(typ,"_kante"); obj = getfield(FlexHyX, s)
             kanten[i] = obj(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)    #-- z.B. iB_kante()
         end
-        append!(M2, kanten[i].M)
+        append!(M, kanten[i].M)
     end
-
-    prepend!(M, M2)
 
     println("-------------------------------------------------------")
 
@@ -224,7 +221,7 @@ function solveNetzwerk(dir::String)
     end
 
     #-- Erzeuge Zustandsvektor y und Indizes wo was steht in y
-    y, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, P_scale, idx_ele = netzwerk2array_2(knoten,kanten) 
+    y, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, P_scale, idx_ele = netzwerk2array(knoten,kanten) 
 
     params = IM, IP, knoten, kanten, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele
 
@@ -234,26 +231,26 @@ function solveNetzwerk(dir::String)
         #-- konsistente AW berechnen -----------
         ind_alg = findall(x->x==0,M[diagind(M)]);
         dy = 0*y;
-        dgl2!(dy,y,params,0.0);
+        dgl!(dy,y,params,0.0);
         println("Test Vorher: ",Base.maximum(abs.(dy[ind_alg])))
         y_alg = copy(y[ind_alg])
-        g!(dy_alg,y_alg) = f_aw2!(dy_alg,y_alg,ind_alg,y,params)
+        g!(dy_alg,y_alg) = f_aw!(dy_alg,y_alg,ind_alg,y,params)
         res = nlsolve(g!,y_alg)
         y[ind_alg] = res.zero;
-        dgl2!(dy,y,params,0.0);
+        dgl!(dy,y,params,0.0);
         println("Test Nachher: ",Base.maximum(abs.(dy[ind_alg])))
     end
 
     #--------------
     #-- Jacobi Struktur
-    #f!(x,z) = dgl2!(x,z,params,0.0); 
+    #f!(x,z) = dgl!(x,z,params,0.0); 
     #jac_sparsity = Symbolics.jacobian_sparsity(f!, similar(y), similar(y))  #-- funktioniert nicht immer
     dy0 = copy(y)
-    jac_sparsity = Symbolics.jacobian_sparsity((dy, y) -> dgl2!(dy, y, params, 0.0),dy0, y)
+    jac_sparsity = Symbolics.jacobian_sparsity((dy, y) -> dgl!(dy, y, params, 0.0),dy0, y)
     #--------------
 
     t0 = time()
-    f = ODEFunction(dgl2!; mass_matrix=M)#, jac_prototype = float.(jac_sparsity))
+    f = ODEFunction(dgl!; mass_matrix=M)#, jac_prototype = float.(jac_sparsity))
     tspan = (0.0,simdauer)
     prob_ode = ODEProblem(f,y,tspan,params)
 

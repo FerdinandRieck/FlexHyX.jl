@@ -39,7 +39,7 @@ function einaus(t,ts,schaltzeit)
         y = y + fstep(t,ts[i],schaltzeit);
     end
     for i=2:2:length(ts)
-        y = y + fstep(t,ts[i],schaltzeit);
+        y = y - fstep(t,ts[i],schaltzeit);
     end 
     return y
 end

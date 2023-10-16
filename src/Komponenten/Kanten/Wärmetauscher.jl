@@ -122,7 +122,7 @@ function Kante!(dy,k,kante::mWTaR_kante,t)
     end
 
     #-- Rohr links
-    dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - 1e5*A*(P[1]-PL)*2/dx - lambda(mL,Dm,A,mu,K)/(2*Dm*Arho)*abs(mL)*mL - g*Arho*sin(phi)  #-- mL
+    dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - 1e5*A*(P[1]-PL)*2/dx - lambda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi)  #-- mL
     TRL = T[1] - (T[1]-T[2])/dx * -0.5*dx
     dy[k+1] = eL - 1e-6*(cv_H2O*0.5*(abs(mL)*(TL-TRL)+mL*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL 
     
@@ -138,7 +138,7 @@ function Kante!(dy,k,kante::mWTaR_kante,t)
             fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
         end
         dy[k+i+1] = -a2/A*(fRm-fLm)/dx*1e-5  #-- P 
-        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - 1e5*A*(fRP-fLP)/dx - lambda(m[i],Dm,A,mu,K)/(2*Dm*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)  #-- m #!!! Nicht klar ob Winkel Angegeben werden darf, wegen GL.88 (Herleitung aus Text Rohr (Wasser))
+        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - 1e5*A*(fRP-fLP)/dx - lambda(m[i],D,A,mu,K)/(2*D*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)  #-- m #!!! Nicht klar ob Winkel Angegeben werden darf, wegen GL.88 (Herleitung aus Text Rohr (Wasser))
         if haskey(Z,"m_dot") 
             dy[k+i+1+nx*2] = -1/Arho*Z["m_dot"]*ifxaorb(Z["m_dot"],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) -  kA*pi*Dm/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
         else
@@ -147,7 +147,7 @@ function Kante!(dy,k,kante::mWTaR_kante,t)
     end
 
     #-- Rohr rechts
-    dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - 1e5*A*(PR-P[end])*2/dx - lambda(mR,Dm,A,mu,K)/(2*Dm*Arho)*abs(mR)*mR - g*Arho*sin(phi)  #-- mR
+    dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - 1e5*A*(PR-P[end])*2/dx - lambda(mR,D,A,mu,K)/(2*D*Arho)*abs(mR)*mR - g*Arho*sin(phi)  #-- mR
     TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
     dy[k+3*nx+3] = eR - 1e-6*(cv_H2O*0.5*(abs(mR)*(TRR-TR)+mR*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
 end

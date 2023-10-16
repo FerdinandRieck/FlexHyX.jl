@@ -61,8 +61,7 @@ function Knoten!(dy,k,knoten::WPHR2_Knoten,t)
         @show t
     end
 
-    io = 1.0;  
-    if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
+    io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
 
     ϕ_max = 1.0; ϕ_min = 0.0; 
     ϕ = min(max(ϕ,ϕ_min),ϕ_max)

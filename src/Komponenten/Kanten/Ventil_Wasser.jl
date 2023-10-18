@@ -53,6 +53,10 @@ function Kante!(dy,k,kante::mWVentil_kante,t)
     A_max=1; A_min=0; A = min(max(A,A_min),A_max);
     diff = m_soll - m;
 
+    if t > 3.0e4
+        alpha = 1.0e3
+    end
+
     dy[k] = m - KV*A*P/(sqrt(abs(P)+0.001));
     dy[k+1] = e - 1e-6*cv_H2O*m*ifxaorb(m,TL,TR)
     dy[k+2] = diff/alpha*ifxaorb(diff,A_max-A,A-A_min) - (1-io)*A

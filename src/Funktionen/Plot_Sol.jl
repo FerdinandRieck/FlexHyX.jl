@@ -1,5 +1,5 @@
 function plotSol(sol,x,y)
-    p = plot(sol.t,sol'[:,x], linewidth = 2, xlabel = "Zeit /Tage")#, xlims=(0,65000))
+    p = plot(sol.t,sol'[:,x], linewidth = 2, xlabel = "Zeit /Tage")#, xlims=(0,10000))
     #p = plot(sol.t/(3600*24),sol'[:,x], linewidth = 2, xlabel = "Zeit /Tage")#, xlims=(800/(3600*24), 1030/(3600*24)))
     #p2 = plot(sol.t/3600,sol'[:,y]/(18.3*3600*n_par), linewidth = 2, xlabel = "Zeit /h", ylabel = "soc", title = "Ladezustand", label = "soc",legend=:topleft)
     #p = plot(p1,p2,layout = (2, 1))

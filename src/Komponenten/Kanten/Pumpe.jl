@@ -1,5 +1,7 @@
 Base.@kwdef mutable struct mWPu_Param
     cv_H2O = 4182.0; #-- noch faglich
+    m_max = 3.0 #-- max. Massenfluss = m_max
+    a0 = 10.0 #-- max 10 bar Druckerhöhung
 end
 
 Base.@kwdef mutable struct y_mWPu
@@ -27,7 +29,7 @@ end
 
 function Kante!(dy,k,kante::mWPu_kante,t)
     #-- Parameter
-    (; cv_H2O) = kante.Param
+    (; cv_H2O,a0,m_max) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -41,10 +43,10 @@ function Kante!(dy,k,kante::mWPu_kante,t)
     TL = KL.y.T
     TR = KR.y.T
 
-    io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
-    a0 = 10; #-- max 10 bar Druckerhöhung
-    m_max = 7.0; a1 = a0 / m_max^2 #-- max. Massenfluss = m_max
+    io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = ein(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
+    io = io/length(Z["Schaltzeit"])
+    a1 = a0 / m_max^2 
     dP = PR - PL; 
     dy[k] = m - io*sqrt(max(0.0,(a0-dP)/a1))
-    dy[k+1] = e - cv_H2O*m*ifxaorb(m,TL,TR) 
+    dy[k+1] = e - 1.0e-6*cv_H2O*m*ifxaorb(m,TL,TR) 
 end

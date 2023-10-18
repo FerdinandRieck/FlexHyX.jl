@@ -1,24 +1,30 @@
-Base.@kwdef mutable struct mWTaRK2_Param
+Base.@kwdef mutable struct mWTaRK_Param
     nx = 1
     L = 0.286
     dx = L/max(nx,1/2)
     rho0 = 1000
-    Dü = 0.02
+    Di = 0.02
+    Dm = 0.022
     Da = 0.1
-    A = pi/4*abs(Da^2-Dü^2)
+    Aa = pi/4*(Da^2-Dm^2)
+    Ai = pi/4*Di^2
+    Aarho = Aa*rho0
+    Airho = Ai*rho0
     lamW = 0.6
+    lamRohr = 401.0 #-- Wärmleitung Kupfer
+    kA = 2000.0
     cv_H2O = 4182.0; #-- noch faglich
-    Arho = A*rho0
     leit = lamW/(rho0*cv_H2O)
-    kA = 4000.0
+    mu = 1.0e-3
     WENO = true
     Richtung = "gleich"
+    Ringspalt = true
     fluxTL = Array{Number}(undef, nx+1)
     fluxTR = Array{Number}(undef, nx+1)
     m_dot = 1.0
 end
 
-Base.@kwdef mutable struct y_mWTaRK2
+Base.@kwdef mutable struct y_mWTaRK
     m::Number = 0.0
     eL::Number = 0.0
     eR::Number = 0.0
@@ -26,18 +32,18 @@ Base.@kwdef mutable struct y_mWTaRK2
 end
 
 
-Base.@kwdef mutable struct mWTaRK2_kante <: Wasser_Kante
+Base.@kwdef mutable struct mWTaRK_kante <: Wasser_Kante
     #-- default Parameter
-    Param::mWTaRK2_Param
+    Param::mWTaRK_Param
 
     #-- Knoten links und rechts
     KL::Knoten
     KR::Knoten
 
     #-- Zustandsvariablen
-    y = y_mWTaRK2(T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx))
+    y = y_mWTaRK(T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx))
 
-    #-- Rohr aussen/innen
+    #-- Ringspalt/Rohr innen
     R = 0
 
     #-- M-Matrix
@@ -47,9 +53,9 @@ Base.@kwdef mutable struct mWTaRK2_kante <: Wasser_Kante
     Z::Dict
 end
 
-function Kante!(dy,k,kante::mWTaRK2_kante,t)
+function Kante!(dy,k,kante::mWTaRK_kante,t)
     #-- Parameter
-    (; nx,dx,leit,Arho,Dü,cv_H2O,lamW,kA,WENO,Richtung,fluxTL,fluxTR) = kante.Param
+    (; nx,dx,leit,Ai,Aa,Aarho,Airho,Dm,cv_H2O,lamW,WENO,Richtung,fluxTL,fluxTR,Ringspalt) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -59,7 +65,7 @@ function Kante!(dy,k,kante::mWTaRK2_kante,t)
     T = kante.y.T
     #--
 
-    (; KL,KR,R) = kante
+    (; KL,KR,R,Z) = kante
     TL = KL.y.T
     TR = KR.y.T
     mL = KL.in[1].y.m
@@ -75,14 +81,27 @@ function Kante!(dy,k,kante::mWTaRK2_kante,t)
         T_aussen = reverse(T_aussen)
     end
 
+    if Ringspalt==true
+        if isa(Z["kA"],Function)
+            kA = Z["kA"](kante)
+        else
+            kA = Z["kA"]
+        end
+        Arho = Aarho
+        A = Aa
+    else
+        kA = Z["kA"]
+        Arho = Airho
+        A = Ai
+    end
+
     #-- Rohr links
     dy[k] = m - mL #-- m
-    dy[k+1] = eL - m*(TL-T[1])*cv_H2O  #- A/dx*2*lamW*(TL-T[1]) Wärmeübetragung weglassen
-    #dy[k+1] = eL -(0.5*cv_H2O*(abs(m)*(TL-T[1])+m*(TL+T[1])) + A/dx*2*lamW*(TL-T[1])); #-- eL
-
+    TRL = T[1] - (T[1]-T[2])/dx * -0.5*dx
+    dy[k+1] = eL -1e-6*(0.5*cv_H2O*(abs(m)*(TL-TRL)+m*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL
     #-- Rohr rechts
-    dy[k+2] = eR - m*(T[nx]-TR)*cv_H2O  #- A/dx*2*lamW*(T[nx]-TR) Wärmeübertragung weglassen
-    #dy[k+2] = eR -(0.5*cv_H2O*(abs(m)*(T[end]-TR)+m*(T[end]+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
+    TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
+    dy[k+2] = eR -1e-6*(0.5*cv_H2O*(abs(m)*(TRR-TR)+m*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
 
     #-- Rohr mitte
     fRT = TL #-- linke Randbedingung
@@ -93,6 +112,6 @@ function Kante!(dy,k,kante::mWTaRK2_kante,t)
         else 
             fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
         end
-        dy[k+i+2] = -1/Arho*m*ifxaorb(m,T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) - kA*pi*Dü/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
+        dy[k+i+2] = -1/Arho*m*ifxaorb(m,T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) - kA*pi*Dm/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
     end
 end

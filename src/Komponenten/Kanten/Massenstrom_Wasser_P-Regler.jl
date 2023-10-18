@@ -23,6 +23,7 @@ Base.@kwdef mutable struct mWfP_kante <: Wasser_Kante
     #-- Wasserknoten links und rechts
     KL::Wasser_Knoten
     KR::Wasser_Knoten
+    K = []
 
     #-- M-Matrix
     M::Array{Int} = [0; 0; 1] 
@@ -47,12 +48,12 @@ function Kante!(dy,k,kante::mWfP_kante,t)
     TR = KR.y.T
     T = K.y.T
 
-    T_soll = T_soll + 273.15
+    #T_soll = T_soll + 273.15
 
     io = 1.0; if get(Z,"Schaltzeit",0)!=0 io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end 
     ϕ_max=1; ϕ_min=0; ϕ = min(max(ϕ,ϕ_min),ϕ_max);
 
     dy[k] = m - m_max*ϕ
-    dy[k+1] = e - cv_H2O*m*ifxaorb(m,TL,TR)
-    dy[k+2] = Kp*(T_soll-T)*ifxaorb(T_soll-T,ϕ_max-ϕ,ϕ-ϕ_min) - (1-io)*ϕ
+    dy[k+1] = e - 1e-6*cv_H2O*m*ifxaorb(m,TL,TR)
+    dy[k+2] = Kp*(T_soll-T)
 end

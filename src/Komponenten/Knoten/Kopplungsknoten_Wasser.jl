@@ -1,21 +1,21 @@
-Base.@kwdef mutable struct WP2_Param
+Base.@kwdef mutable struct WP_Param
     cv_H2O = 4182.0
     PW0 = 1.0e5
     T0 = 293.15
 end
 
-Base.@kwdef mutable struct y_WP2
-    Param::WP2_Param
+Base.@kwdef mutable struct y_WP
+    Param::WP_Param
     P::Number = Param.PW0
     T::Number = Param.T0
 end
 
-Base.@kwdef mutable struct WP2_Knoten <: Wasser_Knoten
+Base.@kwdef mutable struct WP_Knoten <: Wasser_Knoten
     #-- geänderte Parameter
-    Param::WP2_Param
+    Param::WP_Param
 
     #-- Zustandsvariablen
-    y = y_WP2(Param=Param)
+    y = y_WP(Param=Param)
     
     #-- M-Matrix
     M::Array{Int} = [0; 1] 
@@ -32,7 +32,7 @@ Base.@kwdef mutable struct WP2_Knoten <: Wasser_Knoten
     out::Array{Any} = []
 end
 
-function Knoten!(dy,k,knoten::WP2_Knoten,t)
+function Knoten!(dy,k,knoten::WP_Knoten,t)
     (; cv_H2O) = knoten.Param
 
     Masse = 0.1

@@ -1,4 +1,4 @@
-Base.@kwdef struct WPHR2_Param
+Base.@kwdef struct WPHR_Param
     PW0 = 1.0
     T0 = 293.15
     D = 1.0
@@ -9,12 +9,12 @@ Base.@kwdef struct WPHR2_Param
     RT_Soll = 293.15
     Niveau = 1
     T_aussen = 273.15
-    ϕ0 = 0.5
+    ϕ0 = 0.0
     e_max = 0.05
 end
 
-Base.@kwdef mutable struct y_WPHR2
-    Param::WPHR2_Param
+Base.@kwdef mutable struct y_WPHR
+    Param::WPHR_Param
     M::Number = Param.PW0*1e5*Param.A/9.81
     MT::Number = M*Param.T0 
     P::Number = Param.PW0
@@ -27,12 +27,12 @@ end
 
 
 
-Base.@kwdef mutable struct WPHR2_Knoten <: Wasser_Knoten
+Base.@kwdef mutable struct WPHR_Knoten <: Wasser_Knoten
     #-- default Parameter
-    Param::WPHR2_Param
+    Param::WPHR_Param
 
     #-- Zustandsvariablen 
-    y = y_WPHR2(Param=Param)
+    y = y_WPHR(Param=Param)
 
     #-- M-Matrix
     M::Array{Int} = [1; 1; 0; 0; 1; 0; 1; 0] 
@@ -49,7 +49,7 @@ Base.@kwdef mutable struct WPHR2_Knoten <: Wasser_Knoten
     out::Array{Any} = []
 end
 
-function Knoten!(dy,k,knoten::WPHR2_Knoten,t)
+function Knoten!(dy,k,knoten::WPHR_Knoten,t)
     #-- Parameter
     (; A,cv_H2O,Kp,Neigung,RT_Soll,Niveau,e_max) = knoten.Param
     #--
@@ -57,12 +57,14 @@ function Knoten!(dy,k,knoten::WPHR2_Knoten,t)
     (; M, MT, P, T, e_zu, ϕ, VT_Soll) = knoten.y
     Z = knoten.Z
 
-    if (t > 12000 ) && (t<15000)
-        @show t
+    if (t>200) && (t<23000)
+        #if typeof(t) == ForwardDiff.Dual{ForwardDiff.Tag{DiffEqBase.OrdinaryDiffEqTag, Float64}, Float64, 1}
+           # @show typeof(t)
+        #end
     end
 
-    io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
 
+    io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
     ϕ_max = 1.0; ϕ_min = 0.0; 
     ϕ = min(max(ϕ,ϕ_min),ϕ_max)
 

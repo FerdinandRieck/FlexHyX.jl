@@ -49,3 +49,8 @@ function fcn_T_aussen2(t)
     T = -A/2*sin(t*2*pi/(7*24*3600)-pi/2) + A*sin(t*2*pi/(24*3600)-pi/2)+273.15
     return T
 end
+
+function fcn_T_aussen3(t)
+    T = 273.15
+    return T
+end

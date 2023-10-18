@@ -92,15 +92,7 @@ function solveNetzwerk(dir::String)
                 kanten[i].R = kanten[R]
                 kanten[RA].R = kanten[i]
             end
-        elseif typ=="mWTaR2"  #-- Wärmetauscher_reduziert
-            Params = MakeParam(kk) 
-            kanten[i] = mWTaR2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"Ringspalt")
-                R = kk["Ringspalt"]
-                kanten[i].R = kanten[R]
-                kanten[R].R = kanten[i]
-            end
-        elseif typ=="mWTaRK"  #-- Wärmetauscher_mdot_konstant
+        elseif typ=="mWTaRK"  #-- Wärmetauscher_Mdot
             Params = MakeParam(kk) 
             kanten[i] = mWTaRK_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
             if haskey(kk,"Ringspalt") 
@@ -110,15 +102,7 @@ function solveNetzwerk(dir::String)
                     kanten[R].R = kanten[i]
                 end
             end
-        elseif typ=="mWTaRK2"  #-- Wärmetauscher_mdot_konstant
-            Params = MakeParam(kk) 
-            kanten[i] = mWTaRK2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"Ringspalt")
-                R = kk["Ringspalt"]
-                kanten[i].R = kanten[R]
-                kanten[R].R = kanten[i]
-            end
-        elseif typ=="mWTRK"  #-- Wärmeübertragung_mdot_konstant
+        elseif typ=="mWTRK"  #-- Wärmeübertragung_Mdot
             Params = MakeParam(kk) 
             kanten[i] = mWTRK_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
             if haskey(kk,"KnotenAussen")
@@ -126,35 +110,14 @@ function solveNetzwerk(dir::String)
                 kanten[i].KA = knoten[KA]
                 knoten[KA].in = kanten[[i]]
             end
-        elseif typ=="mWTRK2"  #-- Wärmeübertragung_mdot_konstant
+        elseif typ=="mWfPI"  #-- Massenstrom Wasser PI-Regler
             Params = MakeParam(kk) 
-            kanten[i] = mWTRK2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"KnotenAussen")
-                KA = kk["KnotenAussen"]
-                kanten[i].KA = knoten[KA]
-                knoten[KA].in = kanten[[i]]
-            end
-        elseif typ=="mWTR"  #-- Wärmeübertragung_Rohr_reduziert
-            Params = MakeParam(kk) 
-            kanten[i] = mWTR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"KnotenAussen")
-                KA = kk["KnotenAussen"]
-                kanten[i].KA = knoten[KA]
-                knoten[KA].in = kanten[[i]]
-            end
-        elseif typ=="mPI"  #-- PI-Regler
-            Params = MakeParam(kk) 
-            kanten[i] = mPI_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+            kanten[i] = mWfPI_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
             K = kk["KnotenAussen"]
             kanten[i].K = knoten[K]
-        elseif typ=="mPI2"  #-- PI-Regler
+        elseif typ=="mWfP"  #-- Massenstrom Wasser P-Regler
             Params = MakeParam(kk) 
-            kanten[i] = mPI2_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            K = kk["KnotenAussen"]
-            kanten[i].K = knoten[K]
-        elseif typ=="mPID"  #-- PID-Regler
-            Params = MakeParam(kk) 
-            kanten[i] = mPID_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+            kanten[i] = mWfP_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
             K = kk["KnotenAussen"]
             kanten[i].K = knoten[K]
         else

@@ -55,7 +55,7 @@ function Wärmeduchgang(alpha_i,alpha_a,Di,Dm,Da,lamRohr1,lamRohr2)
 end
 
 #-- Berechnung Wärmedurchgangskoeffizienten Rohr
-function Wärmeduchgang_Rohr_aussen(kante::mWRoK_kante)
+function Wärmeduchgang_Rohr_aussen(kante::mWRoM_kante)
     m = kante.y.m
     Di = kante.Param.Di
     Dm = kante.Param.Dm
@@ -75,7 +75,7 @@ function Wärmeduchgang_Rohr_aussen(kante::mWRoK_kante)
     return kA
 end
 
-function Wärmeduchgang_Rohr_innen(kante::mWRoK_kante)
+function Wärmeduchgang_Rohr_innen(kante::mWRoM_kante)
     m = kante.y.m
     Di = kante.Param.Di
     Dm = kante.Param.Dm
@@ -139,7 +139,7 @@ end
 #-----------------------
 
 #-- Berechnung Wärmedurchgangskoeffizienten Wärmetauscher
-function Wärmeduchgang_Wärmetauscher_Ringspalt(kante::mWTaRK_kante)
+function Wärmeduchgang_Wärmetauscher_Ringspalt(kante::mWTaRM_kante)
     m = kante.y.m
     Di = kante.Param.Di
     Dm = kante.Param.Dm

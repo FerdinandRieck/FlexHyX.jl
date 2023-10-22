@@ -14,12 +14,12 @@ Base.@kwdef mutable struct iLR_kante <: Strom_Kante
     #-- geänderte Parameter
     Param::iLR_Param
 
-    #-- Zustandsvariablen
-    y = y_iLR()
-
     #-- Spannungsknoten links und rechts
     KL::Strom_Knoten
     KR::Strom_Knoten
+
+    #-- Zustandsvariablen
+    y = y_iLR()
 
     #-- M-Matrix
     M::Array{Int} = [1]

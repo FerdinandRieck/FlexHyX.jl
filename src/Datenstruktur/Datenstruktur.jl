@@ -17,7 +17,7 @@ abstract type Gas_Strom_Kante <: Kante end
 #----------------------------------------
 
 function netzwerk2array(knoten,kanten)
-    y_arr = Float64[]; P_scale = Float64[];
+    y_arr = Float64[]
     idx_ele = Dict()
     idx_iflussL = Array{Int}(undef, 0,2); idx_iflussR = Array{Int}(undef, 0,2); 
     idx_mflussR = Array{Int}(undef, 0,2); idx_mflussL = Array{Int}(undef, 0,2); 
@@ -28,12 +28,7 @@ function netzwerk2array(knoten,kanten)
             if ff != :Param
                 n = length(getfield(knoten[i].y,ff))
                 k = k + n
-                append!(y_arr,getfield(knoten[i].y,ff));  
-                if first(string(ff))=='P' 
-                    push!(P_scale, 1.0e-5)
-                else 
-                    push!(P_scale, 0.0) 
-                end             
+                append!(y_arr,getfield(knoten[i].y,ff));              
                 leg_i = string(ff,knoten[i].Z["Nr"])
                 idx_ele[leg_i] = [i k]  #-- Dictionary
             end
@@ -74,18 +69,13 @@ function netzwerk2array(knoten,kanten)
                         idx_eflussR = vcat(idx_eflussR, [i k])
                         idx_eflussL = vcat(idx_eflussL, [i k])
                     end
-                end 
-                if first(string(ff))=='P' 
-                    push!(P_scale, 1.0e-5)
-                else 
-                    push!(P_scale, 0.0) 
-                end 
+                end
                 leg_i = string(kanten[i].Z["Nr"],ff)
                 idx_ele[leg_i] = [i k]  #-- Dictionary
             end
         end
     end
-    return y_arr, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, P_scale, idx_ele
+    return y_arr, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele
 end
 
 function array2netzwerk!(knoten,kanten,y_arr)

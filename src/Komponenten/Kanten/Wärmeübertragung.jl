@@ -47,12 +47,12 @@ Base.@kwdef mutable struct eWT_kante <: Temp_Kante
     #-- default Parameter
     Param::eWT_Param
 
-    #-- Zustandsvariablen
-    y = y_eWT()
+    #-- Knoten links und rechts
+    KL::Knoten  
+    KR::Knoten 
 
-    #-- Gasknoten links und rechts
-    KL::Knoten  #!!! Hier nochmal überlegen ob das so richtig ist
-    KR::Knoten  #!!! Hier nochmal überlegen ob das so richtig ist
+    #-- Zustandsvariablen
+    y = y_eWT() 
 
     #-- M-Matrix
     M::Array{Int} = [0] 

@@ -22,7 +22,11 @@ Base.@kwdef mutable struct GP_Knoten <: Gas_Knoten
     
     #-- Knotenbilanz
     sum_m::Number = 0.0
-    sum_e::Number = 0.0    
+    sum_e::Number = 0.0   
+    
+    #-- Kanten
+    in::Array{Any} = []
+    out::Array{Any} = []
 end
 
 

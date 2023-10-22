@@ -17,12 +17,12 @@ Base.@kwdef mutable struct mVentil_kante <: Gas_Kante
     #-- default Parameter
     Param::mVentil_Param
 
-    #-- Zustandsvariablen
-    y = y_mVentil(Param=Param)
-
     #-- Gasknoten links und rechts
     KL::Gas_Knoten
-    KR::Gas_Knoten
+    KR::Gas_Knoten    
+
+    #-- Zustandsvariablen
+    y = y_mVentil(Param=Param)
 
     #-- M-Matrix
     M::Array{Int} = [0; 0; 1] 

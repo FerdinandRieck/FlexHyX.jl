@@ -16,12 +16,12 @@ Base.@kwdef mutable struct iD_kante <: Strom_Kante
     #-- geänderte Parameter
     Param::iD_Param
 
-    #-- Zustandsvariablen
-    y = y_iD()
-
     #-- Stromknoten links und rechts
     KL::Strom_Knoten
     KR::Strom_Knoten
+
+    #-- Zustandsvariablen
+    y = y_iD()
 
     #-- M-Matrix
     M::Array{Int} = [0]

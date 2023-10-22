@@ -68,7 +68,7 @@ function plot_knoten!(knoten)
 			color = :blue
 		end
 		plot!([x],[y], seriestype = :scatter, markercolor = :white, markerstrokewidth = 2, markerstrokecolor = color)
-		tt = string(kk["Nr"])*" "*kk["Typ"]
+		tt = kk["Typ"]*" "*string(kk["Nr"])
 		fntsz = 9
 		n = length(tt)
 		str0 = "█"^(n÷2+1)

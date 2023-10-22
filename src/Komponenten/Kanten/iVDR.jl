@@ -13,12 +13,12 @@ Base.@kwdef mutable struct iVDR_kante <: Strom_Kante
     #-- geänderte Parameter
     Param::iVDR_Param
 
-    #-- Zustandsvariablen
-    y = y_iVDR()
-
     #-- Spannungsknoten links und rechts
     KL::Strom_Knoten
-    KR::Strom_Knoten
+    KR::Strom_Knoten    
+
+    #-- Zustandsvariablen
+    y = y_iVDR()
 
     #-- M-Matrix
     M::Array{Int} = [0]

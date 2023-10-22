@@ -55,7 +55,11 @@ Base.@kwdef mutable struct GPMH_Knoten <: Gas_Knoten
 
     #-- Knotenbilanz
     sum_m::Number = 0.0
-    sum_e::Number = 0.0    
+    sum_e::Number = 0.0
+    
+    #-- Kanten
+    in::Array{Any} = []
+    out::Array{Any} = []
 end
 
 function Knoten!(dy,k,knoten::GPMH_Knoten,t)

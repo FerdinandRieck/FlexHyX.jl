@@ -21,6 +21,10 @@ Base.@kwdef mutable struct GP0_Knoten <: Gas_Knoten
 
     #-- zusätzliche Infos
     Z::Dict
+
+    #-- Kanten
+    in::Array{Any} = []
+    out::Array{Any} = []
 end
 
 function Knoten!(dy,k,knoten::GP0_Knoten,t)

@@ -13,12 +13,12 @@ Base.@kwdef mutable struct mWPu_kante <: Wasser_Kante
     #-- default Parameter
     Param::mWPu_Param
 
-    #-- Zustandsvariablen
-    y = y_mWPu()
-
-    #-- Gasknoten links und rechts
+    #-- Wasserknoten links und rechts
     KL::Wasser_Knoten
     KR::Wasser_Knoten
+
+    #-- Zustandsvariablen
+    y = y_mWPu()
 
     #-- M-Matrix
     M::Array{Int} = [0; 0] 

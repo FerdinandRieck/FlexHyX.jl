@@ -12,12 +12,12 @@ Base.@kwdef mutable struct iSP0_kante <: Strom_Kante
     #-- geänderte Parameter
     Param::iSP0_Param
 
-    #-- Zustandsvariablen
-    y = y_iSP0()
-
     #-- Spannungsknoten links und rechts
     KL::Strom_Knoten
     KR::Strom_Knoten
+
+    #-- Zustandsvariablen
+    y = y_iSP0()
 
     #-- M-Matrix
     M::Array{Int} = [0; 0]

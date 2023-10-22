@@ -1,7 +1,9 @@
 Base.@kwdef mutable struct mWVentil_Param
     KV = 1.0e3
     m_soll = 3.0
-    alpha = 1.0e1
+    alpha = 1.0e2
+    alpha2 = 1.0e3
+    t2 = 3.0e4
     cv_H2O = 4182.0; #-- noch faglich
     A0 = 1.0e-5
 end
@@ -17,12 +19,12 @@ Base.@kwdef mutable struct mWVentil_kante <: Wasser_Kante
     #-- default Parameter
     Param::mWVentil_Param
 
-    #-- Zustandsvariablen
-    y = y_mWVentil(Param=Param)
-
     #-- Wasserknoten links und rechts
     KL::Wasser_Knoten
-    KR::Wasser_Knoten
+    KR::Wasser_Knoten    
+
+    #-- Zustandsvariablen
+    y = y_mWVentil(Param=Param)
 
     #-- M-Matrix
     M::Array{Int} = [0; 0; 1] 
@@ -33,7 +35,7 @@ end
 
 function Kante!(dy,k,kante::mWVentil_kante,t)
     #-- Parameter
-    (; KV,m_soll,alpha,cv_H2O) = kante.Param
+    (; KV,m_soll,alpha,alpha2,t2,cv_H2O) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -53,8 +55,8 @@ function Kante!(dy,k,kante::mWVentil_kante,t)
     A_max=1; A_min=0; A = min(max(A,A_min),A_max);
     diff = m_soll - m;
 
-    if t > 3.0e4
-        alpha = 1.0e3
+    if t > t2
+        alpha = alpha2
     end
 
     dy[k] = m - KV*A*P/(sqrt(abs(P)+0.001));

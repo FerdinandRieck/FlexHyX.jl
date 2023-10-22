@@ -32,9 +32,6 @@ Base.@kwdef mutable struct iBZ_kante <: Gas_Strom_Kante
     #-- default Parameter
     Param::iBZ_Param
 
-    #-- Zustandsvariablen
-    y = y_iBZ()
-
     #-- Stromknoten links und rechts
     KUL::Strom_Knoten
     KUR::Strom_Knoten
@@ -42,6 +39,9 @@ Base.@kwdef mutable struct iBZ_kante <: Gas_Strom_Kante
     #-- Gasknoten links und rechts
     KGL::Gas_Knoten
     KGR::Gas_Knoten
+
+    #-- Zustandsvariablen
+    y = y_iBZ()
 
     #-- M-Matrix
     M::Array{Int} = [0; 0; 0] 

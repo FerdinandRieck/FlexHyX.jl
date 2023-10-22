@@ -21,6 +21,10 @@ Base.@kwdef mutable struct U_Knoten <: Strom_Knoten
 
     #-- Knotenbilanz
     sum_i::Number = 0.0  
+
+    #-- Kanten
+    in::Array{Any} = []
+    out::Array{Any} = []
 end
 
 function Knoten!(dy,k,knoten::U_Knoten,t)

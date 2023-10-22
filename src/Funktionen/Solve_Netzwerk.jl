@@ -84,7 +84,7 @@ function solveNetzwerk(dir::String)
             von_mBZ = mBZ["VonNach"][1]; nach_mBZ = mBZ["VonNach"][2]
             Params = MakeParam(kk)
             kanten[i] = iBZ_kante(Param=Params, KUL=knoten[von], KUR=knoten[nach], KGL=knoten[von_mBZ], KGR=knoten[nach_mBZ], Z=kk)
-        elseif typ=="mWTaR"  #-- Wärmetauscher
+        elseif typ=="mWTaR"  #-- Wärmetauscher_Doppelrohr
             Params = MakeParam(kk) 
             kanten[i] = mWTaR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
             if haskey(kk,"Ringspalt")
@@ -92,9 +92,9 @@ function solveNetzwerk(dir::String)
                 kanten[i].R = kanten[R]
                 kanten[RA].R = kanten[i]
             end
-        elseif typ=="mWTaRK"  #-- Wärmetauscher_Mdot
+        elseif typ=="mWTaRM"  #-- Wärmetauscher_Doppelrohr_Mdot
             Params = MakeParam(kk) 
-            kanten[i] = mWTaRK_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+            kanten[i] = mWTaRM_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
             if haskey(kk,"Ringspalt") 
                 if isa(kk["Ringspalt"],Int)
                     R = kk["Ringspalt"]
@@ -102,9 +102,9 @@ function solveNetzwerk(dir::String)
                     kanten[R].R = kanten[i]
                 end
             end
-        elseif typ=="mWTRK"  #-- Wärmeübertragung_Mdot
+        elseif typ=="mWTM"  #-- Wärmeübertragung_Mdot
             Params = MakeParam(kk) 
-            kanten[i] = mWTRK_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+            kanten[i] = mWTM_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
             if haskey(kk,"KnotenAussen")
                 KA = kk["KnotenAussen"]
                 kanten[i].KA = knoten[KA]
@@ -184,7 +184,7 @@ function solveNetzwerk(dir::String)
     end
 
     #-- Erzeuge Zustandsvektor y und Indizes wo was steht in y
-    y, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, P_scale, idx_ele = netzwerk2array(knoten,kanten) 
+    y, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele = netzwerk2array(knoten,kanten) 
 
     params = IM, IP, knoten, kanten, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele
 

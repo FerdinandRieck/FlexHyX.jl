@@ -1,5 +1,5 @@
 function plotSol(sol,x,y)
-    p = plot(sol.t,sol'[:,x], linewidth = 2, xlabel = "Zeit /Tage", xlims=(0,40000))
+    p = plot(sol.t,sol'[:,x], linewidth = 2, xlabel = "Zeit /Tage")#, ylims=(0,4))
     #p = plot(sol.t/(3600*24),sol'[:,x], linewidth = 2, xlabel = "Zeit /Tage")#, xlims=(800/(3600*24), 1030/(3600*24)))
     #p2 = plot(sol.t/3600,sol'[:,y]/(18.3*3600*n_par), linewidth = 2, xlabel = "Zeit /h", ylabel = "soc", title = "Ladezustand", label = "soc",legend=:topleft)
     #p = plot(p1,p2,layout = (2, 1))
@@ -15,7 +15,7 @@ function plotSol(sol,t,x,y)
   return p
 end
 
-function plotSol(sol)
+function plotSol(sol::Int)
   n_par = 1
   p1 = plot(sol.t/3600,sol'[:,[29,30]], linewidth = 2, xlabel = "Zeit /h", ylabel = "A", title = "Ströme", label = ["iV" "iPV"],legend=:bottomleft, legend_columns=-1)
   p2 = plot(sol.t/3600,sol'[:,[26,34,39]], linewidth = 2, xlabel = "Zeit /h", ylabel = "A", title = "Ströme", label = ["iB" "iE" "iBZ"],legend=:bottom, legend_columns=-1)
@@ -39,5 +39,13 @@ function plotSol(sol,t)
   p5 = plot(t/3600,sol[22,:], linewidth = 2, xlabel = "Zeit /h", ylabel = "%", title = "Beladung MHS", label = "Θ",legend=:top)
   
   p = plot(p1,p2,p4,p5, layout = (4, 1), size=(1000,1000))
+  return p
+end
+
+function plotSol(sol)
+  p1 = plot(sol.t/3600,sol'[:,[2]], linewidth = 2, xlabel = "Zeit /h", ylabel = "V", title = "Spannungen", label = "U2", legend=:bottom)
+  p2 = plot(sol.t/3600,sol'[:,22], linewidth = 2, xlabel = "Zeit /h", ylabel = "%", title = "Beladung MHS", label = "Θ",legend=:top)
+   
+  p = plot(p1,p2, layout = (2, 1), size=(1000,1000))
   return p
 end

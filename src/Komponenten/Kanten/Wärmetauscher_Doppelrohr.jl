@@ -48,9 +48,9 @@ Base.@kwdef mutable struct mWTaR_kante <: Wasser_Kante
     #-- default Parameter
     Param::mWTaR_Param
 
-    #-- Knoten links und rechts
-    KL::Knoten
-    KR::Knoten
+    #-- Wasserknoten links und rechts
+    KL::Wasser_Knoten
+    KR::Wasser_Knoten
 
     #-- Zustandsvariablen
     y = y_mWTaR(Param=Param,

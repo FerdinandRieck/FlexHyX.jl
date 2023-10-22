@@ -24,12 +24,12 @@ Base.@kwdef mutable struct iPV_kante <: Strom_Kante
     #-- geänderte Parameter
     Param::iPV_Param
 
-    #-- Zustandsvariablen
-    y = y_iPV()
-
     #-- Spannungsknoten links und rechts
     KL::Strom_Knoten
     KR::Strom_Knoten
+
+    #-- Zustandsvariablen
+    y = y_iPV()
 
     #-- M-Matrix
     M::Array{Int} = [0]

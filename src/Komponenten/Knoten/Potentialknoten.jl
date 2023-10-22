@@ -17,11 +17,12 @@ Base.@kwdef mutable struct U0_Knoten <: Strom_Knoten
     #-- M-Matrix
     M::Array{Int} = [0] 
 
-    #-- Jacobi Struktur
-    J::Int = 1
-
     #-- zusätzeliche Infos
     Z::Dict
+
+    #-- Kanten
+    in::Array{Any} = []
+    out::Array{Any} = []
 end
 
 function Knoten!(dy,k,knoten::U0_Knoten,t)

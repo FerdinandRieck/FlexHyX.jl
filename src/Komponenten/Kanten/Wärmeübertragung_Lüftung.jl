@@ -1,5 +1,7 @@
 Base.@kwdef mutable struct eWTL_Param
    cL = 1006.7
+   t_wechsel = 3*3600
+   t_end = 604800
 end
 
 Base.@kwdef mutable struct y_eWTL
@@ -10,12 +12,12 @@ Base.@kwdef mutable struct eWTL_kante <: Temp_Kante
     #-- default Parameter
     Param::eWTL_Param
 
-    #-- Zustandsvariablen
-    y = y_eWTL()
-
-    #-- Gasknoten links und rechts
+    #-- Knoten links und rechts
     KL::Knoten  
     KR::Knoten
+
+    #-- Zustandsvariablen
+    y = y_eWTL()
 
     #-- M-Matrix
     M::Array{Int} = [0] 
@@ -26,7 +28,7 @@ end
 
 function Kante!(dy,k,kante::eWTL_kante,t)
     #-- Parameter
-    (; cL) = kante.Param
+    (; cL,t_wechsel,t_end) = kante.Param
     #--
 
     #-- Zustandsvariable
@@ -41,8 +43,17 @@ function Kante!(dy,k,kante::eWTL_kante,t)
     if (haskey(Z,"Schaltzeit")==true) 
         io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
         t_lüften = Z["Schaltzeit"][end] - Z["Schaltzeit"][end-1]
-    else
-        t_lüften = 3600
+    else #-- beim ersten Druchgang Schaltzeiten für Luftwechsel berechnen
+        n = t_end/t_wechsel
+        Schaltzeit = zeros(n,1)
+        Schaltzeit[1] = 50000
+        t_lüften = 300
+        for i = 2:2:n-1
+            Schaltzeit[i] = Schaltzeit[i-1] + t_lüften
+            Schaltzeit[i+1] = Schaltzeit[i] + t_wechsel 
+        end
+        Z["Schaltzeit"] = Schaltzeit
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"])
     end
 
     M = KL.Param.Masse/t_lüften

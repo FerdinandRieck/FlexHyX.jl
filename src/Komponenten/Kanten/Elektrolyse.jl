@@ -22,16 +22,16 @@ Base.@kwdef mutable struct iE_kante <: Gas_Strom_Kante
     #-- default Parameter
     Param::iE_Param
 
-    #-- Zustandsvariablen
-    y = y_iE()
-
     #-- Stromknoten links und rechts
     KUL::Strom_Knoten
     KUR::Strom_Knoten
 
     #-- Gasknoten links und rechts
     KGL::Gas_Knoten
-    KGR::Gas_Knoten
+    KGR::Gas_Knoten    
+
+    #-- Zustandsvariablen
+    y = y_iE()
 
     #-- M-Matrix
     M::Array{Int} = [0; 0; 0] 

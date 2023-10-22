@@ -9,12 +9,12 @@ end
 Base.@kwdef mutable struct iV_kante <: Strom_Kante
     Param::iV_Param
 
-    #-- Zustandsvariablen
-    y = y_iV()
-
     #-- Spannungsknoten links und rechts
     KL::Strom_Knoten
     KR::Strom_Knoten
+
+    #-- Zustandsvariablen
+    y = y_iV()
 
     #-- M-Matrix
     M::Array{Int} = [0]

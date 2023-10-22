@@ -1,4 +1,4 @@
-Base.@kwdef mutable struct mWTRK_Param
+Base.@kwdef mutable struct mWTM_Param
     nx = 1
     L = 1.0
     dx = L/max(nx,1/2)
@@ -22,7 +22,7 @@ Base.@kwdef mutable struct mWTRK_Param
     m_dot = 1.0
 end
 
-Base.@kwdef mutable struct y_mWTRK
+Base.@kwdef mutable struct y_mWTM
     m::Number = 0.0
     eL::Number = 0.0
     eR::Number = 0.0
@@ -30,9 +30,9 @@ Base.@kwdef mutable struct y_mWTRK
 end
 
 
-Base.@kwdef mutable struct mWTRK_kante <: Wasser_Kante
+Base.@kwdef mutable struct mWTM_kante <: Wasser_Kante
     #-- default Parameter
-    Param::mWTRK_Param
+    Param::mWTM_Param
 
     #-- Wasserknoten links und rechts
     KL::Wasser_Knoten
@@ -42,7 +42,7 @@ Base.@kwdef mutable struct mWTRK_kante <: Wasser_Kante
     KA = []
 
     #-- Zustandsvariablen
-    y = y_mWTRK(T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx))
+    y = y_mWTM(T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx))
 
     #-- M-Matrix
     M::Array{Int} = [0; 0; 0; ones(Int,Param.nx)]
@@ -51,7 +51,7 @@ Base.@kwdef mutable struct mWTRK_kante <: Wasser_Kante
     Z::Dict
 end
 
-function Kante!(dy,k,kante::mWTRK_kante,t)
+function Kante!(dy,k,kante::mWTM_kante,t)
     #-- Parameter
     (; nx,dx,leit,A,Arho,cv_H2O,Di,lamW,WENO,fluxTL,fluxTR,rho0) = kante.Param
     #--

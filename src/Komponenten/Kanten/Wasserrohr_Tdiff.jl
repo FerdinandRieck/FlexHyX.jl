@@ -42,10 +42,6 @@ Base.@kwdef mutable struct y_mWRoTd
     eR::Number = 0.0
 end
 
-function f(x,L,R,nx)
-    y = L .+ x*0.5*(R-L)/nx
-end
-
 Base.@kwdef mutable struct mWRoTd_kante <: Wasser_Kante
     #-- default Parameter
     Param::mWRoTd_Param
@@ -137,49 +133,3 @@ function Kante!(dy,k,kante::mWRoTd_kante,t)
     TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
     dy[k+3*nx+3] = eR - cv_H2O*mR*(TRR-TR) - A/dx*2*lamW*(TRR-TR) 
 end
-
-function lamda(m,D,A,mu,K)
-    Re = abs(m)*D/(A*mu); Re = max(Re,1.0e-6)
-    lam = 0.25/(log10(K/(3.7*D)+5.74/exp(0.9*log(Re)))^2)
-    #println(lam)
-    #lam = 0.00001
-    return lam
-end
-
-function recover(y)
-    if length(y) > 1
-        yL = [2*y[1]-y[2]; y]; yR = [y; 2*y[end]-y[end-1]] 
-    else
-        yL = [y[1]; y[1]]; yR = [y[end]; y[end]]
-    end
-    return yL, yR
-end
-
-function recover_weno(y)
-    #-- Zellenmittelwerte auf Zellgrenzen interpolieren
-    #-- L = upwind, R = downwind, WENO 3. Ordnung
-    n = length(y);
-    yL = Array{Number}(undef, n+1); yR = Array{Number}(undef, n+1) 
-    #yL[1] = 11/6*y[1]-7/6*y[2]+y[3]/3; yR[1] = yL[1]; #-- Randwerte
-    #yL[2] = y[1]/3+5/6*y[2]-y[3]/6;
-    #yL[n+1] = 11/6*y[n]-7/6*y[n-1]+y[n-2]/3; yR[n+1] = yL[n+1];
-    #yR[n] = y[n]/3+5/6*y[n-1]-y[n-2]/6; 
-    yL[1] = 2*y[1]-y[2]; yR[1] = yL[1]; yL[2] = y[1]
-    yR[n+1] = 2*y[n]-y[n-1]; yL[n+1] = yR[n+1]; yR[n] = y[n] 
-    for i=2:n-1
-        yR[i], yL[i+1] = weno3(y[i-1:i+1]); 
-    end
-    return yL, yR 
-end
-
-function weno3(y) #-- y = [y1,y2,y3]
-    ep = 1.0e-6; p = 0.6;
-    uL = y[2]-y[1]; uC = y[3]-2*y[2]+y[1]; uR = y[3]-y[2]; uCC = y[3]-y[1];
-    ISL = uL^2; ISC = 13/3*uC^2 +0.25*uCC^2; ISR = uR^2; 
-    aL = 0.25*(1/(ep+ISL))^p; aC = 0.5*(1/(ep+ISC))^p;  aR = 0.25*(1/(ep+ISR))^p;
-    suma = max(aL+aC+aR,eps(1.0)); wL = aL/suma; wC = aC/suma; wR = aR/suma;
-    y12 = (0.5*wL+5/12*wC)*y[1] + (0.5*wL+2/3*wC+1.5*wR)*y[2] + (-wC/12-0.5*wR)*y[3];
-    y23 = (-0.5*wL-wC/12)*y[1] + (1.5*wL+2/3*wC+0.5*wR)*y[2] + (5/12*wC+0.5*wR)*y[3];
-    return y12, y23
-end
-

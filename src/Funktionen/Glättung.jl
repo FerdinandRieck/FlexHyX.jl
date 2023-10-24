@@ -33,6 +33,14 @@ function ein(t,ts,schaltzeit)
     return y
 end
 
+function aus(t,ts,schaltzeit)
+    y = 0.0;
+    for i=1:length(ts)
+        y = y - fstep(t,ts[i],schaltzeit);
+    end
+    return y
+end
+
 function einaus(t,ts,schaltzeit)
     y = 0.0;
     for i=1:2:length(ts)

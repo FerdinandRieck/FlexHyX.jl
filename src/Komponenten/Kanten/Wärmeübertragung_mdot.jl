@@ -70,7 +70,7 @@ function Kante!(dy,k,kante::mWTM_kante,t)
     mL = KL.in[1].y.m
 
     if WENO == true
-        recover_weno!(T,fluxTL,fluxTR) #??? hier vieleicht nur recover!(T), da bereits ubwind Diskertisierung mit ifxaorb(m[i],T[i]-fLT,fRT-T[i])??? 
+        recover_weno!(T,fluxTL,fluxTR) 
     else
         recover!(T,fluxTL,fluxTR)
     end
@@ -104,36 +104,4 @@ function Kante!(dy,k,kante::mWTM_kante,t)
             end
         end
     end
-end
-
-function fcn_Q_dot2(t,kante)
-    A = 1000.0
-    P = 2*A+A*sin(t*2*pi/(24*3600))
-    P = -P
-end
-
-function fcn_Q_dot(t,kante)
-    #m = kante.KL.in[1].KL.in[1].y.m
-    #TL = kante.KL.in[1].KL.in[1].KL.y.T
-    #TR = kante.KL.in[1].KL.in[1].KR.y.T
-    #@show  kante.KL.in[1].KL.in[1].KL.y.T
-    m = kante.y.m
-    TL = kante.KL.y.T
-    TR = kante.KR.y.T
-    cv_H2O = kante.Param.cv_H2O
-    e = m*(TL-TR)*cv_H2O 
-    return e*-1.0
-end
-
-function fcn_Q_dot3(t,kante)
-    #m = kante.KL.in[1].KL.in[1].y.m
-    #TL = kante.KL.in[1].KL.in[1].KL.y.T
-    #TR = kante.KL.in[1].KL.in[1].KR.y.T
-    #@show  kante.KL.in[1].KL.in[1].KL.y.T
-    T = sum(kante.y.T)/length(kante.y.T)
-    TA = kante.KA.y.T
-    Aü = kante.Param.Aü
-    kA = kante.Param.kA
-    e = kA*Aü*(T-TA)
-    return -e
 end

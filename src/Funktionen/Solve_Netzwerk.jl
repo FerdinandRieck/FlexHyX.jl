@@ -87,10 +87,12 @@ function solveNetzwerk(dir::String)
         elseif typ=="mWTaR"  #-- Wärmetauscher_Doppelrohr
             Params = MakeParam(kk) 
             kanten[i] = mWTaR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"Ringspalt")
-                R = kk["Ringspalt"]
-                kanten[i].R = kanten[R]
-                kanten[RA].R = kanten[i]
+            if haskey(kk,"Ringspalt") 
+                if isa(kk["Ringspalt"],Int)
+                    R = kk["Ringspalt"]
+                    kanten[i].R = kanten[R]
+                    kanten[R].R = kanten[i]
+                end
             end
         elseif typ=="mWTaRM"  #-- Wärmetauscher_Doppelrohr_Mdot
             Params = MakeParam(kk) 

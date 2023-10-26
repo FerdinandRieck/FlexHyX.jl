@@ -138,12 +138,8 @@ function Kante!(dy,k,kante::mWTaR_kante,t)
             fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
         end
         dy[k+i+1] = -a2/A*(fRm-fLm)/dx*1e-5  #-- P 
-        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - 1e5*A*(fRP-fLP)/dx - lambda(m[i],D,A,mu,K)/(2*D*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)  #-- m #!!! Nicht klar ob Winkel Angegeben werden darf, wegen GL.88 (Herleitung aus Text Rohr (Wasser))
-        if haskey(Z,"m_dot") 
-            dy[k+i+1+nx*2] = -1/Arho*Z["m_dot"]*ifxaorb(Z["m_dot"],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) -  kA*pi*Dm/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
-        else
-            dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) -  kA*pi*Dm/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
-        end
+        dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - 1e5*A*(fRP-fLP)/dx - lambda(m[i],D,A,mu,K)/(2*D*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)  #-- m 
+        dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) -  kA*pi*Dm/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
     end
 
     #-- Rohr rechts

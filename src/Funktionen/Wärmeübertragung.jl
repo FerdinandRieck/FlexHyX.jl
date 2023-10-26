@@ -161,6 +161,21 @@ function Wärmeduchgang_Wärmetauscher_Ringspalt(kante::mWTaRM_kante)
     return kA
 end
 
+function Wärmeübergang_Wärmetauscher_Rohrinnen(kante::mWTaRM_kante)
+    m = kante.y.m
+    D = kante.Param.Di
+    A = kante.Param.Ai
+    L = kante.Param.L
+    mu = kante.Param.mu
+    cv_H2O = kante.Param.cv_H2O
+    lamW = kante.Param.lamW
+    Re = Reynolds(m,D,A,mu)
+    Pr = Prandtl(cv_H2O,mu,lamW)
+    Nu = Nusselt(Re,Pr,D,L)
+    alpha_i = Wärmeübergang(Nu,lamW,D)
+    return alpha_i
+end
+
 function Wärmeduchgang_Wärmetauscher_Ringspalt(kante::mWTaR_kante)
     m = kante.y.mL
     Di = kante.Param.Di
@@ -183,8 +198,8 @@ function Wärmeduchgang_Wärmetauscher_Ringspalt(kante::mWTaR_kante)
     return kA
 end
 
-function Wärmeübergang_Wärmetauscher_Rohrinnen(kante)
-    m = kante.y.m
+function Wärmeübergang_Wärmetauscher_Rohrinnen(kante::mWTaR_kante)
+    m = kante.y.mL
     D = kante.Param.Di
     A = kante.Param.Ai
     L = kante.Param.L
@@ -200,7 +215,7 @@ end
 #-----------------------
 
 #-- Berechnung Wärmedurchgangskoeffizienten Wärmeübertragung
-function Wärmeduchgang_Wärmeübertragung(kante)
+function Wärmeduchgang_Wärmeübertragung(kante::mWTM_kante)
     m = kante.y.m
     Di = kante.Param.Di
     Da = kante.Param.Da

@@ -1,4 +1,4 @@
-Base.@kwdef struct WPB_Param
+Base.@kwdef mutable struct WPB_Param
     PA = 1.01325
     PW0 = 1.0
     T0 = 293.15

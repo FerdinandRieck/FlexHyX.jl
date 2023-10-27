@@ -6,6 +6,7 @@ Base.@kwdef mutable struct iD_Param
     res = nlsolve(f,[0.1]); 
     beta = res.zero[1]
     a = -U0/R+I0*(exp(beta*U0)-1);
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_iD
@@ -32,7 +33,7 @@ end
 
 function Kante!(dy,k,kante::iD_kante,t)
     #-- Parameter
-    (; R,I0,U0,beta) = kante.Param
+    (; R,I0,U0,beta,Jac_init) = kante.Param
     #--
 
     iD = kante.y.i
@@ -43,7 +44,13 @@ function Kante!(dy,k,kante::iD_kante,t)
     UR = KR.y.U
     #--
 
-    io = 1.0; if get(Z,"Schaltzeit",0)!=0 io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
+    end
+
     U = UL-UR
     I = I0*(exp(beta*min(U,U0))-1) + max(U-U0,0)/R;
     

@@ -5,7 +5,11 @@ module FlexHyX
     using Dates
     using LinearAlgebra
     using SparseArrays
+    using SparseDiffTools
+    using LinearSolve
     import JSON
+
+
 
     dir = dirname(@__FILE__)
 

@@ -1,9 +1,10 @@
-Base.@kwdef struct WPH_Param
+Base.@kwdef mutable struct WPH_Param
     PW0 = 1.0
     T0 = 293.15
     D = 1.0
     A = pi*(D/2)^2
     cv_H2O = 4182; #-- noch faglich
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_WPH
@@ -41,13 +42,18 @@ end
 
 function Knoten!(dy,k,knoten::WPH_Knoten,t)
     #-- Parameter
-    (; A,cv_H2O) = knoten.Param
+    (; A,cv_H2O,Jac_init) = knoten.Param
     #--
 
     (; M, MT, P, T, e_zu) = knoten.y
     Z = knoten.Z
 
-    io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
+    end
 
     dy[k] =  sum_m(knoten.in,knoten.out)
     dy[k+1] = (knoten.sum_e + e_zu)/(1e-6*cv_H2O)

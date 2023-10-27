@@ -1,4 +1,4 @@
-Base.@kwdef struct WPSP_Param
+Base.@kwdef mutable struct WPSP_Param
     PW0 = 1.0
     T0 = 293.15
     D = 1.0

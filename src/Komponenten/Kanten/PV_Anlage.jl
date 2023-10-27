@@ -14,6 +14,7 @@ Base.@kwdef mutable struct iPV_Param
     G = 2000.0
     T_PV = 298.15
     Module = 1
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_iPV
@@ -39,6 +40,7 @@ Base.@kwdef mutable struct iPV_kante <: Strom_Kante
 end
 
 function Kante!(dy,k,kante::iPV_kante,t)
+    Jac_init = kante.Param.Jac_init
     iPV = kante.y.i
 
     #-- Spannungsknoten links und rechts
@@ -47,10 +49,13 @@ function Kante!(dy,k,kante::iPV_kante,t)
     UR = KR.y.U
     #--
 
-    
-    io = 1.0;  
-    if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
-    # @show io # io Werte nochmal prüfen !!!  
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
+    end
+
     if (haskey(Z,"Leistung")==true)
         if isa(Z["Leistung"],Number) P = io * Z["Leistung"]; end #!!! io kommt nochmal in dy[k] = io*... vor!!!
         if isa(Z["Leistung"],Function) P = io * Z["Leistung"](t); end

@@ -1,5 +1,6 @@
 Base.@kwdef mutable struct iV_Param
     Scale = 1
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_iV
@@ -24,7 +25,7 @@ Base.@kwdef mutable struct iV_kante <: Strom_Kante
 end
 
 function Kante!(dy,k,kante::iV_kante,t)
-    (; Scale) = kante.Param
+    (; Scale,Jac_init) = kante.Param
     iV = kante.y.i
     Z = kante.Z
 
@@ -34,10 +35,13 @@ function Kante!(dy,k,kante::iV_kante,t)
     UR = KR.y.U
     #--
 
-    io = 1.0;  
-    #!!! Wieso vorher => if get(Z,"Schaltzeit",0)!=0   ???
-    if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end     
-    # @show io # io Werte nochmal prüfen !!! 
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
+    end
+ 
     if (haskey(Z,"Leistung")==true)
         if isa(Z["Leistung"],Number) P = io * Z["Leistung"]; end #!!! io kommt nochmal in dy[k] = io*... vor!!!
         if isa(Z["Leistung"],Function) P = io * Z["Leistung"](t); end

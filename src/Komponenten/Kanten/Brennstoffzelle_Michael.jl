@@ -20,6 +20,7 @@ Base.@kwdef mutable struct iBZ_Param
     Kc=Eoc_nom/E_nom; C1 = N*R*c; C2 = z*F*Uf_H2*xnom*Pstd;  C3 = z*F*k*Pstd/(R*h)*exp(-Dg/(R*T)); 
     C4 = 1.229+(T-298.15)*(-44.43)/(z*F); C5 = R*T/(z*F); C6=R/(z*alpha*F)*N;
     cv = 1.01798*1.0e4 
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_iBZ
@@ -52,7 +53,7 @@ end
 
 function Kante!(dy,k,kante::iBZ_kante,t)
     #-- Parameter
-    (; xnom,Uf_H2,C3,C4,C5,C6,P02,Kc,R_ohm,N,F,cv) = kante.Param
+    (; xnom,Uf_H2,C3,C4,C5,C6,P02,Kc,R_ohm,N,F,cv,Jac_init) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -70,7 +71,12 @@ function Kante!(dy,k,kante::iBZ_kante,t)
     PL = KGL.y.P
     PR = KGR.y.P
 
-    io = 1.0; if get(Z,"Schaltzeit",0)!=0 io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
+    end
 
     P = PL-PR; T_1 = 25
     P = P*1.0e-5; P = max(P,1.0e-5); 

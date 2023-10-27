@@ -4,6 +4,7 @@ Base.@kwdef mutable struct mWfPI_Param
     T_soll = 293.15
     m_max = 1.0
     cv_H2O = 4182.0
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_mWfPI
@@ -34,7 +35,7 @@ end
 
 function Kante!(dy,k,kante::mWfPI_kante,t)
     #-- Parameter
-    (; T_soll, Kp, Ki, cv_H2O, m_max) = kante.Param
+    (; T_soll, Kp, Ki, cv_H2O ,Jac_init) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -48,9 +49,14 @@ function Kante!(dy,k,kante::mWfPI_kante,t)
     TR = KR.y.T
     T = K.y.T #-- Zimmertemperatur im Haus
 
-    io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
+    end
+
     u = Kp*(T_soll-T) + Ki*T_err_dt
-    #m_min=0; u = min(max(u,m_min),m_max);
 
     dy[k] =  m - u
     dy[k+1] = e - 1e-6*cv_H2O*m*ifxaorb(m,TL,TR)

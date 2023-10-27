@@ -1,4 +1,4 @@
-Base.@kwdef struct WPHR_Param
+Base.@kwdef mutable struct WPHR_Param
     PW0 = 1.0
     T0 = 293.15
     D = 1.0
@@ -11,6 +11,7 @@ Base.@kwdef struct WPHR_Param
     T_aussen = 273.15
     ϕ0 = 0.0
     e_max = 0.05
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_WPHR
@@ -51,20 +52,19 @@ end
 
 function Knoten!(dy,k,knoten::WPHR_Knoten,t)
     #-- Parameter
-    (; A,cv_H2O,Kp,Neigung,RT_Soll,Niveau,e_max) = knoten.Param
+    (; A,cv_H2O,Kp,Neigung,RT_Soll,Niveau,e_max,Jac_init) = knoten.Param
     #--
 
     (; M, MT, P, T, e_zu, ϕ, VT_Soll) = knoten.y
     Z = knoten.Z
 
-    if (t>200) && (t<23000)
-        #if typeof(t) == ForwardDiff.Dual{ForwardDiff.Tag{DiffEqBase.OrdinaryDiffEqTag, Float64}, Float64, 1}
-           # @show typeof(t)
-        #end
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
     end
 
-
-    io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
     ϕ_max = 1.0; ϕ_min = 0.0; 
     ϕ = min(max(ϕ,ϕ_min),ϕ_max)
 

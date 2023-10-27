@@ -16,6 +16,7 @@ function solveNetzwerk(dir::String)
     zeitfile = get(J_cfg,"Zeitreihenfile",nothing) 
     dtmax = get(J_cfg,"dtmax",600)
     AW = get(J_cfg,"AW",1)
+    JPattern = get(J_cfg,"JPattern",1)
 
     znamen = []; zwerte = []; zt = [];
     if zeitfile != nothing
@@ -187,15 +188,28 @@ function solveNetzwerk(dir::String)
 
     #-- Erzeuge Zustandsvektor y und Indizes wo was steht in y
     y, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele = netzwerk2array(knoten,kanten) 
-
+    println("Anzahl Gleichungen: ",length(y))
     params = IM, IP, knoten, kanten, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele
 
-    println("Anzahl Gleichungen: ",length(y))
+    #-- Jacobi Struktur
+    dy = 0*y;
+    if JPattern == 1
+        jac_sparsity = Symbolics.jacobian_sparsity((dy, y) -> dgl!(dy, y, params, 0.0),copy(y), y)
+    end
+    for i in eachindex(knoten)
+        if hasfield(typeof(knoten[i].Param), :Jac_init) 
+             knoten[i].Param.Jac_init = false
+        end
+    end
+    for i in eachindex(kanten)
+        if hasfield(typeof(kanten[i].Param), :Jac_init) 
+            kanten[i].Param.Jac_init = false
+        end
+    end
 
+    #-- konsistente AW berechnen 
     if AW == 1
-        #-- konsistente AW berechnen -----------
         ind_alg = findall(x->x==0,M[diagind(M)]);
-        dy = 0*y;
         dgl!(dy,y,params,0.0);
         println("Test Vorher: ",Base.maximum(abs.(dy[ind_alg])))
         y_alg = copy(y[ind_alg])
@@ -206,26 +220,34 @@ function solveNetzwerk(dir::String)
         println("Test Nachher: ",Base.maximum(abs.(dy[ind_alg])))
     end
 
-    #--------------
-    #-- Jacobi Struktur
-    #f!(x,z) = dgl!(x,z,params,0.0); 
-    #jac_sparsity = Symbolics.jacobian_sparsity(f!, similar(y), similar(y))  #-- funktioniert nicht immer
-    dy0 = copy(y)
-    jac_sparsity = Symbolics.jacobian_sparsity((dy, y) -> dgl!(dy, y, params, 0.0),dy0, y)
-    #--------------
 
     t0 = time()
-    f = ODEFunction(dgl!; mass_matrix=M)#, jac_prototype = float.(jac_sparsity))
+    if JPattern == 1
+        f = ODEFunction(dgl!; mass_matrix=M, jac_prototype = jac_sparsity)
+    else
+        f = ODEFunction(dgl!; mass_matrix=M)
+    end
     tspan = (0.0,simdauer)
     prob_ode = ODEProblem(f,y,tspan,params)
 
-    if isempty(eventfile) 
-        n_events = 0 
-        sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}),progress=true, reltol=rtol,abstol=atol,dtmax=dtmax)
+    if JPattern == 1
+        if isempty(eventfile) 
+            n_events = 0 
+            sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward},linsolve=KLUFactorization()),progress=true, reltol=rtol,abstol=atol,dtmax=dtmax)
+        else
+            global n_events
+            cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
+            sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward},linsolve=KLUFactorization()), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=dtmax)
+        end
     else
-        global n_events
-        cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
-        sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=dtmax)
+        if isempty(eventfile) 
+            n_events = 0 
+            sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}),progress=true, reltol=rtol,abstol=atol,dtmax=dtmax)
+        else
+            global n_events
+            cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
+            sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=dtmax)
+        end
     end
     t1 = time()-t0
     println("CPU: ",t1)
@@ -236,7 +258,7 @@ function solveNetzwerk(dir::String)
 
 
     println("---------------- This was FlexHyX -----------------")
-    return (idx_ele, sol, y, knoten_infos, kanten_infos, jac_sparsity)
+    return (idx_ele, sol, y, knoten_infos, kanten_infos)
 end
 
 function MakeParam(kk) 

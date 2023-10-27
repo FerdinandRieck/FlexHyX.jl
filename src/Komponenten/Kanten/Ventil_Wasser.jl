@@ -6,6 +6,7 @@ Base.@kwdef mutable struct mWVentil_Param
     t2 = 3.0e4
     cv_H2O = 4182.0; #-- noch faglich
     A0 = 1.0e-5
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_mWVentil
@@ -35,7 +36,7 @@ end
 
 function Kante!(dy,k,kante::mWVentil_kante,t)
     #-- Parameter
-    (; KV,m_soll,alpha,alpha2,t2,cv_H2O) = kante.Param
+    (; KV,m_soll,alpha,alpha2,t2,cv_H2O,Jac_init) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -50,7 +51,13 @@ function Kante!(dy,k,kante::mWVentil_kante,t)
     TL = KL.y.T
     TR = KR.y.T
 
-    io = 1.0; if get(Z,"Schaltzeit",0)!=0 io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
+    end
+
     P = PL-PR;  
     A_max=1; A_min=0; A = min(max(A,A_min),A_max);
     diff = m_soll - m;

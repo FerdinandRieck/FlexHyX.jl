@@ -4,6 +4,7 @@ Base.@kwdef mutable struct iLR_Param
     P_max = 500
     U_soll = 13.5
     i_max = 10 #???
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_iLR
@@ -30,7 +31,7 @@ end
 
 function Kante!(dy,k,kante::iLR_kante,t)
     #-- Parameter
-    (; R,P_max,U_soll,alpha) = kante.Param
+    (; R,P_max,U_soll,alpha,Jac_init) = kante.Param
     #--
 
     i = kante.y.i
@@ -41,7 +42,12 @@ function Kante!(dy,k,kante::iLR_kante,t)
     UR = KR.y.U
     #--
 
-    io = 1.0; if get(Z,"Schaltzeit",0)!=0 io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
+    end
 
     i_max = (UL-UR)/R; i_max = max(i_max,0);
     if haskey(Z,"P_max")==true

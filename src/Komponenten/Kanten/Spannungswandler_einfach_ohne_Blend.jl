@@ -1,6 +1,7 @@
 Base.@kwdef mutable struct iSP0_Param
     U_soll = 3.6078
     eta = 1.0
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_iSP0
@@ -28,7 +29,7 @@ end
 
 function Kante!(dy,k,kante::iSP0_kante,t)
     #-- Parameter
-    (; U_soll,eta) = kante.Param
+    (; U_soll,eta,Jac_init) = kante.Param
     #--
 
     (; iL,iR) = kante.y
@@ -40,8 +41,13 @@ function Kante!(dy,k,kante::iSP0_kante,t)
     UR = KR.y.U
     #--
 
-    io = 1.0; if get(Z,"Schaltzeit",0)!=0 io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
-    
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
+    end
+
     dy[k] = ifxaorb(iL,1/eta,eta)*iR*UR/UL - iL;
     dy[k+1] = io*(UR - U_soll) + (1-io)*iR
 end

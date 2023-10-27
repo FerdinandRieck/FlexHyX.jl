@@ -10,6 +10,7 @@ Base.@kwdef mutable struct iE_Param
     f_1m = 2.5; f_1b = 50; f_2b = 1; f_2m = -6.25e-6;
     n_Z = 1   #-- Anzahl Zellen  
     cv = 1.01798*1.0e4 
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_iE
@@ -42,7 +43,7 @@ end
 
 function Kante!(dy,k,kante::iE_kante,t)
     #-- Parameter
-    (; nc,A,r1,r2,s,t1,t2,t3,V_ref,v_std,c,F,z,f_1m,f_1b,f_2b,f_2m,n_Z,cv) = kante.Param
+    (; nc,A,r1,r2,s,t1,t2,t3,V_ref,v_std,c,F,z,f_1m,f_1b,f_2b,f_2m,n_Z,cv,Jac_init) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -58,7 +59,12 @@ function Kante!(dy,k,kante::iE_kante,t)
     TL = KGL.y.T
     TR = KGR.y.T
 
-    io = 1.0; if get(Z,"Schaltzeit",0)!=0 io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
+    end
 
     T_L = 25 #???Was ist T_L???
     iA = iE/A #-- ggf. ist iE = io*y_e besser?

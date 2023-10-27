@@ -3,6 +3,7 @@ Base.@kwdef mutable struct iVDR_Param
     U0 = 1.5    #!!!Dieser Parameter wird auch auf U_max getestet aber in Matlab nicht!!!
     gamma = 13
     I_max = 1.0e6
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_iVDR
@@ -29,7 +30,7 @@ end
 
 function Kante!(dy,k,kante::iVDR_kante,t)
     #-- Parameter
-    (; I0,U0,gamma,I_max) = kante.Param
+    (; I0,U0,gamma,I_max,Jac_init) = kante.Param
     #--
 
     i = kante.y.i
@@ -40,7 +41,12 @@ function Kante!(dy,k,kante::iVDR_kante,t)
     UR = KR.y.U
     #--
 
-    io = 1.0; if get(Z,"Schaltzeit",0)!=0 io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
+    end
 
     I = I0*((UL-UR)/U0)^gamma; 
     I = min(max(-I_max,I),I_max);

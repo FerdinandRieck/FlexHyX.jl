@@ -2,6 +2,7 @@ Base.@kwdef mutable struct eWTL_Param
    cL = 1006.7
    t_wechsel = 3*3600
    t_end = 604800
+   Jac_init = true
 end
 
 Base.@kwdef mutable struct y_eWTL
@@ -28,7 +29,7 @@ end
 
 function Kante!(dy,k,kante::eWTL_kante,t)
     #-- Parameter
-    (; cL,t_wechsel,t_end) = kante.Param
+    (; cL,t_wechsel,t_end,Jac_init) = kante.Param
     #--
 
     #-- Zustandsvariable
@@ -40,7 +41,10 @@ function Kante!(dy,k,kante::eWTL_kante,t)
     TR = KR.y.T
 
     io = 1.0
-    if (haskey(Z,"Schaltzeit")==true) 
+    if Jac_init == true
+        io = 1.0
+        t_lüften = 300
+    elseif (haskey(Z,"Schaltzeit")==true) 
         io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
         t_lüften = Z["Schaltzeit"][end] - Z["Schaltzeit"][end-1]
     else #-- beim ersten Druchgang Schaltzeiten für Luftwechsel berechnen

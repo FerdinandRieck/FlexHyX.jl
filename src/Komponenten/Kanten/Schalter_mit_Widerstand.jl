@@ -1,5 +1,6 @@
 Base.@kwdef mutable struct iS_Param
     R = 1.0
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_iS
@@ -26,7 +27,7 @@ end
 
 function Kante!(dy,k,kante::iS_kante,t)
     #-- Parameter
-    (; R) = kante.Param
+    (; R,Jac_init) = kante.Param
     #--
 
     i = kante.y.i
@@ -37,6 +38,12 @@ function Kante!(dy,k,kante::iS_kante,t)
     UR = KR.y.U
     #--
 
-    io = 1.0; if get(Z,"Schaltzeit",0)!=0 io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
+    end
+   
     dy[k] = i - io*(UL-UR)/R;
 end

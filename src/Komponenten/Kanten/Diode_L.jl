@@ -2,6 +2,7 @@ Base.@kwdef mutable struct iDL_Param
     R = 0.01
     alpha = 1
     L0 = 1/R
+    Jac_init = true
 end
 
 Base.@kwdef mutable struct y_iDL
@@ -30,7 +31,7 @@ end
 
 function Kante!(dy,k,kante::iDL_kante,t)
     #-- Parameter
-    (; R,alpha) = kante.Param
+    (; R,alpha,Jac_init) = kante.Param
     #--
 
     iDL = kante.y.i
@@ -42,7 +43,13 @@ function Kante!(dy,k,kante::iDL_kante,t)
     UR = KR.y.U
     #--
 
-    io = 1.0; if (haskey(Z,"Schaltzeit")==true) io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) end
+    io = 1.0
+    if Jac_init == true
+        io = 1.0
+    elseif (haskey(Z,"Schaltzeit")==true) 
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
+    end
+
     U = UL-UR
     L_soll = 1/R
     L1=min(max(L,0),L_soll)

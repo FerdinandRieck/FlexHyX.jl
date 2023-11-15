@@ -105,3 +105,15 @@ function Kante!(dy,k,kante::mWTM_kante,t)
         end
     end
 end
+
+function mWTM_init(knoten,kanten,M,kk,von,nach)
+    Params = MakeParam(kk) 
+    kante = mWTM_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+    push!(kanten,kante)
+    append!(M, kante.M)
+    if haskey(kk,"RefKnoten")
+        KA = kk["RefKnoten"]
+        kanten[end].KA = knoten[KA]
+        knoten[KA].in = kanten[[length(kanten)]]
+    end
+end

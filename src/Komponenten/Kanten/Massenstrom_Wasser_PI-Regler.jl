@@ -61,3 +61,12 @@ function Kante!(dy,k,kante::mWfPI_kante,t)
     dy[k+1] = e - 1e-6*cv_H2O*m*ifxaorb(m,TL,TR)
     dy[k+2] = T_soll-T
 end
+
+function mWfPI_init(knoten,kanten,M,kk,von,nach)
+    Params = MakeParam(kk) 
+    kante = mWfPI_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+    push!(kanten,kante)
+    append!(M, kante.M)
+    K = kk["RefKnoten"]
+    kanten[end].K = knoten[K]
+end

@@ -115,3 +115,17 @@ function Kante!(dy,k,kante::mWTaRM_kante,t)
         dy[k+i+2] = -1/Arho*m*ifxaorb(m,T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT) - kA*pi*Dm/(Arho*cv_H2O)*(T[i]-T_aussen[i])  #-- T
     end
 end
+
+function mWTaRM_init(knoten,kanten,M,kk,von,nach)
+    Params = MakeParam(kk) 
+    kante = mWTaRM_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)
+    push!(kanten,kante)
+    append!(M, kante.M)
+    if haskey(kk,"RefKante") 
+        if isa(kk["RefKante"],Int)
+            R = kk["RefKante"]
+            kanten[end].R = kanten[R]
+            kanten[R].R = kanten[end]
+        end
+    end
+end

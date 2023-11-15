@@ -73,7 +73,7 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 	   end
 	end
 	
-#-- Von/Nach = aktualisieren, RefRohr aktualisieren
+#-- Von/Nach, RefKante und RefKnoten aktualisieren
 	n_n = size(knoten)[1];   n_e = size(kanten)[1]
 	nr2kn = zeros(Int,n_n); nr2ka = zeros(Int,n_e)
 	for i = 1:n_n
@@ -83,28 +83,17 @@ function readNetz(dir,netzfile,zwerte,zt,znamen)
 		nr2ka[i] = kanten[i]["Nr"];
 	end
 	for i = 1:n_e
-		if haskey(kanten[i],"Ringspalt")
-			i_ka = findall(x->x==kanten[i]["Ringspalt"],nr2ka)[1];
-			kanten[i]["Ringspalt"] = i_ka 
+		if haskey(kanten[i],"RefKante")
+			i_ka = findall(x->x==kanten[i]["RefKante"],nr2ka)[1];
+			kanten[i]["RefKante"] = i_ka 
 		end
-		if haskey(kanten[i],"KnotenAussen")
-			i_kn = findall(x->x==kanten[i]["KnotenAussen"],nr2kn)[1];
-			kanten[i]["KnotenAussen"] = i_kn 
+		if haskey(kanten[i],"RefKnoten")
+			i_kn = findall(x->x==kanten[i]["RefKnoten"],nr2kn)[1];
+			kanten[i]["RefKnoten"] = i_kn 
 		end
 		kanten[i]["VonNach"][1] = findall(x->x==kanten[i]["VonNach"][1],nr2kn)[1];
 		kanten[i]["VonNach"][2] = findall(x->x==kanten[i]["VonNach"][2],nr2kn)[1];
 	end
-	#-- RefKanten Infos in Kante einfügen und RefKante löschen
-	idx_ka = Int[]
-	for i = 1:n_e
-		if haskey(kanten[i],"RefKante")
-			i_ka = findall(x->x==kanten[i]["RefKante"],nr2ka)[1];
-			RefKante = kanten[i_ka];
-			kanten[i]["RefKante"] = RefKante	
-			push!(idx_ka,i_ka)
-		end
-	end
-	deleteat!(kanten,idx_ka)
 #--
     return knoten, kanten, eventfile
 end

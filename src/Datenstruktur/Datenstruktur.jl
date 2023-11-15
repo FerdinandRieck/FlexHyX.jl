@@ -13,7 +13,6 @@ abstract type Strom_Kante <: Kante end
 abstract type Gas_Kante <: Kante end
 abstract type Temp_Kante <: Kante end
 abstract type Wasser_Kante <: Kante end
-abstract type Gas_Strom_Kante <: Kante end
 #----------------------------------------
 
 function netzwerk2array(knoten,kanten)

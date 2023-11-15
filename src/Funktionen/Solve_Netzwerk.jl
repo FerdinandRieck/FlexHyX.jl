@@ -30,7 +30,7 @@ function solveNetzwerk(dir::String)
     n_n = size(knoten_infos)[1]; n_e = size(kanten_infos)[1];  
   
     M = Int[]; 
-    kanten = Array{Any}(undef, n_e); knoten =  Array{Any}(undef, n_n);
+    kanten = []; knoten = [];
 
     println("---------------- geänderte Parameter ------------------")
 
@@ -41,91 +41,26 @@ function solveNetzwerk(dir::String)
         Params = MakeParam(kk)
         #-- Knoten erzeugen
         s = Symbol(typ,"_Knoten"); obj = getfield(FlexHyX, s)
-        knoten[i] = obj(Param=Params, Z=kk)     #-- z.B. U0_Knoten()
-
-        append!(M, knoten[i].M)
-    end
-    # !!! AW lieber für jeden Knoten individuell vergeben !!!
-    #=
-    #-- PW_max und TW_max suchen--------------------------
-    PW_max = 0.0; TW_max = 0.0
-
-    for i in eachindex(knoten_infos)
-        if typeof(knoten[i]) <: Wasser_Knoten
-            if hasfield(typeof(knoten[i].y), :P) == true
-                PW_max = maximum([PW_max; knoten[i].y.P]) 
-            end
-            if hasfield(typeof(knoten[i].y), :T) == true
-                TW_max = maximum([TW_max; knoten[i].y.T])
-            end
-        end
+        push!(knoten,obj(Param=Params, Z=kk))     #-- z.B. U0_Knoten()
+        append!(M, knoten[end].M)
     end
 
-    for i in eachindex(knoten_infos) #--- AW ändern ----
-        kk = knoten[i].Z; typ = kk["Typ"];
-        if typ=="WP" 
-            knoten[i].y.P = PW_max; 
-            knoten[i].y.T = TW_max;
-        end
-        if typ=="T" knoten[i].y.T = TW_max; end
-        # wieso kein T_max suchen? Wie können AW für Kopplungsknoten mit T besser bestimmt werden?
-    end
-    =#
     for i = 1:n_e  #-- Kanten erzeugen ---------------------------- 
         kk = kanten_infos[i]; typ = kk["Typ"]; 
         von = kk["VonNach"][1]; nach = kk["VonNach"][2]
-        
-        if typ=="iE"  #-- Elektrolyseeinheit
-            mE = kk["RefKante"]; 
-            von_mE = mE["VonNach"][1]; nach_mE = mE["VonNach"][2]
-            Params = MakeParam(kk)
-            kanten[i] = iE_kante(Param=Params, KUL=knoten[von], KUR=knoten[nach], KGL=knoten[von_mE], KGR=knoten[nach_mE], Z=kk)
-        elseif typ=="iBZ"  #-- Brennstoffzelle
-            mBZ = kk["RefKante"]; 
-            von_mBZ = mBZ["VonNach"][1]; nach_mBZ = mBZ["VonNach"][2]
-            Params = MakeParam(kk)
-            kanten[i] = iBZ_kante(Param=Params, KUL=knoten[von], KUR=knoten[nach], KGL=knoten[von_mBZ], KGR=knoten[nach_mBZ], Z=kk)
-        elseif typ=="mWTaR"  #-- Wärmetauscher_Doppelrohr
-            Params = MakeParam(kk) 
-            kanten[i] = mWTaR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"Ringspalt") 
-                if isa(kk["Ringspalt"],Int)
-                    R = kk["Ringspalt"]
-                    kanten[i].R = kanten[R]
-                    kanten[R].R = kanten[i]
-                end
-            end
-        elseif typ=="mWTaRM"  #-- Wärmetauscher_Doppelrohr_Mdot
-            Params = MakeParam(kk) 
-            kanten[i] = mWTaRM_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"Ringspalt") 
-                if isa(kk["Ringspalt"],Int)
-                    R = kk["Ringspalt"]
-                    kanten[i].R = kanten[R]
-                    kanten[R].R = kanten[i]
-                end
-            end
-        elseif typ=="mWTM"  #-- Heizkörper_Mdot
-            Params = MakeParam(kk) 
-            kanten[i] = mWTM_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            if haskey(kk,"KnotenAussen")
-                KA = kk["KnotenAussen"]
-                kanten[i].KA = knoten[KA]
-                knoten[KA].in = kanten[[i]]
-            end
-        elseif typ=="mWfPI"  #-- Massenstrom Wasser PI-Regler
-            Params = MakeParam(kk) 
-            kanten[i] = mWfPI_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            K = kk["KnotenAussen"]
-            kanten[i].K = knoten[K]
+
+        if isdefined(FlexHyX, Symbol(typ,"_init"))
+            s = Symbol(typ,"_init"); obj_init = getfield(FlexHyX, s)
+            obj_init(knoten,kanten,M,kk,von,nach)
         else
             #-- Parameter erzeugen und ändern
             Params = MakeParam(kk) 
             #-- Kante erzeugen
             s = Symbol(typ,"_kante"); obj = getfield(FlexHyX, s)
-            kanten[i] = obj(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)    #-- z.B. iB_kante()
+            kante = obj(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)    #-- z.B. iB_kante()
+            push!(kanten, kante)
+            append!(M, kante.M)
         end
-        append!(M, kanten[i].M)
     end
 
     println("-------------------------------------------------------")
@@ -190,6 +125,10 @@ function solveNetzwerk(dir::String)
     dy = 0*y;
     if JPattern == 1
         jac_sparsity = Symbolics.jacobian_sparsity((dy, y) -> dgl!(dy, y, params, 0.0),copy(y), y)
+        linsolver = KLUFactorization()
+    else #-- default
+        jac_sparsity = nothing 
+        linsolver = nothing
     end
     for i in eachindex(knoten)
         if hasfield(typeof(knoten[i].Param), :Jac_init) 
@@ -215,42 +154,26 @@ function solveNetzwerk(dir::String)
         println("Test Nachher: ",Base.maximum(abs.(dy[ind_alg])))
     end
 
-
     t0 = time()
-    if JPattern == 1
-        f = ODEFunction(dgl!; mass_matrix=M, jac_prototype = jac_sparsity)
-    else
-        f = ODEFunction(dgl!; mass_matrix=M)
-    end
+    f = ODEFunction(dgl!; mass_matrix=M, jac_prototype = jac_sparsity)
     tspan = (0.0,simdauer)
     prob_ode = ODEProblem(f,y,tspan,params)
 
-    if JPattern == 1
-        if isempty(eventfile) 
-            n_events = 0 
-            sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward},linsolve=KLUFactorization()),progress=true, reltol=rtol,abstol=atol,dtmax=dtmax)
-        else
-            global n_events
-            cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
-            sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward},linsolve=KLUFactorization()), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=dtmax)
-        end
+    if isempty(eventfile) 
+        n_events = 0 
+        sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward},linsolve=linsolver),progress=true, reltol=rtol,abstol=atol,dtmax=dtmax)
     else
-        if isempty(eventfile) 
-            n_events = 0 
-            sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}),progress=true, reltol=rtol,abstol=atol,dtmax=dtmax)
-        else
-            global n_events
-            cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
-            sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward}), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=dtmax)
-        end
+        global n_events
+        cb = VectorContinuousCallback(event_condition,event_affect!,n_events,affect_neg! = nothing)
+        sol = solve(prob_ode,Rodas5P(autodiff=true,diff_type=Val{:forward},linsolve=linsolver), callback=cb, dense=false, progress=true, reltol=rtol, abstol=atol, dtmax=dtmax)
     end
+
     t1 = time()-t0
     println("CPU: ",t1)
-    println(sol.retcode," nt=",size(sol.t)); 
+    println(sol.retcode," nt=",size(sol.t))
     println(sol.destats)
 
     y = Leitsung_anhängen(sol,knoten,kanten,idx_iflussL,idx_iflussR,IM,IP)
-
 
     println("---------------- This was FlexHyX -----------------")
     return (idx_ele, sol, y, knoten_infos, kanten_infos)

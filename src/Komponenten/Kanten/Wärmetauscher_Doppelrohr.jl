@@ -147,3 +147,17 @@ function Kante!(dy,k,kante::mWTaR_kante,t)
     TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
     dy[k+3*nx+3] = eR - 1e-6*(cv_H2O*0.5*(abs(mR)*(TRR-TR)+mR*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
 end
+
+function mWTaR_init(knoten,kanten,M,kk,von,nach)
+    Params = MakeParam(kk) 
+    kante = mWTaR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
+    push!(kanten,kante)
+    append!(M, kante.M)
+    if haskey(kk,"RefKante") 
+        if isa(kk["RefKante"],Int)
+            R = kk["RefKante"]
+            kanten[end].R = kanten[R]
+            kanten[R].R = kanten[end]
+        end
+    end
+end

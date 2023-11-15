@@ -105,7 +105,7 @@ function solveNetzwerk(dir::String)
                     kanten[R].R = kanten[i]
                 end
             end
-        elseif typ=="mWTM"  #-- Wärmeübertragung_Mdot
+        elseif typ=="mWTM"  #-- Heizkörper_Mdot
             Params = MakeParam(kk) 
             kanten[i] = mWTM_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
             if haskey(kk,"KnotenAussen")
@@ -116,11 +116,6 @@ function solveNetzwerk(dir::String)
         elseif typ=="mWfPI"  #-- Massenstrom Wasser PI-Regler
             Params = MakeParam(kk) 
             kanten[i] = mWfPI_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
-            K = kk["KnotenAussen"]
-            kanten[i].K = knoten[K]
-        elseif typ=="mWfP"  #-- Massenstrom Wasser P-Regler
-            Params = MakeParam(kk) 
-            kanten[i] = mWfP_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
             K = kk["KnotenAussen"]
             kanten[i].K = knoten[K]
         else

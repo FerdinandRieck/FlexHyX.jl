@@ -47,7 +47,7 @@ function Kante!(dy,k,kante::eWTL_kante,t)
     elseif (haskey(Z,"Schaltzeit")==true) 
         io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
         t_lüften = Z["Schaltzeit"][end] - Z["Schaltzeit"][end-1]
-    else #-- beim ersten Druchgang Schaltzeiten für Luftwechsel berechnen
+    else #-- beim ersten Druchgang Schaltzeiten für Luftwechsel berechnen wenn nicht angegeben
         n = t_end/t_wechsel
         Schaltzeit = zeros(n,1)
         Schaltzeit[1] = 50000
@@ -60,7 +60,7 @@ function Kante!(dy,k,kante::eWTL_kante,t)
         io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"])
     end
 
-    M = KL.Param.Masse/t_lüften
+    dot_mL = KL.Param.Masse/t_lüften
 
-    dy[k] = e - 1e-6*io*M*cL*(TL-TR)
+    dy[k] = e - 1e-6*io*dot_mL*cL*(TL-TR)
 end

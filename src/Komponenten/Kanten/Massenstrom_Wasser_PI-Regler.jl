@@ -2,7 +2,6 @@ Base.@kwdef mutable struct mWfPI_Param
     Kp = 10.0
     Ki = 1.0
     T_soll = 293.15
-    m_max = 1.0
     cv_H2O = 4182.0
     Jac_init = true
 end

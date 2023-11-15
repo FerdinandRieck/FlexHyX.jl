@@ -35,8 +35,6 @@ Base.@kwdef mutable struct eWT_Param
     #---
     # Q_dot = mcp_w*(TW_zu - T_MHS)*(1 - exp(-kA/mcp_w));
     kA = 5;
-    # Alpha = Defaultwert festlegen
-    # A = Defaultwert festlegen
 end
 
 Base.@kwdef mutable struct y_eWT

@@ -113,11 +113,7 @@ function Kante!(dy,k,kante::mWRo_kante,t)
         end
         dy[k+i+1] = -a2/A*(fRm-fLm)/dx*1e-5
         dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - 1e5*A*(fRP-fLP)/dx - lambda(m[i],Di,A,mu,K)/(2*Di*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)
-        if haskey(Z,"m_dot") 
-            dy[k+i+1+nx*2] = -1/Arho*Z["m_dot"]*ifxaorb(Z["m_dot"],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
-        else
-            dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
-        end
+        dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
         if haskey(Z,"kA")
             if isa(Z["kA"],Number) 
                 dy[k+i+1+nx*2] = dy[k+i+1+nx*2] - 4*Z["kA"]/(rho0*Di*cv_H2O)*(T[i]-Z["T_aussen"]) 

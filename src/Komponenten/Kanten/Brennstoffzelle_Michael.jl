@@ -93,10 +93,12 @@ function Kante!(dy,k,kante::iBZ_kante,t)
     m_BZ = N*iBZ*io/(F*2)*2.01599e-3; #-- nach David
 
     #y_nR(i_ele) = U;
-    KUR.y.U = U
+    KUR.y.U = U #??? Wird das wirklich benötigt ??? wenn ja, wofür???
+
+    #Q_dot = max(0,min(1.0e3,1.12*(1.25 + U)*iBZ))
 
 
     dy[k] = U-(UR-UL)
     dy[k+1] = m - m_BZ
-    dy[k+2] = e - cv*m*ifxaorb(m,TL,TR)
+    dy[k+2] = e - (cv*m*ifxaorb(m,TL,TR))
 end

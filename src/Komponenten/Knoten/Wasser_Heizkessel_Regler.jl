@@ -4,10 +4,10 @@ Base.@kwdef mutable struct WPHR_Param
     D = 1.0
     A = pi*(D/2)^2
     cv_H2O = 4182; #-- noch faglich
-    Kp = 0.01
+    Ki = 0.01
     Neigung = 1.3
     RT_Soll = 293.15
-    Niveau = 1
+    Niveau = 0
     T_aussen = 273.15
     ϕ0 = 0.0
     e_max = 0.05
@@ -23,7 +23,6 @@ Base.@kwdef mutable struct y_WPHR
     ϕ::Number = Param.ϕ0
     e_zu::Number = 0.0
     E::Number = 0.0
-    VT_Soll::Number = 0.0
 end
 
 
@@ -36,7 +35,7 @@ Base.@kwdef mutable struct WPHR_Knoten <: Wasser_Knoten
     y = y_WPHR(Param=Param)
 
     #-- M-Matrix
-    M::Array{Int} = [1; 1; 0; 0; 1; 0; 1; 0] 
+    M::Array{Int} = [1; 1; 0; 0; 1; 0; 1] 
 
     #-- zusätzeliche Infos
     Z::Dict
@@ -52,10 +51,10 @@ end
 
 function Knoten!(dy,k,knoten::WPHR_Knoten,t)
     #-- Parameter
-    (; A,cv_H2O,Kp,Neigung,RT_Soll,Niveau,e_max,Jac_init) = knoten.Param
+    (; A,cv_H2O,Ki,Neigung,RT_Soll,Niveau,e_max,Jac_init) = knoten.Param
     #--
 
-    (; M, MT, P, T, e_zu, ϕ, VT_Soll) = knoten.y
+    (; M, MT, P, T, e_zu, ϕ) = knoten.y
     Z = knoten.Z
 
     io = 1.0
@@ -68,18 +67,19 @@ function Knoten!(dy,k,knoten::WPHR_Knoten,t)
     ϕ_max = 1.0; ϕ_min = 0.0; 
     ϕ = min(max(ϕ,ϕ_min),ϕ_max)
 
-    dy[k] = sum_m(knoten.in,knoten.out)
-    dy[k+1] = (knoten.sum_e + e_zu)/(1e-6*cv_H2O)
-    dy[k+2] = P-M*9.81/A*1e-5
-    dy[k+3] = T-MT/M
-    dy[k+4] = Kp*(VT_Soll-T)*ifxaorb((VT_Soll-T),ϕ_max-ϕ,ϕ-ϕ_min)- (1-io)*ϕ
-    dy[k+5] = e_zu  - ϕ*e_max
-    dy[k+6] = e_zu 
     if haskey(Z,"T_aussen") 
         T_aussen = Z["T_aussen"](t)
         DAR = T_aussen - RT_Soll
-        dy[k+7] = VT_Soll - (RT_Soll * Niveau - Neigung*DAR*(1.4347 + 0.021*DAR + 247.9*10^-6*DAR^2))
+        VT_Soll = RT_Soll + Niveau - Neigung*DAR*(1.4347 + 0.021*DAR + 247.9*10^-6*DAR^2)
     elseif haskey(Z,"T_soll")
-        dy[k+7] = VT_Soll - Z["T_soll"]
+        VT_Soll = Z["T_soll"]
     end
+
+    dy[k] = knoten.sum_m
+    dy[k+1] = (knoten.sum_e + e_zu)/(1e-6*cv_H2O)
+    dy[k+2] = P-M*9.81/A*1e-5
+    dy[k+3] = T-MT/M
+    dy[k+4] = Ki*(VT_Soll-T)*ifxaorb((VT_Soll-T),ϕ_max-ϕ,ϕ-ϕ_min)- (1-io)*ϕ
+    dy[k+5] = e_zu  - ϕ*e_max
+    dy[k+6] = e_zu 
 end

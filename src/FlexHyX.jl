@@ -9,8 +9,6 @@ module FlexHyX
     using LinearSolve
     import JSON
 
-
-
     dir = dirname(@__FILE__)
 
     #-- Event-Funktion einfügen
@@ -20,8 +18,7 @@ module FlexHyX
     end
 
     #-- Datenstruktur einfügen
-    pfad = filter(contains(r".jl$"), readdir(dir*"/Datenstruktur/";join=true))
-    include.(pfad)
+    include("Datenstruktur.jl")
 
     #-- Knoten einfügen
     pfad = filter(contains(r".jl$"), readdir(dir*"/Komponenten/Knoten/";join=true))
@@ -43,7 +40,5 @@ module FlexHyX
     =#
 
     #-- Funktionen exportieren
-    export solveNetzwerk
-    export plotSol
-    export plotNetz
+    export solveNetz, plotSol, plotNetz
  end

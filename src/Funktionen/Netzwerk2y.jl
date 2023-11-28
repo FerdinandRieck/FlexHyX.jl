@@ -1,21 +1,4 @@
-#-- Datentypen Hirachie
-abstract type flexhyx end
-
-abstract type Knoten <: flexhyx end
-abstract type Kante <: flexhyx end
-
-abstract type Strom_Knoten <: Knoten end
-abstract type Gas_Knoten <: Knoten end
-abstract type Temp_Knoten <: Knoten end
-abstract type Wasser_Knoten <: Knoten end
-
-abstract type Strom_Kante <: Kante end
-abstract type Gas_Kante <: Kante end
-abstract type Temp_Kante <: Kante end
-abstract type Wasser_Kante <: Kante end
-#----------------------------------------
-
-function netzwerk2array(knoten,kanten)
+function netzwerk2y(knoten,kanten)
     y_arr = Float64[]
     idx_ele = Dict()
     idx_iflussL = Array{Int}(undef, 0,2); idx_iflussR = Array{Int}(undef, 0,2); 
@@ -77,7 +60,7 @@ function netzwerk2array(knoten,kanten)
     return y_arr, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele
 end
 
-function array2netzwerk!(knoten,kanten,y_arr)
+function y2netzwerk!(knoten,kanten,y_arr)
     idx = 1
     for i in eachindex(knoten)
         for ff in fieldnames(typeof(knoten[i].y))

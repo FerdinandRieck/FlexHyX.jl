@@ -1,7 +1,7 @@
 function dgl!(dy,y,P,t) 
     IM, IP, knoten, kanten, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele  = P
     
-    array2netzwerk!(knoten,kanten,y)
+    y2netzwerk!(knoten,kanten,y)
 
     #-- jetzt alle Knoten und Kanten druchlaufen und Gleichungen erzeugen
     k = 1

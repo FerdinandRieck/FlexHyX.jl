@@ -124,16 +124,19 @@ function Kante!(dy,k,kante::mE_kante,t)
     dy[k+1] = e - cv*m*ifxaorb(m,TL,TR)
 end
 
-function iE_init(knoten,kanten,M,kk,von,nach)
+function iE_init!(knoten,kanten,M,kk,von,nach)
     kk["Typ"] = "E"
     Params = MakeParam(kk)
     kk["Typ"] = "iE"
     kante = iE_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)
     push!(kanten, kante)
     append!(M, kante.M)
+    if haskey(kk,"RefKante")
+        error("“RefKante“ im JSON in “mE“ Kante eintragen!")
+    end
 end
 
-function mE_init(knoten,kanten,M,kk,von,nach)
+function mE_init!(knoten,kanten,M,kk,von,nach)
     kk["Typ"] = "E"
     Params = MakeParam(kk)
     kk["Typ"] = "mE"

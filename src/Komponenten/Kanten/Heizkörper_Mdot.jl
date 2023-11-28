@@ -79,10 +79,10 @@ function Kante!(dy,k,kante::mWTM_kante,t)
 
     #-- Rohr links
     dy[k] = m - mL #-- m    
-    TRL = T[1] - (T[1]-T[2])/dx * -0.5*dx
+    TRL = 0.5*(3*T[1] - T[2]) #-- Extrapolation der Temp. auf Rohreinlauf
     dy[k+1] = eL - 1e-6*(0.5*cv_H2O*(abs(m)*(TL-TRL)+m*(TL+TRL)) + A/dx*2*lamW*(TL-T[1])); #-- eL
     #-- Rohr rechts
-    TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
+    TRR = 0.5*(3*T[nx] - T[nx-1]) #-- Extrapolation der Temp. auf Rohrauslauf
     dy[k+2] = eR - 1e-6*(0.5*cv_H2O*(abs(m)*(TRR-TR)+m*(TRR+TR)) + A/dx*2*lamW*(T[end]-TR)) #-- eR
 
     #-- Rohr mitte 
@@ -106,7 +106,7 @@ function Kante!(dy,k,kante::mWTM_kante,t)
     end
 end
 
-function mWTM_init(knoten,kanten,M,kk,von,nach)
+function mWTM_init!(knoten,kanten,M,kk,von,nach)
     Params = MakeParam(kk) 
     kante = mWTM_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
     push!(kanten,kante)

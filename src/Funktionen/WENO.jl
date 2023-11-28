@@ -30,7 +30,7 @@ function recover_weno!(y,yL,yR)
 end
 #---
 
-#-- WENO für LaxFriedrich ansatz
+#-- WENO mit LaxFriedrich ansatz
 function recover(y)
     if length(y) > 1
         yL = [2*y[1]-y[2]; y]; yR = [y; 2*y[end]-y[end-1]] 

@@ -1,4 +1,4 @@
-function solveNetzwerk(dir::String)
+function solveNetz(dir::String)
     println("---------------- This is FlexhyX ------------------")
 #-- Netwerk einlesen
     J_cfg = JSON.parsefile(dir*"/Netzwerk/flexhyx.cfg")
@@ -26,13 +26,10 @@ function solveNetzwerk(dir::String)
     end
 
     knoten_infos, kanten_infos, eventfile = readNetz(dir, netzfile, zwerte, zt, znamen)
-
     n_n = size(knoten_infos)[1]; n_e = size(kanten_infos)[1];  
-  
-    M = Int[]; 
-    kanten = []; knoten = [];
+    M = Int[]; kanten = []; knoten = [];
 
-    println("---------------- geänderte Parameter ------------------")
+    #println("---------------- geänderte Parameter ------------------")
 
     for i = 1:n_n  #-- Knoten erzeugen ----------------------------
         kk = knoten_infos[i];  typ = kk["Typ"]; 
@@ -49,13 +46,13 @@ function solveNetzwerk(dir::String)
         kk = kanten_infos[i]; typ = kk["Typ"]; 
         von = kk["VonNach"][1]; nach = kk["VonNach"][2]
 
-        if isdefined(FlexHyX, Symbol(typ,"_init"))
-            s = Symbol(typ,"_init"); obj_init = getfield(FlexHyX, s)
-            obj_init(knoten,kanten,M,kk,von,nach)
+        if isdefined(FlexHyX, Symbol(typ,"_init!"))
+            #-- spezielle Kanten erzeugen
+            s = Symbol(typ,"_init!"); obj_init! = getfield(FlexHyX, s)
+            obj_init!(knoten,kanten,M,kk,von,nach) #-- z.B. iE_init()
         else
-            #-- Parameter erzeugen und ändern
+            #-- normale Kanten erzeugen
             Params = MakeParam(kk) 
-            #-- Kante erzeugen
             s = Symbol(typ,"_kante"); obj = getfield(FlexHyX, s)
             kante = obj(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)    #-- z.B. iB_kante()
             push!(kanten, kante)
@@ -63,7 +60,9 @@ function solveNetzwerk(dir::String)
         end
     end
 
-    println("-------------------------------------------------------")
+    M = sparse(diagm(M))
+
+    #println("-------------------------------------------------------")
 
     #-- U_max, P_max suchen--------------------------
     U_max = 1.0; P_max = 101325;
@@ -95,11 +94,8 @@ function solveNetzwerk(dir::String)
         kk = knoten[i].Z; typ = kk["Typ"];
         if typ=="U" knoten[i].y.U = U_max; end 
         if typ=="GP" knoten[i].y.P = P_max; end 
-        # wieso kein T_max suchen? Wie können AW für Kopplungsknoten mit T besser bestimmt werden?
     end
     #-----------------------------------------------------
-
-    M = sparse(diagm(M))
 
     #-- Erzeuge Inzidenzmatrix 
     IM, IP = inzidenz(knoten,kanten) 
@@ -117,7 +113,7 @@ function solveNetzwerk(dir::String)
     end
 
     #-- Erzeuge Zustandsvektor y und Indizes wo was steht in y
-    y, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele = netzwerk2array(knoten,kanten) 
+    y, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele = netzwerk2y(knoten,kanten) 
     println("Anzahl Gleichungen: ",length(y))
     params = IM, IP, knoten, kanten, idx_iflussL, idx_iflussR, idx_mflussL, idx_mflussR, idx_eflussL, idx_eflussR, idx_ele
 
@@ -126,7 +122,7 @@ function solveNetzwerk(dir::String)
     if JPattern == 1
         jac_sparsity = Symbolics.jacobian_sparsity((dy, y) -> dgl!(dy, y, params, 0.0),copy(y), y)
         linsolver = KLUFactorization()
-    else #-- default
+    else 
         jac_sparsity = nothing 
         linsolver = nothing
     end
@@ -176,7 +172,7 @@ function solveNetzwerk(dir::String)
     y = Leitsung_anhängen(sol,knoten,kanten,idx_iflussL,idx_iflussR,IM,IP)
 
     println("---------------- This was FlexHyX -----------------")
-    return (idx_ele, sol, y, knoten_infos, kanten_infos)
+    return (sol, y, sol.t, idx_ele)
 end
 
 function MakeParam(kk) 
@@ -186,7 +182,7 @@ function MakeParam(kk)
     for ff in fieldnames(typeof(Param))
         if haskey(kk,String(ff))==true 
             D[String(ff)] = kk[String(ff)] #-- speichere geänderte Params in Dict
-            println(kk["Typ"]," --> ",String(ff),"=",kk[String(ff)])
+            #println(kk["Typ"]," --> ",String(ff),"=",kk[String(ff)])
         end
     end
     par = Dict("param" => D)
@@ -195,11 +191,8 @@ function MakeParam(kk)
 end
 
 function Leitsung_anhängen(y,knoten,kanten,idx_iflussL,idx_iflussR,IM,IP)
-
     idx2netzwerk!(knoten,kanten)
-    
     y = Array(y)
-
     sum_i = IP[:,idx_iflussR[:,1]]*y[idx_iflussR[:,2],:] - IM[:,idx_iflussL[:,1]]*y[idx_iflussL[:,2],:];
 
     for i in eachindex(knoten)
@@ -214,30 +207,19 @@ function Leitsung_anhängen(y,knoten,kanten,idx_iflussL,idx_iflussR,IM,IP)
         end
     end
     for i in eachindex(kanten)
-        if (typeof(kanten[i]) <: Strom_Kante) && (typeof(kanten[i]) != iSP0_kante)
+        if (typeof(kanten[i]) <: Strom_Kante)
             idx_UL = kanten[i].KL.y.U
             idx_UR = kanten[i].KR.y.U
-            idx_i  = kanten[i].y.i
-            UL = y[[idx_UL],:]; UR = y[[idx_UR],:]
-            U = UR - UL; I = y[[idx_i],:]
-            P = U.*I
-            y = vcat(y,P)
-        elseif typeof(kanten[i]) == iSP0_kante
-            idx_UL = kanten[i].KL.y.U
-            idx_UR = kanten[i].KR.y.U
-            idx_iL  = kanten[i].y.iL
-            idx_iR  = kanten[i].y.iR
+            if hasfield(typeof(kanten[i].y), :iL) == true
+                idx_iL  = kanten[i].y.iL
+                idx_iR  = kanten[i].y.iR
+            else
+                idx_iL  = kanten[i].y.i
+                idx_iR  = idx_iL
+            end
             UL = y[[idx_UL],:]; UR = y[[idx_UR],:]
             IL = y[[idx_iL],:]; IR = y[[idx_iR],:]
-            P = UR.*IR - UL.*IL;
-            y = vcat(y,P)
-        elseif typeof(kanten[i]) <: Gas_Strom_Kante
-            idx_UL = kanten[i].KUL.y.U
-            idx_UR = kanten[i].KUR.y.U
-            idx_i  = kanten[i].y.i
-            UL = y[[idx_UL],:]; UR = y[[idx_UR],:]
-            U = UR - UL; I = y[[idx_i],:]
-            P = U.*I
+            P = UR.*IR - UL.*IL
             y = vcat(y,P)
         end
     end

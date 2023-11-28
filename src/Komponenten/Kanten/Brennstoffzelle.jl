@@ -12,10 +12,10 @@ Base.@kwdef mutable struct BZ_Param
     
     alpha = (R*Tnom)/(z*Anom*F);
     Uf_H2 =nnom*DhO*N/(100*(z*F*Vnom));    # Gleichung 2-29
-    Uf_02 =(60000*R*Tnom*N*Inom)/(4*F*Pair_nom*Pstd*Vluftnom*ynom); # Gleichung 2-16 Pstd(normaler Luftdruck dazu f?r absoluten Druck
+    Uf_02 =(60000*R*Tnom*N*Inom)/(4*F*Pair_nom*Pstd*Vluftnom*ynom); # Gleichung 2-16 Pstd(normaler Luftdruck dazu für absoluten Druck
     PH2_nom = xnom*(1-Uf_H2)*Pfuel_nom; P02_nom = ynom*(1-Uf_02)*Pair_nom;
-    P02 = ynom*(1-Uf_02)*Pair_nom; # Luft ä®¤ert sich nicht
-    E_nom = 1.229+(Tnom-298.15)*(-44.43/(z*F))+(R*Tnom/(z*F))*log(PH2_nom*sqrt(P02_nom));# Nominal f?r andere Werte
+    P02 = ynom*(1-Uf_02)*Pair_nom; # Luft ändert sich nicht
+    E_nom = 1.229+(Tnom-298.15)*(-44.43/(z*F))+(R*Tnom/(z*F))*log(PH2_nom*sqrt(P02_nom));# Nominal für andere Werte
     Kl=2*F*k*(PH2_nom*Pstd+P02_nom*Pstd)/(h*R); Dg= -R*Tnom*log(i0_nom/Kl);
     Kc=Eoc_nom/E_nom; C1 = N*R*c; C2 = z*F*Uf_H2*xnom*Pstd;  C3 = z*F*k*Pstd/(R*h)*exp(-Dg/(R*T)); 
     C4 = 1.229+(T-298.15)*(-44.43)/(z*F); C5 = R*T/(z*F); C6=R/(z*alpha*F)*N;
@@ -142,16 +142,19 @@ function Kante!(dy,k,kante::mBZ_kante,t)
     dy[k+1] = e - (cv*m*ifxaorb(m,TL,TR))
 end
 
-function iBZ_init(knoten,kanten,M,kk,von,nach)
+function iBZ_init!(knoten,kanten,M,kk,von,nach)
     kk["Typ"] = "BZ"
     Params = MakeParam(kk)
     kk["Typ"] = "iBZ"
     kante = iBZ_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk)
     push!(kanten,kante)
     append!(M, kante.M)
+    if haskey(kk,"RefKante")
+        error("“RefKante“ im JSON in “mBZ“ Kante eintragen!")
+    end
 end
 
-function mBZ_init(knoten,kanten,M,kk,von,nach)
+function mBZ_init!(knoten,kanten,M,kk,von,nach)
     kk["Typ"] = "BZ"
     Params = MakeParam(kk)
     kk["Typ"] = "mBZ"

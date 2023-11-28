@@ -96,8 +96,8 @@ function Kante!(dy,k,kante::mWRoTd_kante,t)
     end
     #-- Rohr links
     dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - 1e5*A*(P[1]-PL)*2/dx - lamda(mL,Di,A,mu,K)/(2*Di*Arho)*abs(mL)*mL - g*Arho*sin(phi); #-- mL
-    TRL = T[1] - (T[1]-T[2])/dx * - 0.5*dx
-    dy[k+1] =  eL - cv_H2O*mL*(TL-TRL) - A/dx*2*lamW*(TL-TRL) 
+    TRL = 0.5*(3*T[1] - T[2]) #-- Extrapolation der Temp. auf Rohreinlauf
+    dy[k+1] =  eL - cv_H2O*mL*(TL-TRL) - A/dx*2*lamW*(TL-T[1]) 
     #-- Rohr mitte
     fRP = PL; fRm = mL; fRT = TL #-- linke Randbedingung
     fCRP = 0.5*(fluxPR[1]-PL); fCRm = 0.5*(fluxmR[1]-mL)  #-- Flusskorrekturen
@@ -130,6 +130,6 @@ function Kante!(dy,k,kante::mWRoTd_kante,t)
     end
     #-- Rohr rechts
     dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - 1e5*A*(PR-P[end])*2/dx - lamda(mR,Di,A,mu,K)/(2*Di*Arho)*abs(mR)*mR - g*Arho*sin(phi); #-- mR
-    TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
-    dy[k+3*nx+3] = eR - cv_H2O*mR*(TRR-TR) - A/dx*2*lamW*(TRR-TR) 
+    TRR = 0.5*(3*T[nx] - T[nx-1]) #-- Extrapolation der Temp. auf Rohrauslauf
+    dy[k+3*nx+3] = eR - cv_H2O*mR*(TRR-TR) - A/dx*2*lamW*(T[nx]-TR) 
 end

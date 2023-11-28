@@ -1,4 +1,4 @@
-Base.@kwdef mutable struct mWRo_Param
+Base.@kwdef mutable struct mWRo2_Param
     nx = 1
     L = 1.0
     dx = L/max(nx,1/2)
@@ -18,7 +18,7 @@ Base.@kwdef mutable struct mWRo_Param
     g = 9.81
     a = 1414
     a2 = a^2
-    K = 1e-3 #-- Rauheit
+    K = 1e-5 #-- Rauheit
     phi = 0.0 #-- Neigungswinkel
     m = 0.0
     WENO = true
@@ -31,31 +31,30 @@ Base.@kwdef mutable struct mWRo_Param
     fluxTR = Array{Number}(undef, nx+1)
 end
 
-Base.@kwdef mutable struct y_mWRo
-    Param::mWRo_Param
-    mL::Number = Param.m
+#-- Rohrränder ---------------------------------
+Base.@kwdef mutable struct y_mWRo2
+    mL::Number = 0.0
     eL::Number = 0.0
     P
     _m
     T
-    mR::Number = Param.m
+    mR::Number = 0.0
     eR::Number = 0.0
 end
 
-Base.@kwdef mutable struct mWRo_kante <: Wasser_Kante
+Base.@kwdef mutable struct mWRo2_kante <: Wasser_Kante
     #-- default Parameter
-    Param::mWRo_Param
+    Param::mWRo2_Param
 
     #-- Wasserknoten links und rechts
     KL::Wasser_Knoten
     KR::Wasser_Knoten
 
     #-- Zustandsvariablen
-    y = y_mWRo(Param=Param,
-               P = f(Vector(1:2:2*Param.nx), KL.y.P, KR.y.P, Param.nx), 
-               T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx),
-               _m = fill(Param.m,Param.nx)
-               )
+    y = y_mWRo2(P = f(Vector(1:2:2*Param.nx), KL.y.P, KR.y.P, Param.nx), 
+                T = f(Vector(1:2:2*Param.nx), KL.y.T, KR.y.T, Param.nx),
+                _m = fill(Param.m,Param.nx)
+                )
 
     #-- M-Matrix
     M::Array{Int} = [1; 0; ones(Int,3*Param.nx); 1; 0]
@@ -64,9 +63,10 @@ Base.@kwdef mutable struct mWRo_kante <: Wasser_Kante
     Z::Dict
 end
 
-function Kante!(dy,k,kante::mWRo_kante,t)
+
+function Kante!(dy,k,kante::mWRo2_kante,t)
     #-- Parameter
-    (; nx,dx,a2,leit,Arho,rho0,A,Di,cv_H2O,mu,K,lamW,phi,g,WENO,fluxPL,fluxPR,fluxmL,fluxmR,fluxTL,fluxTR) = kante.Param
+    (; nx,dx,a2,a,leit,Arho,rho0,A,Di,cv_H2O,mu,K,lamW,phi,g,WENO,fluxPL,fluxPR,fluxmL,fluxmR,fluxTL,fluxTR) = kante.Param
     #--
 
     #-- Zustandsvariablen
@@ -86,34 +86,39 @@ function Kante!(dy,k,kante::mWRo_kante,t)
     TR = KR.y.T
 
     if WENO == true
-        recover_weno!(P,fluxPL,fluxPR)
-        recover_weno!(m,fluxmL,fluxmR)
-        recover_weno!(T,fluxTL,fluxTR) #??? hier vieleicht nur recover(T), da bereits ubwind Diskertisierung mit ifxaorb(m[i],T[i]-fLT,fRT-T[i])??? 
+        fluxPL, fluxPR = recover_weno(P)
+        fluxmL, fluxmR = recover_weno(m)
+        fluxTL, fluxTR = recover_weno(T)
     else
-        recover!(P,fluxPL,fluxPR)
-        recover!(m,fluxmL,fluxmR)
-        recover!(T,fluxTL,fluxTR)
+        fluxPL, fluxPR = recover(P)
+        fluxmL, fluxmR = recover(m)
+        fluxTL, fluxTR = recover(T)
     end
-
     #-- Rohr links
     dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - 1e5*A*(P[1]-PL)*2/dx - lambda(mL,Di,A,mu,K)/(2*Di*Arho)*abs(mL)*mL - g*Arho*sin(phi); #-- mL
     TRL = 0.5*(3*T[1] - T[2]) #-- Extrapolation der Temp. auf Rohreinlauf
     dy[k+1] = eL - 1e-6*(cv_H2O*0.5*(abs(mL)*(TL-TRL)+mL*(TL+TRL)) + A/dx*2*lamW*(TL-T[1])) #-- eL  
-    
     #-- Rohr mitte
     fRP = PL; fRm = mL; fRT = TL #-- linke Randbedingung
+    fCRP = 0.5*(fluxPR[1]-PL); fCRm = 0.5*(fluxmR[1]-mL)  #-- Flusskorrekturen
+    fluxTL[1] = TL; fluxTR[nx+1] = TR;
     for i = 1:nx
         fLP = fRP; fLm = fRm; fLT = fRT
+        fCLP = fCRP; fCLm = fCRm  #-- Flusskorrekturen
         if i == nx
             fRP = PR; fRm = mR ; fRT = TR
+            fCRP = 0.5*(PR-fluxPL[nx+1]); fCRm = 0.5*(mR-fluxmL[nx+1]);   #-- Flusskorrekturen
         else
-            fRP = 0.5*(fluxPL[i+1]+fluxPR[i+1]) 
-            fRm = 0.5*(fluxmL[i+1]+fluxmR[i+1]) 
-            fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
+            fRP = 0.5*(fluxPL[i+1]+fluxPR[i+1]); fRm = 0.5*(fluxmL[i+1]+fluxmR[i+1]); fRT = 0.5*(fluxTL[i+1]+fluxTR[i+1])
+            fCRP = 0.5*(fluxPR[i+1]-fluxPL[i+1]); fCRm = 0.5*(fluxmR[i+1]-fluxmL[i+1])  #-- Flusskorrekturen
         end
-        dy[k+i+1] = -a2/A*(fRm-fLm)/dx*1e-5
+        dy[k+i+1] = -a2/A*(fRm-fLm)/dx * 1e-5
         dy[k+i+1+nx] = -(fRm^2-fLm^2)/(dx*Arho) - 1e5*A*(fRP-fLP)/dx - lambda(m[i],Di,A,mu,K)/(2*Di*Arho)*abs(m[i])*m[i] - g*Arho*sin(phi)
-        dy[k+i+1+nx*2] = -1/Arho*m[i]*ifxaorb(m[i],T[i]-fLT,fRT-T[i])*2/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
+        if WENO  
+            dy[k+i+1] = dy[k+i+1] + a*(fCRP-fCLP)/dx #-- dämpft zu stark
+            dy[k+i+1+nx] = dy[k+i+1+nx] + a*(fCRm-fCLm)/dx
+        end
+        dy[k+i+1+nx*2] =  -m[i]/Arho*ifxaorb(m[i],fluxTL[i+1]-fluxTL[i],fluxTR[i+1]-fluxTR[i])/dx + leit*2/(dx^2)*(fLT-2*T[i]+fRT)
         if haskey(Z,"kA")
             if isa(Z["kA"],Number) 
                 dy[k+i+1+nx*2] = dy[k+i+1+nx*2] - 4*Z["kA"]/(rho0*Di*cv_H2O)*(T[i]-Z["T_aussen"]) 
@@ -123,19 +128,8 @@ function Kante!(dy,k,kante::mWRo_kante,t)
             end
         end
     end
-    
     #-- Rohr rechts
     dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - 1e5*A*(PR-P[end])*2/dx - lambda(mR,Di,A,mu,K)/(2*Di*Arho)*abs(mR)*mR - g*Arho*sin(phi); #-- mR
     TRR = 0.5*(3*T[nx] - T[nx-1]) #-- Extrapolation der Temp. auf Rohrauslauf
     dy[k+3*nx+3] = eR - 1e-6*(cv_H2O*0.5*(abs(mR)*(TRR-TR)+mR*(TRR+TR)) + A/dx*2*lamW*(T[nx]-TR)) #-- eR
-end
-
-function lambda(m,D,A,mu,K)
-    Re = abs(m)*D/(A*mu); Re = max(Re,1.0e-6)
-    lam = 0.25/(log10(K/(3.7*D)+5.74/exp(0.9*log(Re)))^2)
-    return lam
-end
-
-function f(x,L,R,nx)
-    y = L .+ x*0.5*(R-L)/nx
 end

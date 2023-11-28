@@ -62,7 +62,7 @@ function Kante!(dy,k,kante::mWfPI_kante,t)
     dy[k+2] = T_soll-T
 end
 
-function mWfPI_init(knoten,kanten,M,kk,von,nach)
+function mWfPI_init!(knoten,kanten,M,kk,von,nach)
     Params = MakeParam(kk) 
     kante = mWfPI_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
     push!(kanten,kante)

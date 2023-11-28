@@ -18,7 +18,7 @@ Base.@kwdef mutable struct mWTaR_Param
     mu = 1.0e-3
     WENO = true
     Richtung = "gleich"
-    Ringspalt = true
+    Ringspalt = false
     g = 9.81
     a = 1414
     a2 = a^2
@@ -114,7 +114,7 @@ function Kante!(dy,k,kante::mWTaR_kante,t)
         Arho = Aarho
         A = Aa
         D = Da
-    elseif isa(Ringspalt,Int)
+    else
         kA = Z["kA"]
         Arho = Airho
         A = Ai
@@ -123,8 +123,8 @@ function Kante!(dy,k,kante::mWTaR_kante,t)
 
     #-- Rohr links
     dy[k] = -(m[1]^2-mL^2)*2/(dx*Arho) - 1e5*A*(P[1]-PL)*2/dx - lambda(mL,D,A,mu,K)/(2*D*Arho)*abs(mL)*mL - g*Arho*sin(phi)  #-- mL
-    TRL = T[1] - (T[1]-T[2])/dx * -0.5*dx
-    dy[k+1] = eL - 1e-6*(cv_H2O*0.5*(abs(mL)*(TL-TRL)+mL*(TL+TRL)) + A/dx*2*lamW*(TL-TRL)) #-- eL 
+    TRL = 0.5*(3*T[1] - T[2]) #-- Extrapolation der Temp. auf Rohreinlauf
+    dy[k+1] = eL - 1e-6*(cv_H2O*0.5*(abs(mL)*(TL-TRL)+mL*(TL+TRL)) + A/dx*2*lamW*(TL-T[1])) #-- eL 
     
     #-- Rohr mitte
     fRP = PL; fRm = mL; fRT = TL #-- linke Randbedingung
@@ -144,18 +144,20 @@ function Kante!(dy,k,kante::mWTaR_kante,t)
 
     #-- Rohr rechts
     dy[k+3*nx+2] = -(mR^2-m[end]^2)*2/(dx*Arho) - 1e5*A*(PR-P[end])*2/dx - lambda(mR,D,A,mu,K)/(2*D*Arho)*abs(mR)*mR - g*Arho*sin(phi)  #-- mR
-    TRR = T[nx-1] - (T[nx-1]-T[nx])/dx * 1.5*dx
-    dy[k+3*nx+3] = eR - 1e-6*(cv_H2O*0.5*(abs(mR)*(TRR-TR)+mR*(TRR+TR)) + A/dx*2*lamW*(TRR-TR)) #-- eR
+    TRR = 0.5*(3*T[nx] - T[nx-1]) #-- Extrapolation der Temp. auf Rohrauslauf
+    dy[k+3*nx+3] = eR - 1e-6*(cv_H2O*0.5*(abs(mR)*(TRR-TR)+mR*(TRR+TR)) + A/dx*2*lamW*(T[nx]-TR)) #-- eR
 end
 
-function mWTaR_init(knoten,kanten,M,kk,von,nach)
+function mWTaR_init!(knoten,kanten,M,kk,von,nach)
     Params = MakeParam(kk) 
     kante = mWTaR_kante(Param=Params, KL=knoten[von], KR=knoten[nach], Z=kk) 
     push!(kanten,kante)
     append!(M, kante.M)
     if haskey(kk,"RefKante") 
-        if isa(kk["RefKante"],Int)
-            R = kk["RefKante"]
+        R = kk["RefKante"]
+        if R > length(kanten) #-- RefKante wurde an falscher Stelle eintragen
+            error("“RefKante“ im JSON erst in der zweiten zugehörigen Kante eintragen!")
+        else #-- RefKante wurde an richtiger Stelle eintragen
             kanten[end].R = kanten[R]
             kanten[R].R = kanten[end]
         end

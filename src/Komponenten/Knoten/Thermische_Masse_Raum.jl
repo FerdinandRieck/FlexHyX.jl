@@ -1,7 +1,7 @@
 Base.@kwdef mutable struct TMHR_Param
-    T0 = 293.15
-    Masse = 10.0
-    c = 896.0
+    T0 = 292.15
+    Masse = 612.0
+    c = 1006.7
 end
 
 Base.@kwdef mutable struct y_TMHR

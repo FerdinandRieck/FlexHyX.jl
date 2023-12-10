@@ -86,6 +86,7 @@ function y2netzwerk!(knoten,kanten,y_arr)
     nothing
 end
 
+#-- Wird für Leistung_anhängen benötigt
 function idx2netzwerk!(knoten,kanten)
     idx = 1
     for i in eachindex(knoten)

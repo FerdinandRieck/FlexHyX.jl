@@ -1,4 +1,3 @@
-#function read_zeitreihe(file::AbstractString)
 function readZeitreihe(file)
     # Daten einer/mehrerer Zeitreihen einlesen
     T = read(file, String)

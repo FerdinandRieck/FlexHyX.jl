@@ -1,5 +1,5 @@
+#-- PtGtX
 function plotSol(y,t)
-
   n_par = 1
   p1 = plot(t/3600,y[50,:], linewidth = 2, xlabel = "Zeit /h", ylabel = "W", title = "Leistung", label = "2iV-P",legend=:topright, legend_columns=-1)
   p1 = plot!(t/3600,y[51,:], linewidth = 2, label = "3iPV-P")
@@ -13,6 +13,7 @@ function plotSol(y,t)
   return p
 end
 
+#-- Fernwärme
 function plotSol(y,t,idx_ele,Typ)
   if Typ == "Zweileiternetzwerk"
     T1 = idx_ele["T1"][2] #-- Vorlauf Fern

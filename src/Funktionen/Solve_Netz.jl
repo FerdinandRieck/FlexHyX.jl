@@ -29,8 +29,6 @@ function solveNetz(dir::String)
     n_n = size(knoten_infos)[1]; n_e = size(kanten_infos)[1];  
     M = Int[]; kanten = []; knoten = [];
 
-    #println("---------------- geänderte Parameter ------------------")
-
     for i = 1:n_n  #-- Knoten erzeugen ----------------------------
         kk = knoten_infos[i];  typ = kk["Typ"]; 
 
@@ -61,8 +59,6 @@ function solveNetz(dir::String)
     end
 
     M = sparse(diagm(M))
-
-    #println("-------------------------------------------------------")
 
     #-- U_max, P_max suchen--------------------------
     U_max = 1.0; P_max = 101325;

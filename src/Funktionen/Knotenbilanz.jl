@@ -1,3 +1,5 @@
+#-- Wird eigentlich nicht benötigt, da mit Inzidenzmatrix bilanziert wird. 
+#-- Mit diesen Funktionen könnte theoretisch auch bilanziert werden.
 function sum_i(IN,OUT)
     sum_IN = 0.0; sum_OUT = 0.0
     for i in eachindex(IN)

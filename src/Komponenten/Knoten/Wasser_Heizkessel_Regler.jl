@@ -72,7 +72,7 @@ function Knoten!(dy,k,knoten::WPHR_Knoten,t)
         DAR = T_aussen - RT_Soll
         VT_Soll = RT_Soll + Niveau - Neigung*DAR*(1.4347 + 0.021*DAR + 247.9*10^-6*DAR^2)
     elseif haskey(Z,"T_soll")
-        VT_Soll = Z["T_soll"]
+        VT_Soll = Z["T_soll"]+273.15
     end
 
     dy[k] = knoten.sum_m

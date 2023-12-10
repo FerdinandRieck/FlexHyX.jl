@@ -7,6 +7,7 @@ module FlexHyX
     using SparseArrays
     using SparseDiffTools
     using LinearSolve
+    using Measures
     import JSON
 
     dir = dirname(@__FILE__)

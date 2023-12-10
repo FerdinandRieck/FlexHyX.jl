@@ -47,9 +47,14 @@ function Kante!(dy,k,kante::mWPu_kante,t)
     io = 1.0
     if Jac_init == true
         io = 1.0
+    elseif (haskey(Z,"Schaltzeit_ein")==true) 
+        io = ein(t,Z["Schaltzeit_ein"],Z["Schaltdauer"]) 
+        io = io/length(Z["Schaltzeit_ein"])
+    elseif (haskey(Z,"Schaltzeit_aus")==true) 
+        io = aus(t,Z["Schaltzeit_aus"],Z["Schaltdauer"]) 
+        io = io/length(Z["Schaltzeit_aus"])
     elseif (haskey(Z,"Schaltzeit")==true) 
-        io = ein(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
-        io = io/length(Z["Schaltzeit"])
+        io = einaus(t,Z["Schaltzeit"],Z["Schaltdauer"]) 
     end
     a1 = a0 / m_max^2 
     dP = PR - PL; 

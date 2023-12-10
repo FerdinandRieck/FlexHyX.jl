@@ -172,7 +172,7 @@ function solveNetz(dir::String)
     y = Leitsung_anhängen(sol,knoten,kanten,idx_iflussL,idx_iflussR,IM,IP)
 
     println("---------------- This was FlexHyX -----------------")
-    return (sol, y, sol.t, idx_ele)
+    return (y, sol.t, idx_ele)
 end
 
 function MakeParam(kk) 

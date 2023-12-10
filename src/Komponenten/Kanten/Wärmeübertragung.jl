@@ -34,7 +34,7 @@ Base.@kwdef mutable struct eWT_Param
     mcp_w = V_w*rho_w*cp_w;
     #---
     # Q_dot = mcp_w*(TW_zu - T_MHS)*(1 - exp(-kA/mcp_w));
-    kA = 5;
+    k_A = 5;
 end
 
 Base.@kwdef mutable struct y_eWT
@@ -61,7 +61,7 @@ end
 
 function Kante!(dy,k,kante::eWT_kante,t)
     #-- Parameter
-    (; kA) = kante.Param
+    (; k_A) = kante.Param
     #--
 
     #-- Zustandsvariable
@@ -75,6 +75,6 @@ function Kante!(dy,k,kante::eWT_kante,t)
     if (haskey(Z,"kA")==true) && (haskey(Z,"A")==true)
         dy[k] = e - Z["kA"]*Z["A"]*(TL-TR)
     else
-        dy[k] = e - kA*(TL-TR)  #-- hier noch dot m einfügen 
+        dy[k] = e - k_A*(TL-TR)  #-- hier noch dot m einfügen 
     end
 end

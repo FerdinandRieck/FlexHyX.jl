@@ -101,13 +101,10 @@ function Kante!(dy,k,kante::iBZ_kante,t)
     T = T_1 + 273.15;
     PH2 = xnom*(1-Uf_H2)*P; 
     i0 = C3*(PH2+P02); En = C4 + C5*log(PH2*sqrt(P02)); Eoc = Kc*En;
-
     #-- Kennlinie Brennstoffzelle
     s=1
     NA=C6*T;
     U = Eoc - s*NA*log(max(iBZ*io,i0)/i0)-R_ohm*iBZ*io; #-- Spannung
-
-    #Q_dot = max(0,min(1.0e3,1.12*(1.25 + U)*iBZ))
 
     dy[k] = U-(UR-UL)
 end
@@ -135,8 +132,6 @@ function Kante!(dy,k,kante::mBZ_kante,t)
     end
 
     m_BZ = N*iBZ*io/(F*2)*2.01599e-3; #-- nach David
-
-    #Q_dot = max(0,min(1.0e3,1.12*(1.25 + U)*iBZ))
 
     dy[k] = m - m_BZ
     dy[k+1] = e - (cv*m*ifxaorb(m,TL,TR))

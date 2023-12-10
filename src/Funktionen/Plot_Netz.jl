@@ -104,8 +104,6 @@ function plot_kanten!(knoten, kanten)
 				color = :green
 			elseif obj <: Temp_Kante
 				color = :red
-			elseif obj <: Gas_Strom_Kante
-				color = :orange
 			elseif obj <: Wasser_Kante
 				color = :blue
 			end
